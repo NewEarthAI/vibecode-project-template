@@ -15,33 +15,7 @@ This command walks you through a structured interview to populate CLAUDE.md, con
 
 ## Workflow
 
-### Step 0: Determine Environment & Setup Prerequisites
-
-**0.0 Check if running in pi:**
-
-Detect whether this is a pi session or Claude Code session:
-
-```bash
-# Check for pi indicators
-if [ -d ".pi" ] || [ -d "$HOME/.pi/agent" ] || command -v pi &>/dev/null; then
-  echo "PI_DETECTED=true"
-else
-  echo "PI_DETECTED=false"
-fi
-```
-
-IF `PI_DETECTED=true` AND `.pi/` directory does NOT exist yet:
-  - INFORM user: "You're running in pi but this repo hasn't been migrated yet. The pi-migration skill will set up everything you need — MCP servers, skills, hooks, extensions, prompts, and models."
-  - ASK: "Run /pi-migration now to set up pi for this repo? (Y/n)"
-  - IF yes: Run the pi-migration skill (`.claude/skills/pi-migration/SKILL.md`), then CONTINUE with setup below
-  - IF no: CONTINUE with setup below (pi-specific features will be skipped)
-
-IF `PI_DETECTED=true` AND `.pi/` directory EXISTS:
-  - INFORM user: "pi is already set up for this repo. Continuing with project setup..."
-  - CONTINUE with setup below
-
-IF `PI_DETECTED=false`:
-  - CONTINUE with Claude Code setup below
+### Step 0: Determine Depth & Setup Prerequisites
 
 **0.1 Check for hookify plugin:**
 ```bash
@@ -223,7 +197,7 @@ The template ships 13 hookify rules. Most work immediately with wildcard matcher
 
 Read `.mcp.json` or ask user for their configured MCP servers. Identify:
 - Which Supabase project? (e.g., `supabase-myproject`)
-- Which n8n instance? (e.g., `n8n-mcp-myinstance`)
+- Which n8n instance? (e.g., `n8n-yourinstance`)
 - Which other servers? (playwright, github, etc.)
 
 **7.5.2 Tighten Wildcard Matchers (Optional but Recommended):**
@@ -235,8 +209,8 @@ Hooks ship with wildcards (`mcp__supabase-*__.*`). For precision, tighten to exa
 | `supabase-auto-load` | `mcp__supabase-*__.*` | `mcp__supabase-myproject__.*` |
 | `supabase-smart-query` | `mcp__supabase-*__execute_sql` | `mcp__supabase-myproject__execute_sql` |
 | `supabase-select-star` | `mcp__supabase-*__execute_sql` | `mcp__supabase-myproject__execute_sql` |
-| `n8n-auto-load` | `mcp__n8n-mcp-*__.*` | `mcp__n8n-mcp-myinstance__.*` |
-| `n8n-fetch-blocker` | `mcp__n8n-mcp-*__n8n_get_workflow` | `mcp__n8n-mcp-myinstance__n8n_get_workflow` |
+| `n8n-auto-load` | `mcp__n8n-mcp-*__.*` | `mcp__n8n-yourinstance__.*` |
+| `n8n-fetch-blocker` | `mcp__n8n-mcp-*__n8n_get_workflow` | `mcp__n8n-yourinstance__n8n_get_workflow` |
 | `n8n-update-safety` | `mcp__n8n-mcp-*__n8n_update_*` | Exact server names |
 | `n8n-executions-full` | `mcp__n8n-mcp-*__n8n_executions` | Exact server name |
 
@@ -356,12 +330,7 @@ wildcard allow patterns for read-only operations. Common patterns:
     "Stop": [
       {
         "matcher": "*",
-        "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/session-summarizer.sh" },
-          { "type": "command", "command": "bash .claude/hooks/session-end-continuation-gate.sh" },
-          { "type": "command", "command": "bash .claude/hooks/vault-capture.sh" },
-          { "type": "command", "command": "bash .claude/hooks/auto-sync-artifacts.sh" }
-        ]
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/session-summarizer.sh" }]
       }
     ]
   }
@@ -385,11 +354,7 @@ These should NOT be added to the allow list — they require human confirmation:
 **Step E — Make hook scripts executable + verify:**
 
 ```bash
-chmod +x .claude/hooks/sql-guardian.sh \
-         .claude/hooks/session-summarizer.sh \
-         .claude/hooks/session-end-continuation-gate.sh \
-         .claude/hooks/vault-capture.sh \
-         .claude/hooks/auto-sync-artifacts.sh
+chmod +x .claude/hooks/sql-guardian.sh .claude/hooks/session-summarizer.sh
 ```
 
 Note: `.claude/settings.local.json` is gitignored — it stays on your machine only.
@@ -578,7 +543,7 @@ A Claude session CANNOT self-provision this half. SURFACE it to the user — do
 not attempt to automate it:
 
 **(A) The n8n dispatch substrate + REPO_MAP**
-- **NewEarth repo**: the files already point at the shared `W-KI-SSH-EXECUTE`
+- **the agency repo**: the files already point at the shared `W-KI-SSH-EXECUTE`
   n8n workflow. Add ONE line to its `Resolve Project Path` node's REPO_MAP
   mapping this repo's slug → `{ repo path on the target Mac, target user }`.
 - **External adopter**: autofire needs your own n8n SSH-Execute workflow —
@@ -804,55 +769,6 @@ IF corrections needed:
 
 ---
 
-### Step 9.5: Set up the "map of your project" tool (understand-anything)
-
-This step gives the operator a friendly tool that reads their code and turns it into a clickable
-map — plus a guided tour and a plain-English explainer that answers "how does this bit work?". It's
-useful right now to get your bearings, and just as useful all through the project — any time you, or
-someone new joining, needs to find their way around. (Built by Lum1104; runs with `/understand`.)
-
-**9.5.1 — Is the tool installed already?**
-```bash
-# Is the understand-anything plugin present? (same check style as the Step 0.1 hookify check)
-ls ~/.claude/plugins/marketplaces/understand-anything/ 2>/dev/null
-```
-
-IF NOT found:
-  - SAY to the user, in plain words: "I can add a tool that reads your project and turns it into a
-    friendly, clickable map — with a guided tour and a plain-English explainer that answers 'how does
-    this part work?'. Handy now to get your bearings, and handy later any time you need to find your
-    way around. Want me to set it up? (Y/n)"
-  - IF yes: guide the user to run these two commands (this adds the tool to their Claude Code):
-    - `/plugin marketplace add Lum1104/Understand-Anything`
-    - `/plugin install understand-anything@understand-anything`
-  - IF no: note it under Step 10's next steps so they can add it whenever they like.
-
-**9.5.2 — When to run it (depends on whether there's anything to map yet):**
-
-The tool works by reading code/systems that already exist, so the timing depends on what the operator
-is starting with:
-
-- **IF they're bringing in something they already have** (an existing project, code, or systems they
-  want to connect) — this is where it's most valuable straight away: OFFER to run `/understand` now,
-  pointed at whatever they already have, to build the first map. Then show them where to look:
-  - `/understand-dashboard` — the visual, clickable map
-  - `/understand-explain` — plain-English deep dives on any part
-  - `/understand-onboard` — an auto-written "getting started" guide
-  - `/understand-domain` — the business-side view (what the project does, in plain terms)
-- **IF they're starting from scratch** (nothing built yet — common for a first project): tell them to
-  run `/understand` **once they've written their first bit of code**. Until something exists, there's
-  nothing to map, so running it now would just give an empty page. Pop it in Step 10's next steps.
-
-> **Also already in your project — a deeper version, for when you're ready.** Think of the tool above
-> as a map of your *code*. Your project also comes with a deeper tool (run it with `/topology`) that
-> keeps a live map of your *whole* system — your code, your databases, your automations and your
-> settings — and gently flags when what's actually been built has drifted away from what you planned.
-> It becomes more valuable as the project grows. It's more than you need on day one — just good to
-> know it's there for when you want to grow into it. (`/topology health` shows the map; `/topology
-> reconcile` flags the drift.)
-
----
-
 ### Step 10: Next Steps
 
 REPORT to user:
@@ -882,12 +798,7 @@ Recommended next steps:
 2. Configure .mcp.json with your credentials
 3. Run /prime to test Claude's understanding
 4. Run /daily-plan to generate your first session plan
-5. Get a map of your project: run /understand on anything you already have (existing code or
-   systems you're connecting) for a clickable map + guided tour + plain-English explainer. Starting
-   from scratch? Run it once you've written your first bit of code. (There's also a deeper /topology
-   tool already included — a live map of your whole system that flags when things drift from the
-   plan — for when you're ready to grow into it.)
-6. Start building!
+5. Start building!
 ```
 
 ---
@@ -909,94 +820,9 @@ SKIP specs/ and docs/ generation.
 
 ---
 
-## Step 8 — Obsidian autopilot read-side wiring (mandatory, runs after the existing project-init steps)
-
-The fresh repo gets its session-open repo-state briefing + slug-filtered vault feed wired automatically. No hand-rolling, no copy-paste from another project. Four sub-steps:
-
-### 8.1 — Run the bootstrap script
-
-```bash
-# Idempotent: safe to re-run. Auto-detects per-repo slug from the folder name.
-# Creates .claude/obsidian-second-brain.local.md, verifies macOS Keychain entry,
-# verifies vault_path resolution, smoke-tests the SessionStart vault block.
-if [ -x .claude/scripts/bootstrap-obsidian.sh ]; then
-  bash .claude/scripts/bootstrap-obsidian.sh
-fi
-```
-
-If the script exits non-zero, surface the error to the operator before continuing — typically the macOS Keychain credential is missing (the script prints the exact `security add-generic-password` command needed).
-
-### 8.2 — Register the SessionStart hook in `.claude/settings.local.json`
-
-The aggregator hook is file-present in the template but is NOT auto-registered (the harness reads `settings.local.json`, which is gitignored per-machine — only the setup recipe is the right place to author it). Add the third SessionStart entry pointing at the aggregator:
-
-```python
-import json, os
-settings_path = ".claude/settings.local.json"
-existing = json.load(open(settings_path)) if os.path.exists(settings_path) else {"hooks": {}}
-ss_block_list = existing.setdefault("hooks", {}).setdefault("SessionStart", [{"matcher": "*", "hooks": []}])
-hooks_list = ss_block_list[0]["hooks"]
-target_cmd = "bash $CLAUDE_PROJECT_DIR/.claude/hooks/sessionstart-context-aggregator.sh"
-if not any(h.get("command") == target_cmd for h in hooks_list):
-    hooks_list.append({"type": "command", "command": target_cmd, "timeout": 15})
-    json.dump(existing, open(settings_path, "w"), indent=2)
-```
-
-Use whatever JSON-merge primitive the surrounding setup steps already use; the shape above is the contract.
-
-### 8.3 — Stamp `.claude/template-source.md` with the current template-version pin + Held-Files Ledger stub
-
-If the file doesn't exist yet (fresh project), create it with frontmatter pointing at the template repo + a Held-Files Ledger section header (empty — just the heading, so future Claude sessions can find it via grep):
-
-```markdown
----
-repo: https://github.com/NewEarthAI/claude-code-project-template
-local_path: <fill in path to local template clone>
-version: <current template version pin — copy from template's own template-source.md>
-last_sync: <today's date>
----
-
-# Template Source
-
-## Held-Files Ledger
-
-(Empty for now. Add a row here when a /update-latest pull would overwrite a deliberately-customised file. Format: `| <path> | <why held> |`. See the template repo's CHANGELOG.md for examples of when files were held in adopter projects.)
-
-## TEMPLATE-MANAGED files
-
-(Optional: list the files this project tracks as template-managed for /push-to-template + /update-latest.)
-```
-
-If the file already exists, do not overwrite — only stamp it if missing.
-
-### 8.4 — Smoke-test the wiring
-
-Run a hermetic check of the SessionStart hook (it must produce well-formed JSON output with no errors):
-
-```bash
-SMOKE=$(echo "{}" | bash .claude/hooks/sessionstart-context-aggregator.sh 2>&1)
-if printf '%s' "$SMOKE" | grep -q '"hookEventName":"SessionStart"'; then
-  echo "✓ Step 8 smoke: SessionStart hook emits clean briefing"
-else
-  echo "✗ Step 8 smoke FAILED — hook output:"; echo "$SMOKE" | head -20
-  echo "  Setup is INCOMPLETE. Triage the hook before considering /setup done."
-fi
-```
-
-A FAIL means the wiring is broken — operator must triage before continuing.
-
-### What the operator sees the next time a session opens in this repo
-
-The session opens with a structured briefing block at the top — branch state, working-tree changes, recent commits, recent council sessions, recent specs, MEMORY.md head, open PRs, pre-flight status, and (if the agency vault is configured + the macOS Keychain entry exists) a 📓 Recent vault activity section filtered to this project's slug.
-
-This is the read-side of the LLM-Wiki Obsidian autopilot pattern. The write-side (vault-capture at session close + central compiler at the agency level) is wired separately in `/update-latest`.
-
----
-
 ## Report
 
 Confirm:
 - Number of files created
 - Grade level recommendation
 - Suggested next command (/plan or /prime)
-- ✓ Step 8 Obsidian autopilot read-side wired (bootstrap ran, SessionStart hook registered, smoke test passed)

@@ -7,22 +7,22 @@ Multiple Claude Code sessions running in parallel cause `.git/index.lock` conten
 
 ### Starting work
 ```bash
-cd /Users/justin/Documents/GitHub/BuyBox-AI
+cd /Users/justin/Documents/GitHub/a SaaS app
 git fetch origin main
-git worktree add ../buybox-<short-name> -b <branch-name> origin/main
-cd ../buybox-<short-name>
+git worktree add ../the app-<short-name> -b <branch-name> origin/main
+cd ../the app-<short-name>
 npm install
 ```
 
 ### During work
-- ALL edits happen in the worktree directory (`../buybox-<short-name>/`)
+- ALL edits happen in the worktree directory (`../the app-<short-name>/`)
 - NEVER `cd` back to the main repo to edit files
 - Each worktree has its own `node_modules`, its own file state, its own index
 - No `.git/index.lock` contention — each worktree has its own index file
 
 ### Committing
 ```bash
-cd ../buybox-<short-name>
+cd ../the app-<short-name>
 pkill -9 -f "vite" 2>/dev/null
 pkill -9 -f "esbuild" 2>/dev/null
 source ~/.nvm/nvm.sh && nvm use 24
@@ -34,8 +34,8 @@ git push origin <branch-name>
 
 ### Cleanup (after PR merged)
 ```bash
-cd /Users/justin/Documents/GitHub/BuyBox-AI
-git worktree remove ../buybox-<short-name>
+cd /Users/justin/Documents/GitHub/a SaaS app
+git worktree remove ../the app-<short-name>
 ```
 
 ### Listing active worktrees
@@ -51,7 +51,7 @@ git worktree list
 ## Anti-Patterns
 | Wrong | Right |
 |-------|-------|
-| `git checkout -b feature/x` in main repo | `git worktree add ../buybox-x -b feature/x origin/main` |
+| `git checkout -b feature/x` in main repo | `git worktree add ../the app-x -b feature/x origin/main` |
 | Editing files in main repo while on feature branch | All edits in worktree directory |
 | Leaving worktrees after PR merge | `git worktree remove` after merge |
 | Running `npm run dev` in main repo while worktree sessions are active | Each worktree runs its own dev server on different ports |

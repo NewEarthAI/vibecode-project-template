@@ -6,7 +6,7 @@
 
 ```bash
 # Fresh worktree off main, no uncommitted changes
-cd ~/code/buybox-autovibe
+cd ~/code/the app-autovibe
 git status --porcelain  # should be empty
 ```
 

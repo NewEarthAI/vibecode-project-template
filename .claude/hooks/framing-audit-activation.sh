@@ -43,20 +43,6 @@
 
 set -uo pipefail
 
-# ── Hook-profile-gating kill-switch (see .claude/rules/hook-profile-gating.md) ─
-# Honours HOOK_FRAMING_AUDIT_ACTIVATION ∈ {0,false,no,off,disabled} → DISABLE.
-# Default (unset/empty) or 1/true/yes/enabled = ENABLED. Matches AUTOVIBE_AUTOFIRE
-# precedent exactly (no _DISABLED suffix; feature-flag, not state-assertion).
-# This hook is advisory-only — disabling is safe (NOT a safety-critical guard).
-HOOK_DISABLE_VAR="HOOK_FRAMING_AUDIT_ACTIVATION"
-HOOK_DISABLE_VAL="$(printf '%s' "${!HOOK_DISABLE_VAR:-}" | tr '[:upper:]' '[:lower:]')"
-case "$HOOK_DISABLE_VAL" in
-  0|false|no|off|disabled)
-    echo "framing-audit-activation: DISABLED via ${HOOK_DISABLE_VAR}=${!HOOK_DISABLE_VAR} — unset or set to 1/true/yes/enabled to re-enable" >&2
-    exit 0
-    ;;
-esac
-
 # ── The processing logic (python3 — portable; quoted heredoc = literal) ──────
 PYCODE=$(cat <<'PYEOF'
 import sys, json, re
@@ -77,7 +63,15 @@ The five framing-audit primitives:
   /audit-artefact-grounding    - audit a skill/rule/hook/agent/doctrine on six axes
   _shared/frame-vs-input-classifier.md - classify operator pushback (frame vs input)
 
-Doctrine: .claude/rules/framing-audit-mandate.md  (the audit is a named, non-skippable step)"""
+Doctrine: .claude/rules/framing-audit-mandate.md  (the audit is a named, non-skippable step)
+
+[arc-leg-label-collision awareness] Active collision on the matrix-rehab-decouple arc — three
+distinct meanings of "Slice 2" within 2026-05-20:
+  - PR #841 closure council "Slice 2" = checklist-axis decouple, DEFERRED via framing audit
+  - PR #847 Track 1 "Slice 2"        = per-strategy rehab wiring follow-up
+  - MULTI-ARC handoff "Slice 2"      = downstream coordination scope
+Before propagating any bare "Slice 2" reference on this arc, run the collision check in
+.claude/rules/arc-leg-label-collision.md and qualify the label."""
 
 # Trivial workflows — no framing decision is being made here.
 SKIP_TRIVIAL = ("/commit", "/push", "/ship", "/setup", "/daily-plan", "/prime")

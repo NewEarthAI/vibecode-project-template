@@ -45,5 +45,5 @@ Subagents MUST include this in their prompt when touching SQL functions:
 
 ## Composes With
 
-- 📄 `sql-defensive-defaults.md` — sibling rule. Function replacements MUST also satisfy: (a) no `lpad/rpad/substring/left/right` on counter-derived defaults the function depends on, (b) every secondary INSERT/UPDATE in the function body wrapped in `BEGIN ... EXCEPTION` or `ON CONFLICT DO NOTHING`. The 2026-05-14 Nirvana cascade was a textbook case where a clean function replacement was undermined by an unguarded secondary INSERT.
+- 📄 `sql-defensive-defaults.md` — sibling rule. Function replacements MUST also satisfy: (a) no `lpad/rpad/substring/left/right` on counter-derived defaults the function depends on, (b) every secondary INSERT/UPDATE in the function body wrapped in `BEGIN ... EXCEPTION` or `ON CONFLICT DO NOTHING`. The 2026-05-14 a logistics app cascade was a textbook case where a clean function replacement was undermined by an unguarded secondary INSERT.
 - 📄 `data-layer.md` § Function Migration Safety — never change parameter order on replacement.

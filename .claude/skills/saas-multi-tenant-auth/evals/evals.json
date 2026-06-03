@@ -78,7 +78,7 @@
   ],
   "validation_notes": {
     "validated_on": [
-      "BuyBox-AI CM.32 (origin — 4 phases shipped 2026-04-19 to 2026-04-21)"
+      "a SaaS app CM.32 (origin — 4 phases shipped 2026-04-19 to 2026-04-21)"
     ],
     "held_out_test": "Apply skill to a fresh Supabase + Vite + React project with no existing auth/team concepts. All 6 tiers should ship cleanly using only the skill's references and templates."
   }

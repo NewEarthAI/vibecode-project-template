@@ -1,6 +1,6 @@
 ---
 name: verify-shipped
-description: Walk the full BuyBox repo state across 6 layers (worktrees, branches, PRs, Vercel deploy, edge function deploy-vs-main drift, migrations applied-vs-repo) and produce a punch-list with exact fix commands. Use when - "verify fleet", "fleet check", "is everything actually shipped", "what's loose", "drift check", "shipping audit", before any major demo, or auto-fired by /autovibe post-ship + /daily-plan morning brief. Catches the silent killers - edge function source-vs-deployed drift (Cedar Hurst doctrine pattern) and migration file-vs-applied drift - that /ship and /autovibe alone cannot see because each operates on ONE branch at a time.
+description: Walk the full a SaaS app repo state across 6 layers (worktrees, branches, PRs, Vercel deploy, edge function deploy-vs-main drift, migrations applied-vs-repo) and produce a punch-list with exact fix commands. Use when - "verify fleet", "fleet check", "is everything actually shipped", "what's loose", "drift check", "shipping audit", before any major demo, or auto-fired by /autovibe post-ship + /daily-plan morning brief. Catches the silent killers - edge function source-vs-deployed drift (Cedar Hurst doctrine pattern) and migration file-vs-applied drift - that /ship and /autovibe alone cannot see because each operates on ONE branch at a time.
 ---
 
 # /verify-shipped — Fleet Audit Across 6 Shipping Layers
@@ -46,7 +46,7 @@ When this skill loads, execute in order:
 ### Phase 0 — Preflight
 1. Confirm cwd is a git repo: `git rev-parse --is-inside-work-tree`
 2. Confirm `gh` CLI authenticated: `gh auth status` (non-fatal — Layer 3 will degrade)
-3. Confirm `supabase-buyboxai` MCP available (used by Layers 5 + 6)
+3. Confirm `supabase-yourproject` MCP available (used by Layers 5 + 6)
 4. **Pre-fetch origin refs** (REQUIRED for Layer 2 STALE_LOCAL detection per code-council 2026-05-07 IMPORTANT #1):
    ```bash
    git fetch --all --prune --quiet 2>/dev/null || echo "[INFO] git fetch failed; Layer 2 STALE_LOCAL detection may under-report" >&2
@@ -167,7 +167,7 @@ Edge cases:
 Implementation: build a `suppressed_by_l3 = {<branch_name>: True}` set from Layer 3 MERGED_NOT_CLEANED outputs; when iterating Layer 2 findings, skip any STALE_LOCAL whose branch is in that set.
 
 **Apply suppress-file** (decision 4.4): for each remaining finding, compute a finding-key:
-- Layer 1: `1:<status>:<path>` (e.g., `1:DIRTY:/Users/justin/code/buybox-comp-frontend`)
+- Layer 1: `1:<status>:<path>` (e.g., `1:DIRTY:/Users/justin/code/the app-comp-frontend`)
 - Layer 2: `2:<status>:<branch>` (e.g., `2:AHEAD:feat/foo`)
 - Layer 3: `3:<status>:<pr-number>` (e.g., `3:STALE_OPEN_PR:471`)
 - Layer 5: `5:DRIFT:<function-name>` (e.g., `5:DRIFT:sync-to-airtable`)
@@ -185,16 +185,16 @@ NOT counted in the layer's issue count. NOT counted in the total. Auto-purge exp
 🚧 Fleet Audit — <timestamp> — <duration>s
 
 LAYER 1 (worktrees): 2 issues
-  [DIRTY] /Users/justin/code/buybox-comp-frontend  3 uncommitted
-    fix: cd /Users/justin/code/buybox-comp-frontend && git status
+  [DIRTY] /Users/justin/code/the app-comp-frontend  3 uncommitted
+    fix: cd /Users/justin/code/the app-comp-frontend && git status
 
 LAYER 2 (branches): 1 issue
   [AHEAD] feat/foo 3 commits not pushed
     fix: git push origin feat/foo
 
 LAYER 3 (PRs): 1 issue
-  [MERGED_NOT_CLEANED] PR #481 "Track 1: match_score truthiness fix" merged 4 days ago — worktree at /Users/justin/code/buybox-track1, branch feat/track1
-    fix: git worktree remove /Users/justin/code/buybox-track1 && git branch -D feat/track1 && git push origin --delete feat/track1
+  [MERGED_NOT_CLEANED] PR #481 "Track 1: match_score truthiness fix" merged 4 days ago — worktree at /Users/justin/code/the app-track1, branch feat/track1
+    fix: git worktree remove /Users/justin/code/the app-track1 && git branch -D feat/track1 && git push origin --delete feat/track1
 
 LAYER 5 (edge function drift): 1 issue
   [DRIFT] sync-to-airtable — main 2 commits ahead of deployed

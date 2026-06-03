@@ -74,7 +74,7 @@ fi
 if [ -z "$url" ]; then
   if command -v vercel >/dev/null 2>&1; then
     # Latest production deployment
-    url=$(vercel ls --prod --scope teamnewearthaias-projects 2>/dev/null | awk '/https:/ {print $2; exit}' || true)
+    url=$(vercel ls --prod --scope teamyour-orgas-projects 2>/dev/null | awk '/https:/ {print $2; exit}' || true)
   fi
   if [ -z "$url" ]; then
     echo "smoke: no URL provided and could not resolve via vercel CLI" >&2

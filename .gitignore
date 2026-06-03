@@ -47,6 +47,16 @@ htmlcov/
 .ruff_cache/
 
 # Bootstrap credentials (NEVER commit)
-*.env.nirvana
-# Session-coordination heartbeats (transient, per-machine, written by SessionStart hook)
-.claude/worktrees/
+.env.mcp
+*.env.mcp
+
+# Claude Code runtime state (local only)
+.claude/autovibe-state.json
+.claude/autovibe-sessions/
+.claude/ship-state.json
+.claude/phase47-log.jsonl
+.claude/.newvibe-autofire-armed
+.claude/settings.json.bak
+
+# PI agent config (machine/user-specific — like settings.local.json)
+.pi/

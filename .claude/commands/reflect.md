@@ -1,23 +1,23 @@
 ---
-description: Trigger self-improvement reflection. Analyzes the current session for patterns that should become skills, memory entries, or hooks.
+description: Trigger self-improvement reflection. Analyzes the current session for patterns that should become skills or expertise updates.
 ---
 
 # /reflect — Self-Improvement Reflection
 
-Analyze this session for learnings that should be captured as skills, memory, or hooks.
+Analyze this session for learnings that should be captured as skills or expertise.
 
 ## Instructions
 
-You are now in **reflection mode**. Your goal is to extract learnings from the current session and propose updates to the skill/memory/hook system.
+You are now in **reflection mode**. Your goal is to extract learnings from the current session and propose updates to the skill/expertise system.
 
 ### Step 1: Scan Session
 
 Review the conversation history and extract:
 
 1. **Corrections** — Where the user said "no, do X instead"
-2. **Approvals** — Where the user confirmed your approach worked (validated judgment calls)
+2. **Approvals** — Where the user confirmed your approach worked
 3. **Repeated Patterns** — Approaches used 3+ times
-4. **New Discoveries** — Things learned that weren't in existing skills or memory
+4. **New Discoveries** — Things learned that weren't in existing skills
 
 ### Step 2: Categorize
 
@@ -25,8 +25,8 @@ Assign confidence levels:
 
 | Level | Criteria |
 |-------|----------|
-| **HIGH** | Explicit user correction, 5+ occurrences, or incident-driven learning |
-| **MEDIUM** | Pattern worked 3+ times, or user confirmed a non-obvious approach |
+| **HIGH** | Explicit user correction, 5+ occurrences |
+| **MEDIUM** | Pattern worked 3+ times |
 | **LOW** | First observation, needs validation |
 
 ### Step 3: Apply A.U.D.N.
@@ -35,14 +35,23 @@ For each learning, determine action:
 
 | Action | When |
 |--------|------|
-| **ADD** | No similar skill/memory/hook exists |
+| **ADD** | No similar skill/pattern exists |
 | **UPDATE** | Similar exists, needs enhancement |
-| **DELETE** | New learning contradicts old — remove stale entry |
+| **DELETE** | New learning contradicts old |
 | **NOOP** | Already fully captured |
 
 ### Step 3.5: Hook-Worthiness Gate
 
-For each HIGH-confidence pattern, evaluate whether it should become a **hook** (active enforcement at tool-call time) rather than just documentation.
+For each HIGH-confidence pattern, evaluate whether it should become a **hook** (active enforcement at tool-call time) rather than just an expertise YAML entry (passive documentation).
+
+**Token-efficiency mandate (non-negotiable)**: Per `.claude/rules/hook-efficiency.md`, every proposed hook MUST use the triple-gate pattern so it enters context ONLY when truly applicable. A hook that fires context on 10%+ of tool calls is cost bloat, not signal. Default to expertise unless the hook genuinely saves from irreversible damage.
+
+Before proposing ANY hook, the proposed rule body MUST contain:
+- **Gate 1 — Matcher scope**: specific tool name, NEVER `*`
+- **Gate 2 — Bash-native fast-path** (for Bash matcher): raw-string substring check on stdin BEFORE `jq`/subprocess invocation. Exit `echo '{}'; exit 0` in <2ms for non-matching cases.
+- **Gate 3 — Conditional early-exit**: after parsing, if the specific condition doesn't apply, inject NOTHING. Only inject context when the hook can produce value.
+
+Propose `<5ms on 95%+ of invocations` as the budget. If the hook fires meaningful context on more than ~5% of calls, reconsider whether expertise suffices.
 
 **Score each pattern against this matrix:**
 
@@ -58,11 +67,11 @@ For each HIGH-confidence pattern, evaluate whether it should become a **hook** (
 
 | Total | Verdict |
 |-------|---------|
-| **7-10** | **MUST be a hook** — propose hookify alongside memory/skill entry |
-| **4-6** | **Consider hook** — propose if not already partially covered by existing hooks |
-| **0-3** | **Documentation only** — memory or skill entry is sufficient |
+| **8-10** | **MUST be a hook** — propose hookify alongside expertise YAML (threshold raised from 7 after token-bloat concern 2026-04-23) |
+| **5-7** | **Consider hook** — only propose if existing hooks don't partially cover AND the triple-gate fast-path is explicit |
+| **0-4** | **Expertise only** — passive documentation is sufficient. Default path. |
 
-**Before proposing a new hook**: search `.claude/hookify.*.local.md` and `.claude/settings.local.json` shell hooks for existing coverage. If existing hooks partially cover the pattern, propose an UPDATE to the existing hook rather than a new one.
+**Before proposing a new hook**: search `.claude/hookify.*.local.md` and `settings.local.json` shell hooks for existing coverage. If existing hooks partially cover the pattern, propose an UPDATE to the existing hook rather than a new one. A bloated hook list is worse than a missing hook — the user's tokens pay for each non-firing hook's matcher evaluation on every tool call.
 
 **Hook proposal format** (append to the Step 5 output for patterns that score 7+):
 
@@ -71,22 +80,18 @@ For each HIGH-confidence pattern, evaluate whether it should become a **hook** (
 **Hook Score**: [N]/10
 **Matrix**: Irreversible=[Y/N] Pre-exec=[Y/N] Detectable=[Y/N] Time-critical=[Y/N] Not-covered=[Y/N]
 **Type**: PreToolUse warn | PreToolUse block | PostToolUse addContext | Stop addContext
-**Tool Matcher**: [tool pattern, e.g. mcp__supabase-{{project}}__apply_migration]
+**Tool Matcher**: [tool pattern, e.g. mcp__supabase-yourproject__apply_migration]
 **Existing Coverage**: [None | Partial: hookify.X.local.md covers Y but not Z]
 **Content Summary**: [1-2 sentence description of what the hook injects/blocks]
 ```
 
 ### Step 4: Check Existing
 
-Before proposing changes, search the following locations to avoid duplication:
+Before proposing changes, search:
 
 ```
-.claude/skills/**/*.md           # Skill library
-.claude/rules/*.md               # CLAUDE.md-linked reference rules
-.claude/hookify.*.local.md       # Active hookify rules
-.claude/hooks/*.sh               # Shell hooks
-memory/MEMORY.md                 # Auto-memory index
-memory/*.md                      # Individual memory files
+.claude/skills/**/*.md
+.claude/expertise/*.yaml
 ```
 
 ### Step 5: Propose Changes
@@ -94,112 +99,90 @@ memory/*.md                      # Individual memory files
 Present proposed changes in this format:
 
 ```markdown
-## Proposed Updates
+## Proposed Skill/Expertise Updates
 
 ### ADD: [pattern_name]
 **Confidence**: HIGH/MEDIUM/LOW
 **Reason**: [why this should be added]
-**Destination**: [memory/ | .claude/skills/ | .claude/rules/ | .claude/hookify.*.local.md]
+**Location**: .claude/expertise/[file].yaml
 **Content**:
-[the actual content to write]
+```yaml
+- name: pattern_name
+  detection: |
+    [how to identify]
+  resolution: |
+    [how to fix]
+```
 
-### UPDATE: [existing_file]
+### UPDATE: [existing_skill]
 **Reason**: [what's being enhanced]
 **Change**: [description of modification]
-
-### DELETE: [stale_memory_file]
-**Reason**: [what is now contradicted or obsolete]
 
 ---
 
 **Approve these changes?**
-- Enter 'y' to apply all
-- Enter 'n' to cancel
-- Enter 'edit' to modify specific items
+**Always offer these five options — do not collapse to a simple y/n:**
+
+- **`y all`** — Apply every proposed change AND every proposed hook
+- **`y hooks 8+`** — Apply only hooks with Hook Score ≥ 8/10; skip every non-hook change
+- **`y 8+ both`** — Apply only hooks with Hook Score ≥ 8/10 AND only changes labeled HIGH confidence (≥ 8/10 equivalent); skip everything else
+- **`y changes 8+`** — Apply only HIGH-confidence changes (≥ 8/10 equivalent); skip all hooks and all MEDIUM/LOW changes
+- **`y changes only`** — Apply every proposed change but NO hooks (for when user trusts the documentation path but wants to manually review hooks separately)
+- **`n`** — Cancel all
+- **`edit`** — User enumerates specific items (e.g., "y for 1, 3, 5; skip 2, 4")
+
+**Confidence-to-score mapping for filtering**:
+- HIGH confidence → treat as ≥ 8/10 for filter purposes
+- MEDIUM confidence → treat as 5-7/10
+- LOW confidence → treat as < 5/10
+
+Hook scores come directly from the Step 3.5 matrix (0-10 scale).
+
+When the user picks a filtered option (`y hooks 8+`, `y 8+ both`, `y changes 8+`), echo back the exact list of items being applied and the list being skipped, so they can intervene before writes happen.
 ```
 
 ### Step 6: Apply After Approval
 
 If approved:
 1. Write changes to appropriate files
-2. Update `memory/MEMORY.md` index if new memory files were added
-3. Propose git commit message (only if user asks to commit):
+2. Propose git commit message:
    ```
-   chore(reflect): [description of updates]
+   chore(skills): [description of updates]
 
    - Added: [list]
    - Updated: [list]
-   - Deleted: [list of stale files removed]
+   - Hooks added: [list — or "none"]
    ```
+
+### Step 7: Propagate to Template (universal learnings only)
+
+After the project-local changes commit, evaluate each applied change for **universal applicability**:
+
+**Universal** = benefits ANY Claude Code / Cursor / Supabase / n8n / Vercel / GitHub / PostHog / Sentry / API-integration / React / TypeScript project, not just this codebase's specific domain.
+
+- **Council patterns, git workflows, hook infrastructure, shell portability, MCP usage patterns, code-review discipline, planning protocols, tool fallback rules** → UNIVERSAL, push to template.
+- **Project-specific data models, pipeline references, the app schemas, client-specific business logic, specific table/column names** → NEVER push (respect `.claude/template-source.md` PROJECT-SPECIFIC list).
+
+For each universal change:
+1. Read `.claude/template-source.md` to confirm the file is in the TEMPLATE-MANAGED table (or propose adding it)
+2. Invoke `/push-to-template` to handle the actual copy + generalization + CHANGELOG entry
+3. If the change affects a file NOT currently template-managed but IS universal, update `.claude/template-source.md` first to add the mapping, THEN push
+
+**Why this matters**: patterns that caught a bug in this project (e.g., "URL-param schemes are per-page, grep target before reusing") are free wins for every future project. Letting them stay local is a cross-project tax.
+
+**Propose push at the same approval gate**: "Apply + push to template" as one of the `y` options in Step 5. Default assumes user wants universal learnings propagated unless they explicitly skip.
 
 ## Abstraction Rules
 
 When creating new patterns:
 
 1. **Extract MECHANISM, not INSTANCE**
-   - BAD: "KI action 4472 failed because webhook timed out"
-   - GOOD: "KI action-execute workflow drops items silently if webhook exceeds 10min timeout"
+   - BAD: "Fleet 998 batch stuck"
+   - GOOD: "Batches timeout after 10 min if workflow fails"
 
 2. **Use Placeholders**
-   - `{{workflow_id}}`, `{{project_slug}}`, `{{action_type}}`, `{{event_id}}`
+   - `{{fleet}}`, `{{batch_id}}`, `{{event_id}}`
 
 3. **Generalize**
    - Error types, not specific error messages
    - Patterns, not specific IDs
-   - Reference the AFFECTED SYSTEM, not the specific instance
-
-## Destination Guide
-
-| Learning Type | Destination |
-|---------------|-------------|
-| User preference, feedback, working style | `memory/` as feedback type |
-| Infrastructure fact, API quirk, gotcha | `memory/` as user/reference type OR `.claude/rules/` if durable |
-| Repeatable procedure with 3+ steps | `.claude/skills/{name}/SKILL.md` |
-| Active enforcement pattern (score 7+) | `.claude/hookify.{name}.local.md` + optional shell hook |
-| Incident root cause + fix | `.claude/memory/fix-audit-trail.md` entry |
-| Project-specific state, ongoing work | `memory/` as project type |
-
-## Example Output
-
-```markdown
-## Reflection Summary
-
-### Session Signals
-- 2 corrections extracted (user said "don't bulk-apply template updates")
-- 1 repeated pattern (checking git log before investigating from scratch)
-- 1 new discovery (n8n HTTP Request nodes replace $json downstream)
-
-### Proposed Changes
-
-#### ADD: template-update-review-by-default
-**Confidence**: HIGH
-**Reason**: User explicitly corrected bulk-apply behavior; incident-driven
-**Destination**: memory/feedback_template-updates.md
-**Content**:
----
-name: Template updates must default to review-by-default
-type: feedback
----
-When running /update-latest, always default to reviewing files one-by-one.
-**Why:** Past incident where bulk-apply clobbered local modifications to
-.claude/rules/n8n-patterns.md.
-**How to apply:** Never switch to bulk-apply without explicit user (a).
-
-#### UPDATE: .claude/commands/update-latest.md
-**Reason**: Codify review-by-default as the command's contract
-**Change**: Added "Default behavior: ALWAYS review one-by-one" section
-
----
-
-**Approve these changes? (y/n/edit)**
-```
-
-## When NOT to Reflect
-
-Skip reflection entirely if:
-- The session was a single Q&A or file read
-- Nothing was shipped and no corrections occurred
-- `/reflect` was already run earlier this session
-- The user has explicitly ended the session
-
-The `auto-reflect` hookify rule (fires on Stop event) gates reflection behind a 2+ criteria trigger — trust its gating and don't force a reflect on trivial sessions.

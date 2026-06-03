@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # autovibe/orchestrate.sh — top-of-stack orchestrator
-# Composes: prime-lite → preflight → triage → forge?/plan?/council/amend/execute/code-council → ship → post-push
+# Composes: prime-lite → preflight → triage → forge?/plan?/execute/code-council → ship → post-push
+# (Strategy council + /amend-plan retired from autofire loop 2026-05-23 — rabbit-hole detours.
+#  /code-council at step 7 stays — that's the DIFF reviewer for shipped code.)
 #
 # Usage:
 #   orchestrate.sh "<intent>"                   → run flow
@@ -11,7 +13,7 @@
 #   0  success — shipped + post-push doc done
 #   1  preflight failed (path, disk, locks)
 #   2  triage halted (no intent / unknown error)
-#   3  composed-step failure (council/amend/execute/code-council)
+#   3  composed-step failure (execute/code-council)
 #   4  /ship returned non-zero (passes through ship's exit code class)
 #   5  lock collision — another autovibe in progress
 #   6  unhealthy path (path-check rejection)
@@ -56,7 +58,7 @@ _run() {
 # Trap: release lock ONLY on signal-based termination (INT/TERM).
 # We deliberately do NOT trap EXIT — code-council 2026-04-19 caught that releasing
 # the lock on `exit 0` broke the multi-turn handoff. The lock must persist across
-# the conversation's composition phase (council/execute/ship) and is released
+# the conversation's composition phase (execute/code-council/ship) and is released
 # explicitly by post-ship.sh (or via TTL takeover after 30 min).
 cleanup_signal() {
   echo "[autovibe] caught termination signal — releasing lock" >&2
@@ -158,11 +160,13 @@ _log mode dispatch "branch=$TRIAGE_OUT, ship-mode=$SHIP_MODE, doc=$MODE_DOC"
 
 # ─── Phase 7: Compose downstream skills ──────────────────────
 #
-# This script CANNOT directly invoke /council, /amend-plan, /execute,
-# /code-council, /ship — those are Claude-CLI commands run via the Skill
-# tool by the calling session. orchestrate.sh writes the next-step
-# directive into state and exits with a sentinel; the calling Claude
-# session reads state and invokes the next skill.
+# This script CANNOT directly invoke /execute, /code-council, /ship — those
+# are Claude-CLI commands run via the Skill tool by the calling session.
+# orchestrate.sh writes the next-step directive into state and exits with a
+# sentinel; the calling Claude session reads state and invokes the next skill.
+# (Strategy council + /amend-plan were retired from the autofire loop
+# 2026-05-23 — operator-only `/council` survives as a manual skill outside
+# autovibe.)
 #
 # Why not invoke them directly? Skills run in the conversation context;
 # they can read prior conversation, plan files, and council session
@@ -183,14 +187,14 @@ EOF
   else
     cat <<EOF >&2
   1. (if forge needed) /prompt-forge "$INTENT"
-  2. EnterPlanMode
-  3. /council --extended
-  4. /amend-plan
-  5. ExitPlanMode (auto-accept)
-  6. /execute
-  7. /code-council
-  8. /ship $SHIP_MODE --format=json --caller=autovibe
-  9. post-push doc step
+  2. framing-audit (goal-audit checkpoint — Skill reduce-to-first-principles / check-commensurability / map-feedback-loops)
+  3. EnterPlanMode
+  4. (if grill triggers) Skill pocock-grill-with-docs
+  5. Skill superpowers:writing-plans
+  6. ExitPlanMode (auto-accept; Foundation-First operator self-check)
+  7. /execute
+  8. /code-council (diff review)
+  9. /ship $SHIP_MODE --format=json --caller=autovibe + post-push doc step
 EOF
   fi
   exit 0

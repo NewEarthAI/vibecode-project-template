@@ -1,8 +1,8 @@
 ---
-repo: https://github.com/NewEarthAI/claude-code-project-template
+repo: https://github.com/NewEarthAI/vibecode-project-template
 local_path: /Users/justin/code/template-fresh
-version: 2026-06-02-autovibe-full-sync
-last_sync: 2026-06-02-autovibe-full-sync
+version: 2026-05-18-newvibe-template-portable
+last_sync: 2026-05-18-newvibe-template-portable
 ---
 
 # Template Source
@@ -12,8 +12,8 @@ last_sync: 2026-06-02-autovibe-full-sync
 These files flow between this project and the template repo. Use `/push-to-template` to push improvements upstream, `/update-latest` to pull updates.
 
 **Generalization rules**: Before pushing, replace project-specific identifiers:
-- `mcp__supabase-dispodaddy__*` → `mcp__supabase-.*__*`
-- `mcp__n8n-mcp-honeybird__*` → `mcp__n8n-mcp-.*__*`
+- `mcp__supabase-yourproject__*` → `mcp__supabase-.*__*`
+- `mcp__n8n-yourinstance__*` → `mcp__n8n-mcp-.*__*`
 - Project URLs, IDs, timezones → remove or templatize
 
 ### Plugin Source Code
@@ -135,11 +135,11 @@ These files flow between this project and the template repo. Use `/push-to-templ
 | `.claude/skills/kpi-dashboard-design/` | `.claude/skills/kpi-dashboard-design/` | KPI framework + visualization |
 | `.claude/skills/build-dashboard/` | `.claude/skills/build-dashboard/` | Self-contained HTML dashboards |
 | `.claude/skills/grafana-dashboards/` | `.claude/skills/grafana-dashboards/` | Grafana dashboard patterns |
-| `.claude/skills/bulletproof-drawer-perimeter/` | `.claude/skills/bulletproof-drawer-perimeter/` | Playwright regression-test perimeter for drawers/modals/side-sheets — 8 patterns (cell[1] row click, role=dialog scope, 2-click toggle, idempotent round-trip, REST PATCH cleanup, serial mode, storageState token, zero-skip). Composes with newearth-ui-design. Added 2026-04-23 after 4-hour debugging session on BuyBox-AI seller drawer (PRs #228/229/231/234). |
+| `.claude/skills/bulletproof-drawer-perimeter/` | `.claude/skills/bulletproof-drawer-perimeter/` | Playwright regression-test perimeter for drawers/modals/side-sheets — 8 patterns (cell[1] row click, role=dialog scope, 2-click toggle, idempotent round-trip, REST PATCH cleanup, serial mode, storageState token, zero-skip). Composes with ui-design-system. Added 2026-04-23 after 4-hour debugging session on a SaaS app seller drawer (PRs #228/229/231/234). |
 | `.claude/skills/llm-monitoring-dashboard/` | `.claude/skills/llm-monitoring-dashboard/` | LLM usage monitoring |
 | `.claude/skills/landing-page-mvp/` | `.claude/skills/landing-page-mvp/` | GSAP cinematic landing pages |
 | `.claude/skills/ship/` | `.claude/skills/ship/` | Autonomous code-ship workflow (quick/pr/hotfix). Pre-flight gates (iCloud path, disk, stale-lock, tsc), atomic mkdir-lock with TTL + future-skew tolerance, snapshot before destructive, admin-merge heuristic on chronic CI flake, post-deploy smoke with Vercel auth pre-check + retry+backoff, auto-rollback on smoke fail. Dual-use (human + Autovibe orchestrator, same code path). Added 2026-04-19. Generalized: snapshot dir = `~/.claude-ship-snapshots/`; project must configure production URL + chronic-flake CI job list. |
-| `.claude/skills/autovibe/` | `.claude/skills/autovibe/` | Top-of-stack autonomous shipping orchestrator. Composes /ship + /council --extended + /amend-plan + /execute + /code-council + /prompt-forge + prime-lite. Two modes: direct (typo→/ship quick) and planned (substantive→full council ceremony→/ship pr). Hotfix REFUSED (human-only). Atomic-mkdir lock + jq-backed JSON state file (post-code-council hardened 2026-04-19). 6 eval scenarios. Added 2026-04-19. Required dep: jq. |
+| `.claude/skills/autovibe/` | `.claude/skills/autovibe/` | Top-of-stack autonomous shipping orchestrator. Composes /ship + /execute + /code-council + /prompt-forge + prime-lite + framing-audit primitives + Pocock toolkit. Two modes: direct (typo→/ship quick) and planned (substantive→goal-audit→plan→execute→diff-review→/ship pr). Strategy council (/council --extended) + /amend-plan RETIRED from autofire loop 2026-05-23 (rabbit-hole detours, work not finishing). /council survives as MANUAL operator skill outside autovibe; /code-council (diff reviewer for shipped code) stays at step 7. Hotfix REFUSED (human-only). Atomic-mkdir lock + jq-backed JSON state file (post-code-council hardened 2026-04-19). 6 eval scenarios. Required dep: jq. |
 | `.claude/commands/autovibe.md` | `.claude/commands/autovibe.md` | /autovibe command wrapper |
 | `.claude/skills/prime-lite/` | `.claude/skills/prime-lite/` | Lightweight (<2000 token, <3s) repo-state context briefing primitive for orchestrators. Composable building block — Autovibe's first step, also reusable by future orchestrators. Verified at 863 words / 1353ms on a real worktree. Added 2026-04-19. |
 | `.claude/commands/council.md` | `.claude/commands/council.md` | Council command trigger |
@@ -148,20 +148,16 @@ These files flow between this project and the template repo. Use `/push-to-templ
 | `.claude/skills/tailwind-shadcn-system/` | `.claude/skills/tailwind-shadcn-system/` | Tailwind v4 + shadcn component system |
 | `.claude/skills/design-review/` | `.claude/skills/design-review/` | Priority-weighted UI/UX review |
 | `.claude/skills/brand-visual-identity/` | `.claude/skills/brand-visual-identity/` | Brand token management + extraction |
-| `.claude/skills/saas-multi-tenant-auth/` | `.claude/skills/saas-multi-tenant-auth/` | Enterprise-grade multi-tenant auth + sub-user bootstrap for Supabase + React + TanStack Query. Six-tier shipping plan (foundation → invitations → team mgmt → audit log → frontend → hardening) with verification gates between each. Twelve doctrinal pillars (security_invoker views, JWT-derived identity, atomic invite claim, promote-before-demote owner transfer, append-only audit via RLS+structural triggers+revoke, STABLE helper, _v2 sunset, listUsers pagination trap, org-switch JWT refresh, actionable 4xx codes). 22 files: SKILL.md + 8 references + 5 SQL templates + 5 TS templates + audit script + evals.json. Parameterized with placeholders (`{{prefix}}`, `{{org_table}}`, `{{tenant_column}}`, etc.). Distilled from BuyBox-AI CM.32 (4-phase ship 2026-04-19 to 2026-04-21). Composes with `saas-platforms` (strategy layer) + `better-auth-security` (alternative auth) + `master-security-review` (post-ship audit). Added 2026-04-28. |
+| `.claude/skills/saas-multi-tenant-auth/` | `.claude/skills/saas-multi-tenant-auth/` | Enterprise-grade multi-tenant auth + sub-user bootstrap for Supabase + React + TanStack Query. Six-tier shipping plan (foundation → invitations → team mgmt → audit log → frontend → hardening) with verification gates between each. Twelve doctrinal pillars (security_invoker views, JWT-derived identity, atomic invite claim, promote-before-demote owner transfer, append-only audit via RLS+structural triggers+revoke, STABLE helper, _v2 sunset, listUsers pagination trap, org-switch JWT refresh, actionable 4xx codes). 22 files: SKILL.md + 8 references + 5 SQL templates + 5 TS templates + audit script + evals.json. Parameterized with placeholders (`{{prefix}}`, `{{org_table}}`, `{{tenant_column}}`, etc.). Distilled from a SaaS app CM.32 (4-phase ship 2026-04-19 to 2026-04-21). Composes with `saas-platforms` (strategy layer) + `better-auth-security` (alternative auth) + `master-security-review` (post-ship audit). Added 2026-04-28. |
 | `.claude/rules/council-protocol.md` | `.claude/rules/council-protocol.md` | Council protocol rules (5/8 agents) |
 | `.claude/skills/obsidian-second-brain/` | `.claude/skills/obsidian-second-brain/` | Vault operations: search, frontmatter, MOC, KI bridge |
 | `.claude/skills/digitalocean-infra/` | `.claude/skills/digitalocean-infra/` | Droplet health + self-healing (5 modes) |
 | `.claude/skills/code-council/SKILL.md` | `.claude/skills/code-council/SKILL.md` | Multi-lens code review deliberation (v1.0, 6/9 agents) |
 | `.claude/skills/code-forge/SKILL.md` | `.claude/skills/code-forge/SKILL.md` | Fresh-context non-sycophantic reviewer (v1.0, subprocess) |
-| `.claude/skills/competitive-intelligence/` | `.claude/skills/competitive-intelligence/` | Universal competitor-intel super-skill (supersedes 7 external skills; Phase 0 SI skeleton binding; 7 bundled scaffold templates; JTBD + rubric + SWOT + decisions-log + positioning integration). See council/sessions/2026-04-18-competitive-intelligence-super-skill.md. DO NOT PUSH until SI.0 + SI.2 validate end-to-end in BuyBox. |
-| `.claude/agents/code-council/security-auditor.md` | *(not in template — sourced from NewEarth AI Agency)* | Auth, injection, secrets, OWASP |
-| `.claude/agents/code-council/spec-validator.md` | *(not in template — sourced from NewEarth AI Agency)* | Code-matches-spec reviewer |
-| `.claude/agents/code-council/performance-reviewer.md` | *(not in template — sourced from NewEarth AI Agency)* | N+1, allocations, latency |
-| `.claude/skills/claude-history-ingest/` | `.claude/skills/claude-history-ingest/` | **NEW 2026-05-21** — Pure file-transform skill from upstream `ar9av/obsidian-wiki` (1.4k★) that distils Claude Code session history (`~/.claude/projects/*/`) + memory files into structured Obsidian wiki pages following Karpathy's LLM-Wiki pattern. No LLM API call — in-session Claude is the execution engine. Three files: `SKILL.md` + `references/claude-data-format.md` (both verbatim from upstream for diff-able updates) + `LOCAL-ADAPTATIONS.md` (per-project overrides — vault quarantine subpath, sensitive-info skip extension, composition with existing context hooks). Idempotent append mode (manifest-based delta). Smoke-passed end-to-end with full schema conformance (frontmatter fields, summary ≤200 chars, provenance markers, sensitive-info skip). |
-| `.claude/skills/llm-wiki/` | `.claude/skills/llm-wiki/` | **NEW 2026-05-22 (obsidian-wiki Phase 3)** — Keystone skill from upstream `ar9av/obsidian-wiki` (MIT, pinned SHA `6f20faa`): Karpathy LLM-Wiki three-layer pattern + the shared protocols (Config Resolution, Retrieval Primitives, Link Format) that `cross-linker` + `tag-taxonomy` reference. `SKILL.md` + `references/karpathy-pattern.md` verbatim upstream; `LOCAL-ADAPTATIONS.md` carries per-project overrides + a first-install preamble (replace vault root, lock link-format to `wikilink`, disable QMD). Theory layer beneath any `obsidian-second-brain`-style vault doctrine. |
-| `.claude/skills/cross-linker/` | `.claude/skills/cross-linker/` | **NEW 2026-05-22 (obsidian-wiki Phase 3)** — WRITE-HEAVY: auto-discovers + inserts missing `[[wikilinks]]` between wiki pages. Verbatim from upstream `ar9av/obsidian-wiki` (MIT, pinned SHA `6f20faa`); depends on `llm-wiki` (same set). `LOCAL-ADAPTATIONS.md` ships an UNENFORCED-CONTROL banner — the quarantine write-boundary is sidecar prose the verbatim SKILL.md never references, so install-only until the per-project vault root is pinned + a path-guard hook exists + a first-run dry-run passes. Token-disciplined registry build; flag the unconditional Step-2 full-read on large vaults. |
-| `.claude/skills/tag-taxonomy/` | `.claude/skills/tag-taxonomy/` | **NEW 2026-05-22 (obsidian-wiki Phase 3)** — WRITE-HEAVY: controlled-vocabulary tag enforcement across wiki pages. Verbatim from upstream `ar9av/obsidian-wiki` (MIT, pinned SHA `6f20faa`); depends on `llm-wiki` (Config Resolution Protocol only). `LOCAL-ADAPTATIONS.md` pins the taxonomy file to a `Fleeting/wiki-ingest/_meta/taxonomy.md` quarantine subpath (created first-run) + same UNENFORCED-CONTROL + first-run dry-run gate as cross-linker. |
+| `.claude/skills/competitive-intelligence/` | `.claude/skills/competitive-intelligence/` | Universal competitor-intel super-skill (supersedes 7 external skills; Phase 0 SI skeleton binding; 7 bundled scaffold templates; JTBD + rubric + SWOT + decisions-log + positioning integration). See council/sessions/2026-04-18-competitive-intelligence-super-skill.md. DO NOT PUSH until SI.0 + SI.2 validate end-to-end in a SaaS app. |
+| `.claude/agents/code-council/security-auditor.md` | *(not in template — sourced from the agency)* | Auth, injection, secrets, OWASP |
+| `.claude/agents/code-council/spec-validator.md` | *(not in template — sourced from the agency)* | Code-matches-spec reviewer |
+| `.claude/agents/code-council/performance-reviewer.md` | *(not in template — sourced from the agency)* | N+1, allocations, latency |
 
 ### Rules (Template-Portable)
 
@@ -171,7 +167,6 @@ These files flow between this project and the template repo. Use `/push-to-templ
 | `.claude/rules/n8n-patterns.md` | `.claude/rules/n8n-patterns.md` | n8n conventions |
 | `.claude/rules/tool-fallbacks.md` | `.claude/rules/tool-fallbacks.md` | MCP fallback rules |
 | `.claude/rules/code-review-identity.md` | `.claude/rules/code-review-identity.md` | Anti-sycophancy identity preamble (7 principles) |
-| `.claude/rules/check-standing-decision-before-mandating-workflow.md` | `.claude/rules/check-standing-decision-before-mandating-workflow.md` | Before encoding a workflow-DEFAULT into a skill/rule/template/hook, grep continuations/ + rules/ for a standing decision the new default would CONTRADICT. Contradiction-mirror of dont-conflate-inflight-programme (subsumption) + doctrine-currency-check (currency). Added 2026-05-21. |
 | `.claude/rules/code-review-domain-routing.md` | `.claude/rules/code-review-domain-routing.md` | File-pattern → domain rule routing for code-council |
 | `.claude/rules/operational-guardrails.md` | `.claude/rules/operational-guardrails.md` | Git write safety: disk pressure, rebase semantics, snapshot-before-destructive (generic sections only; project Playwright heuristic kept local) |
 | `.claude/rules/shell-portability.md` | `.claude/rules/shell-portability.md` | Shell-scripting traps (pipes eat $?, grep -c double-echo, macOS timeout portability, mkdir-atomic locks, zsh reserved names). Added 2026-04-19 via /ship skill build. |
@@ -187,7 +182,7 @@ These files flow between this project and the template repo. Use `/push-to-templ
 | `.claude/HOOKS-AND-RULES-STANDARDIZATION.md` | `.claude/HOOKS-AND-RULES-STANDARDIZATION.md` | Three-layer enforcement guide |
 | `.claudeignore` | `.claudeignore` | Token efficiency — excludes irrelevant dirs from codebase indexing |
 
-### Zero-Regression Infrastructure (added 2026-04-11 via BuyBox-AI PR #53)
+### Zero-Regression Infrastructure (added 2026-04-11 via SaaS app PR #53)
 
 | Project Path | Template Path | Notes |
 |-------------|---------------|-------|
@@ -211,7 +206,7 @@ These files are project-specific and should NEVER be pushed to the template:
 - `.claude/memory/` — project-specific memory
 - `.claude/sessions/` — session logs
 - `.claude/plans/` — session plans
-- `.claude/skills/buybox-workflows/` — project domain skill
+- `.claude/skills/the app-workflows/` — project domain skill
 - `.claude/skills/pipeline-debug/` — project domain skill
 - `.claude/skills/mcp-patterns/` — project domain skill
 - `.claude/commands/pipeline-debug.md` — project-specific command

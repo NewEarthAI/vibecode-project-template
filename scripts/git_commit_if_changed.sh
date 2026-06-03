@@ -50,7 +50,7 @@ fi
 git add "$FILE_PATH"
 git commit -m "$COMMIT_MSG
 
-Co-Authored-By: safe-bash <noreply@dispodaddy.dev>"
+Co-Authored-By: safe-bash <noreply@.dev>"
 
 POST_HASH=$(git show "HEAD:${FILE_PATH}" 2>/dev/null | sha256sum | cut -d' ' -f1)
 

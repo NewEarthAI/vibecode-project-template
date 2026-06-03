@@ -6,21 +6,13 @@ tool_matcher: mcp__n8n-mcp-*__get_node_info
 action: block
 ---
 
-**[BLOCKED] get_node_info returns 100KB+ of raw node documentation**
+**[BLOCKED] get_node_info is the wrong tool**
 
-`get_node_info` has a ~20% failure rate and dumps the entire node specification — parameters, descriptions, examples, type definitions. This is almost never what you need.
+`get_node_info` has a **20% failure rate** and returns **100KB+ payloads**. It is almost never the right choice.
 
-**Use `get_node_essentials` instead:**
-```
-get_node_essentials({ nodeType: "n8n-nodes-base.httpRequest" })
-```
+**Use these instead:**
+- `get_node_essentials` — compact node config (~2KB, 95% token savings)
+- `search_nodes` — find node types by keyword
+- `n8n_get_workflow(mode: "structure")` — to understand workflow topology
 
-`get_node_essentials` returns only:
-- Required parameters for the operation
-- Common optional parameters
-- Key gotchas and validation rules
-- ~2-5KB vs 100KB+
-
-**Token savings: 95%+ with get_node_essentials**
-
-Only use `get_node_info` with explicit CONTEXT_APPROVAL when `get_node_essentials` cannot answer your question.
+Only use `get_node_info` with explicit CONTEXT_APPROVAL and a stated reason.

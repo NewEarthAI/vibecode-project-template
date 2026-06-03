@@ -37,10 +37,10 @@ Generate professional-grade presentations, proposals, reports, SOPs, case studie
 
 | Argument | Values | Default | Example |
 |----------|--------|---------|---------|
-| `[topic]` | Any string | Auto-detect from conversation | `/present Nirvana Freight Q1 report` |
+| `[topic]` | Any string | Auto-detect from conversation | `/present Acme Corp Q1 report` |
 | `--format` | `html`, `pptx`, `both` | `html` | `--format pptx` |
 | `--archetype` | `auto`, `proposal`, `audit-report`, `feedback-report`, `pitch-deck`, `sop`, `case-study`, `executive-summary`, `custom` | `auto` | `--archetype proposal` |
-| `--brand` | Brand slug | `newearth-ai` | `--brand nirvana-freight` |
+| `--brand` | Brand slug | `your-brand` | `--brand client-brand` |
 | `--audience` | `technical`, `business`, `executive`, `mixed` | `business` | `--audience executive` |
 | `--theme` | `dark`, `light`, `branded` | `dark` | `--theme light` |
 
@@ -48,8 +48,8 @@ Generate professional-grade presentations, proposals, reports, SOPs, case studie
 
 ```
 /present                                              # Auto-detect from conversation
-/present AI Maturity Audit for Nirvana Freight        # Specific topic, auto archetype
-/present --archetype proposal --brand nirvana-freight  # Client proposal with brand
+/present AI Maturity Audit for Acme Corp        # Specific topic, auto archetype
+/present --archetype proposal --brand client-brand  # Client proposal with brand
 /present --format pptx --audience executive            # PPTX for executives
 /present --archetype sop Fleet Dispatch Process        # SOP document
 /present --format both --archetype pitch-deck          # Both formats, pitch deck

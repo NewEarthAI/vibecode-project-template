@@ -16,11 +16,11 @@ Build comprehensive understanding of the codebase by analyzing structure, docume
 ## Process
 
 ### 1. Analyze Project Structure
-List all tracked files:
-!`git ls-files`
+List all tracked files (gracefully degrades if not a git repo yet — fresh template clone):
+!`git rev-parse --git-dir >/dev/null 2>&1 && git ls-files || echo "(not a git repo yet — use Glob to enumerate files. Tip: run 'git init' to enable git-based commands.)"`
 
 Show directory structure (top 3 levels, excluding noise):
-!`tree -L 3 -I 'node_modules|__pycache__|.git|dist|build|.next|.cache' --dirsfirst 2>/dev/null || echo "tree not installed — using git ls-files above"`
+!`tree -L 3 -I 'node_modules|__pycache__|.git|dist|build|.next|.cache' --dirsfirst 2>/dev/null || echo "tree not installed — using ls fallback" && ls -la`
 
 ### 2. Read Core Documentation
 Read these files if they exist (in priority order):
@@ -45,11 +45,11 @@ Based on the structure, identify and read:
 - Important service or controller files (read the first 50-100 lines for interface understanding)
 
 ### 5. Understand Current State
-Check recent activity:
-!`git log -10 --oneline`
+Check recent activity (gracefully degrades if not a git repo yet):
+!`git rev-parse --git-dir >/dev/null 2>&1 && git log -10 --oneline || echo "(not a git repo yet — no commit history. Run 'git init' to enable.)"`
 
 Check current branch and status:
-!`git status`
+!`git rev-parse --git-dir >/dev/null 2>&1 && git status || echo "(not a git repo yet — no working-tree status. Run 'git init' to enable.)"`
 
 ### 6. Session Continuity
 Read the 2-3 most recent session summary files for context on prior work:

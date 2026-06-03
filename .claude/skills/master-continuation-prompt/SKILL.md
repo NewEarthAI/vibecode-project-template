@@ -920,10 +920,10 @@ SESSION END
 
 This skill is designed to be **project-agnostic**. When used in different projects:
 
-| Project Element | This Project (Nirvana) | Generic Equivalent |
+| Project Element | This Project (a logistics app) | Generic Equivalent |
 |----------------|----------------------|-------------------|
-| Database tool | `mcp__supabase-nirvana__execute_sql` | `{{db_tool}}` — any database MCP or CLI |
-| Workflow tool | `mcp__n8n-mcp-newearthai__*` | `{{workflow_tool}}` — any automation platform |
+| Database tool | `mcp__supabase-yourproject__execute_sql` | `{{db_tool}}` — any database MCP or CLI |
+| Workflow tool | `mcp__n8n-yourinstance__*` | `{{workflow_tool}}` — any automation platform |
 | Frontend | Lovable.dev (React/Vite) | `{{frontend_framework}}` — any frontend |
 | Backend | Supabase Edge Functions | `{{backend_platform}}` — any backend |
 | Messaging | Wassenger (WhatsApp) | `{{messaging_platform}}` — any comms channel |

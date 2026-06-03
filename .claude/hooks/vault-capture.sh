@@ -88,12 +88,7 @@ ${GIT_STATE_LINE:+- ${GIT_STATE_LINE}}
 "
 
 # ── Write to vault daily note (with mkdir-based lock) ─────────────────────
-# Per-user daily folder (NS-1, council 2026-05-10): daily/{user}/YYYY-MM-DD.md
-# Avoids guaranteed merge conflict when both users edit "the daily note" on
-# the same date. Falls back to "unknown" on the rare path where $USER is unset
-# (defensive — keeps stray content out of either user's folder).
-USER_SLUG="${USER:-unknown}"
-DAILY_DIR="$VAULT_PATH/daily/$USER_SLUG"
+DAILY_DIR="$VAULT_PATH/daily"
 DAILY_FILE="$DAILY_DIR/${TODAY}.md"
 
 # Ensure daily directory exists
@@ -155,7 +150,7 @@ rmdir "$LOCK_DIR" 2>/dev/null || true
 if [ -d "$VAULT_PATH/.git" ]; then
     (
         cd "$VAULT_PATH"
-        git add "daily/${USER_SLUG}/${TODAY}.md" 2>/dev/null || true
+        git add "daily/${TODAY}.md" 2>/dev/null || true
         git commit -m "auto-capture: session ${NOW} from ${PROJECT_NAME}" --no-gpg-sign 2>/dev/null || true
     ) || {
         # Git failure is a warning, not fatal — append note to daily file
@@ -167,19 +162,6 @@ fi
 NOTE_COUNT=$(find "$VAULT_PATH/daily" -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 if [ "$NOTE_COUNT" -lt 14 ]; then
     echo "Vault: ${NOTE_COUNT} daily notes. /drift unlocks at ~14." >&2
-fi
-
-# ── Trigger vault-sync at session end (Gap-5+ extension 2026-05-15) ───────
-# SessionStart fires vault-sync at session open; this Stop hook fires it
-# again at session close. Together: writes that happen DURING a session
-# (Claude creating vault notes, manual edits in Obsidian mid-session)
-# reach the agency database within seconds of the session ending — instead
-# of waiting until the next session open. Non-blocking; silent on failure.
-REPO_ROOT_FOR_SYNC="$(cd "$(dirname "$CONFIG_FILE")/.." && pwd)"
-if [ -x "$REPO_ROOT_FOR_SYNC/bin/vault-sync.sh" ]; then
-    (
-        nohup bash "$REPO_ROOT_FOR_SYNC/bin/vault-sync.sh" >/dev/null 2>&1 &
-    ) >/dev/null 2>&1
 fi
 
 exit 0

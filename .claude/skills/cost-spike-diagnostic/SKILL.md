@@ -8,7 +8,7 @@ created: 2026-05-14
 updated: 2026-05-15
 validated_on: 2026-05-15
 metadata:
-  origin: 2026-05-14 Nirvana fleet automation $435 silent loss investigation
+  origin: 2026-05-14 a logistics app fleet automation $435 silent loss investigation
   cost_class: cost-debugging
   trigger_phrases: ["cost spike", "openai bill", "api billing", "why is X so expensive", "where did all the tokens go", "$X yesterday", "billing audit", "still being charged", "tons of gpt-4o"]
   v2_changes: |
@@ -154,7 +154,7 @@ After Phase 4, you'll have 1-3 plausible hypotheses. Resist the urge to keep the
 | "Which project's Supabase has this in secrets?" | First 12 characters of `OPENAI_API_KEY` in each candidate Supabase Edge Functions Secrets page |
 | "Did yesterday's fix actually work?" | Hour-by-hour billing CSV for the last 48h on the suspect key |
 
-**Why this phase exists**: in the 2026-05-14 audit, three wrong hypothesis branches (Podio, BuyBox edge functions, n8n retry-config) cost ~45 minutes each before the user surfaced an n8n error-pane screenshot that named the actual bug. **One concrete dashboard fact beats five plausible models.**
+**Why this phase exists**: in the 2026-05-14 audit, three wrong hypothesis branches (Podio, a SaaS app edge functions, n8n retry-config) cost ~45 minutes each before the user surfaced an n8n error-pane screenshot that named the actual bug. **One concrete dashboard fact beats five plausible models.**
 
 ### Phase 6 — Trace error to root cause
 With the concrete error message in hand, trace upward through the calling code/SQL/workflow until you find the bug. Common patterns:
@@ -207,12 +207,12 @@ With the concrete error message in hand, trace upward through the calling code/S
 
 ## Failure Precedents
 
-### 2026-05-14 — Nirvana fleet `data_conflicts` cascade (the FIRST claimed fix)
+### 2026-05-14 — a logistics app fleet `data_conflicts` cascade (the FIRST claimed fix)
 
-- **Phase 1a inventory** revealed 11 OpenAI consumers across 3 repos (Nirvana edge functions, n8n workflows, BuyBox edge functions)
+- **Phase 1a inventory** revealed 11 OpenAI consumers across 3 repos (a logistics app edge functions, n8n workflows, a SaaS app edge functions)
 - **Phase 1b NOT performed in v1** — missed that pod-ocr-backfill cron fired every 2 minutes
 - **Phase 1c NOT performed in v1** — missed the BACKFILL classification entirely
-- **Phase 2 attribution** showed a key labelled "Nirvana Freight - AI Workbook" was the source
+- **Phase 2 attribution** showed a key labelled "a logistics app - AI Workbook" was the source
 - **Phase 3 fingerprint** (1,407 input / 206 output) matched a fixed-prompt classifier
 - **Phase 4 cross-reference** showed 508 saved classifications vs 3,104 API calls — 6:1 ratio, looked like a retry loop in the Visual AI Media Classifier
 - **Phase 5 escalation** to user produced a screenshot of the n8n error pane → `duplicate key value violates unique constraint "data_conflicts_pkey"` → identified the lpad bug

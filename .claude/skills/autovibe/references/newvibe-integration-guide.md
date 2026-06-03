@@ -7,9 +7,9 @@
 >
 > **Register**: technical. This is a runbook for Claude consumption, not chat prose.
 >
-> **Origin**: NewEarth AI, NewVibe Phase 2 (2026-05-17). Reference implementation
-> values below (`n8n.newearthai.agency`, workflow `4s3mMGYcpucHbD2Tc3kci`, the
-> `nv_detect_slug` REPO_MAP) are NewEarth's. An adopting org replaces them with
+> **Origin**: the agency, NewVibe Phase 2 (2026-05-17). Reference implementation
+> values below (`your-instance.app.n8n.cloud`, workflow `4s3mMGYcpucHbD2Tc3kci`, the
+> `nv_detect_slug` REPO_MAP) are the agency's. An adopting org replaces them with
 > its own — every place that needs replacing is marked **[ORG-SPECIFIC]**.
 
 ---
@@ -36,7 +36,7 @@
 > nothing; it is not broken, and it is not something to "go set up." If there
 > is nothing to chain from, just do the work (or `/ship` it).
 
-**NewVibe** = NewEarth AI's autonomous-shipping orchestrator. Two halves:
+**NewVibe** = the agency's autonomous-shipping orchestrator. Two halves:
 
 1. **The orchestrator** — the `/autovibe` skill. Composes `/plan → /council →
    /amend-plan → /execute → /code-council → /ship` into one invocation, or routes
@@ -114,22 +114,8 @@ done on every machine × every repo.
 
 > Why `settings.local.json` and not `settings.json`: agent writes to the
 > committed `.claude/settings.json` are blocked by the self-modification
-> guardrail. `settings.local.json` is per-machine and is the correct home for
-> a Stop hook by repo convention.
->
-> **⚠ Agent hard-block reality — read before an agent-driven setup.**
-> `settings.local.json` is *normally* agent-writable, but when the specific
-> change **constitutes arming an autonomous self-dispatching loop** (the
-> autofire Stop hook + `NEWVIBE_AUTOFIRE_PERSIST` + the arm flag, together) the
-> auto-mode safety classifier treats it as a security-boundary action and
-> **hard-blocks the edit even though the file is normally writable**. The same
-> applies to the Layer-1 slug-arm edit in `nv_detect_slug` (§5) — that is
-> autofire-behaviour code, also a self-modification block. An in-conversation
-> "yes" **cannot** clear a security-boundary block (verified across two repos,
-> 2026-05-19). Consequence: an agent cannot wire NewVibe for you. The operator
-> must **hand-apply** these edits, or add a standing settings permission rule
-> for the path first. Plan the setup as operator-hand work — assuming a normal
-> agent edit will land is the single most common stall.
+> guardrail. `settings.local.json` is agent-writable and per-machine — the
+> correct home for a Stop hook by repo convention.
 
 Add the `Stop` entry and the `PreCompact` block. The shape:
 
@@ -225,33 +211,10 @@ bash -c 'source .claude/skills/autovibe/scripts/newvibe-dispatch-lib.sh
 The slug chosen here **must equal** the key used in the n8n REPO_MAP (step 7).
 The slug is the contract between the repo and the dispatch substrate.
 
-> **Intended** NewEarth org slugs: `buybox-ai`, `nirvana-freight`,
-> `goodbuy-properties`, `golden-pocket`, and `justin-newearthai` /
-> `newearthai` for the agency hub (hub slug is user-aware). **[ORG-SPECIFIC]**.
-> ⚠ This list is the *intent*, not the shipped state: the `nv_detect_slug`
-> worked example as templated contains **only the BuyBox arms**. Every other
-> repo in this list — and any new adopter — resolves to empty until its arm is
-> hand-added per the two-layer model below. Do not assume a repo is wired just
-> because its slug appears in this note.
-
-### 5a. The two routing layers — and why Layer 1 fails first, silently
-
-Slug routing is **two layers**. An adopter must satisfy both; they fail in order.
-
-| | Layer 1 — slug *detection* | Layer 2 — slug *routing* |
-|---|---|---|
-| Where | In-repo: the `nv_detect_slug` `case` block in `newvibe-dispatch-lib.sh` | Off-repo: the n8n SSH-Execute workflow's slug allowlist + REPO_MAP |
-| Turns | repo path → slug | slug → target machine path + SSH credential |
-| Who edits | The repo owner (hand-apply — it is a self-modification hard-block, see §3) | The n8n workflow owner only — invisible and uneditable from any repo |
-| Fails as | repo path matches no arm → empty slug → `skip_reason: slug-undetected`, **dispatch never sent** | slug resolves but is not in the allowlist → server rejects → no session launched |
-
-**Layer 1 fails first and silently.** A freshly-templated repo has no arm for
-itself, so it skips at `slug-undetected` before Layer 2 is ever reached — the
-webhook is never even called. Fixing Layer 1 alone is necessary but not
-sufficient: a wired+armed repo with a resolving slug still does nothing until
-the n8n owner adds the matching Layer-2 entry. When adopting NewVibe in a new
-repo, treat both as explicit, separately-owned setup steps — and expect Layer 2
-to be the dependency that gates the first real fire.
+> the agency reference REPO_MAP (`nv_detect_slug`): `the app-ai`, `a-logistics-app-freight`,
+> `yourproject-properties`, `golden-pocket`, and `justin-your-org` /
+> `your-org` for the agency hub (the hub slug is user-aware). **[ORG-SPECIFIC]** —
+> replace with your own repos.
 
 ---
 
@@ -284,64 +247,20 @@ going further.
 ## 7. Step 5 — environment substrate (operator-gated)
 
 This is the half a Claude session **cannot** self-provision. For a real autofire
-to land a fresh session, three environment pieces must exist: the three dispatch
-constants in the in-file dispatch-lib (§7.0), the n8n dispatch workflow with a
-REPO_MAP entry for this repo (§7a), and the target Mac's SSH substrate (§7b).
-
-### 7.0. Replace the three dispatch constants BEFORE arming — REQUIRED
-
-The template ships `newvibe-dispatch-lib.sh` with three `{{...}}` placeholders at
-the top of the file:
-
-```bash
-# .claude/skills/autovibe/scripts/newvibe-dispatch-lib.sh, lines 49-51
-NV_N8N_HOST="{{N8N_HOST}}"           # e.g. https://n8n.your-org.example
-NV_WEBHOOK_PATH="{{N8N_WEBHOOK_PATH}}"  # e.g. /webhook/ssh-execute
-NV_WORKFLOW_ID="{{N8N_WORKFLOW_ID}}"    # the SSH-Execute workflow id (heartbeats)
-```
-
-Replace ALL THREE before arming autofire. Three values from your own org's n8n
-substrate (the `[ORG-SPECIFIC]` markers in §7a name the NewEarth values as
-example reference):
-
-| Placeholder | What it is | Example |
-|---|---|---|
-| `{{N8N_HOST}}` | the n8n instance base URL | `https://n8n.your-org.example` |
-| `{{N8N_WEBHOOK_PATH}}` | the SSH-Execute webhook path | `/webhook/ssh-execute` |
-| `{{N8N_WORKFLOW_ID}}` | the SSH-Execute workflow ID (used in heartbeat URLs the operator inspects post-dispatch) | `abc123XYZ` (n8n auto-generated) |
-
-**Verify before arming**:
-
-```bash
-grep -E '^NV_(N8N_HOST|WEBHOOK_PATH|WORKFLOW_ID)' \
-  .claude/skills/autovibe/scripts/newvibe-dispatch-lib.sh \
-  | grep -F '{{'
-```
-
-This command MUST return nothing (no remaining placeholders). If it returns ANY
-line, the dispatch is unconfigured — arming would send curl POSTs to a literal
-string like `{{N8N_HOST}}{{N8N_WEBHOOK_PATH}}`, producing a 15-second curl
-timeout per Stop hook (loud failure, but accumulates in `phase47-log.jsonl` as
-`webhook-dispatch-failed-rc-*` rows until the operator finds the cause).
-
-Per the council-recommended defence (Edge Case Finder, 2026-05-19): the dispatch
-lib's `nv_dispatch_live` runs an explicit placeholder check before the first
-curl and fail-fast-loud if any `{{...}}` marker survives. The receiver still
-needs to fill the constants — the in-code check is the safety net, not the
-substitute for the operator action.
+to land a fresh session, two environment pieces must exist:
 
 ### 7a. The n8n dispatch workflow + REPO_MAP
 
 Autofire POSTs to an n8n webhook that routes to an SSH-Execute step:
 
-- **[ORG-SPECIFIC]** Webhook: `https://n8n.newearthai.agency/webhook/ki-ssh-execute`
+- **[ORG-SPECIFIC]** Webhook: `https://your-instance.app.n8n.cloud/webhook/ki-ssh-execute`
 - **[ORG-SPECIFIC]** Workflow: `W-KI-SSH-EXECUTE` (id `4s3mMGYcpucHbD2Tc3kci`)
 
 The workflow's REPO_MAP must contain an entry for this repo's slug (step 5)
 mapping it to `{ repo path on the target Mac, target user }`. Without that entry,
 the webhook validates but the SSH-Execute step throws on the unknown slug.
 
-If adopting NewVibe outside NewEarth, the webhook host + workflow are replaced
+If adopting NewVibe outside the agency, the webhook host + workflow are replaced
 with the org's own SSH-Execute equivalent. The dispatch contract (the JSON body)
 is fixed: `{project_slug, prompt, action_type:"autofire_continuation",
 session_id, target_branch, expected_sha256}`.
@@ -354,7 +273,7 @@ n8n workflow reachability, an `autossh` reverse tunnel, macOS Remote Login,
 (`~/.claude_oauth_token`, mode 600 — Keychain is unreachable from a
 non-interactive SSH session), and the SSH topology.
 
-Full walk-through: `docs/d-prime-v2-cassandra-mac-setup.md` (NewEarth). Treat it
+Full walk-through: `docs/d-prime-v2-cassandra-mac-setup.md` (the agency). Treat it
 as the precondition checklist before adding any new `target_user` to the n8n
 REPO_MAP. **A new Mac is a deliberate operator setup, not an autonomous step.**
 

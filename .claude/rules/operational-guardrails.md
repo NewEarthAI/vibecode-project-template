@@ -13,10 +13,10 @@
    - GitHub MCP is for repos you do NOT have cloned locally
 
 3. **Identify the correct Supabase instance** before ANY query:
-   - `supabase-newearthai` — Agency OS (NewEarth AI internal, KI pipeline, agency tables)
-   - `supabase-dispodaddy` — BuyBox AI (deal analysis, PropTech)
-   - `supabase-nirvana` — Nirvana Freight (fleet ops, trips, fuel)
-   - `supabase-midatlantic-home` — MidAtlantic (separate client)
+   - `supabase-yourproject` — Agency OS (the agency internal, KI pipeline, agency tables)
+   - `supabase-yourproject` — a SaaS app (deal analysis, PropTech)
+   - `supabase-yourproject` — a logistics app (fleet ops, trips, fuel)
+   - `supabase-yourproject` — a client app (separate client)
    - When in doubt: check `clients/{slug}/CLAUDE.md` for the correct instance
    - NEVER query one instance assuming it has another instance's tables
 

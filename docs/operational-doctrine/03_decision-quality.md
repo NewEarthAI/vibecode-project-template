@@ -436,7 +436,7 @@ Gate 1 of `doctrine-verification-gate.md` requires naming ≥2 downstream consum
 
 1. **Session 4 skill code authoring** (`/diagnose-bottleneck` + `/map-feedback-loops` skill code; Session 3 plan v2 A10 mandate) — Session 4 will hit decision-under-uncertainty patterns when authoring the skills (when to fail loud vs quiet; when to return ADVISORY vs PASS; how to handle conflicting inputs from operator vs context). Without this doctrine, those calls get made ad-hoc, inconsistently across the two skills.
 
-2. **Future propagation event (Session 5+)** — propagating skills to BuyBox AI / Nirvana Freight / MidAtlantic requires each entity's operators to make decisions about which skills to invoke when. Without Decision-Quality, each entity reinvents the AI-Confidence-Asymmetry detection patterns (P5) — same content, three places.
+2. **Future propagation event (Session 5+)** — propagating skills to a SaaS app / a logistics app / a client app requires each entity's operators to make decisions about which skills to invoke when. Without Decision-Quality, each entity reinvents the AI-Confidence-Asymmetry detection patterns (P5) — same content, three places.
 
 3. **Cross-doctrine synthesis layer** (deferred from Session 4 to Session 5+ per A10) — synthesis cannot run without three doctrines; without Decision-Quality, synthesis would be limited to TOC + Systems Thinking which produces a static-vs-dynamic comparison but no procedure for choosing between them under uncertainty.
 
@@ -478,9 +478,9 @@ Gate 1 of `doctrine-verification-gate.md` requires naming ≥2 downstream consum
 
 ## Appendix A — Worked Examples
 
-### Example 1 — Non-software domain (Nirvana fleet dispatch under uncertain driver availability)
+### Example 1 — Non-software domain (a logistics app fleet dispatch under uncertain driver availability)
 
-**Decision context**: Nirvana Freight dispatcher at 06:00 — three drivers reported sick overnight; four trips scheduled for the day; one of the trips is a 14-hour interstate haul that requires specific driver certification (only 2 of remaining 5 drivers hold it).
+**Decision context**: a logistics app dispatcher at 06:00 — three drivers reported sick overnight; four trips scheduled for the day; one of the trips is a 14-hour interstate haul that requires specific driver certification (only 2 of remaining 5 drivers hold it).
 
 **Option A**: Cancel the 14-hour haul; serve the other 3 trips fully staffed.
 **Option B**: Run the 14-hour haul; serve 2 of the other 3 trips; defer the third to tomorrow.
@@ -505,7 +505,7 @@ Gate 1 of `doctrine-verification-gate.md` requires naming ≥2 downstream consum
 - Step 8 counterfactual: dispatcher's default would have been Option B (familiar pattern). Doctrine recommends C. Difference: `substantial` (recoverability dominates; B's customer-churn risk is week-class while C's margin-loss is day-class).
 - Step 9 agent-disagreement: not applicable (no council ran).
 
-**Result**: C with HIGH confidence + stated falsifier. Decision counterfactual is substantial; doctrine earned leverage in this case. This example is hypothetical for illustration; actual Nirvana dispatch decisions would need real ground-truth.
+**Result**: C with HIGH confidence + stated falsifier. Decision counterfactual is substantial; doctrine earned leverage in this case. This example is hypothetical for illustration; actual a logistics app dispatch decisions would need real ground-truth.
 
 ### Example 2 — Workshop-operator-specific (Worktree-Branch-Choice)
 

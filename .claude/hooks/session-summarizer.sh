@@ -97,15 +97,20 @@ if [ "$SESSION_COUNT" -gt 14 ]; then
 fi
 
 # ── /clientprojectupdate auto-trigger check ────────────────────────────────
-# Fires when ROADMAP has milestone completions (~~strikethrough~~, COMPLETE, DONE)
-# Customize: replace /clientprojectupdate with your project's status update command
+# Fires when ANY ROADMAP has milestone completions (~~strikethrough~~, COMPLETE, DONE, [x])
+# Scans root + sub-project ROADMAPs (customize ROADMAP_FILES for your repo)
 CLIENT_UPDATE_NOTE=""
 ROADMAP_CHANGED=0
 
-if git -C "$PROJECT_ROOT" diff HEAD~1 HEAD -- ROADMAP.md >/dev/null 2>&1; then
-    ROADMAP_CHANGED=$(git -C "$PROJECT_ROOT" diff HEAD~1 HEAD -- ROADMAP.md 2>/dev/null \
-        | grep -cE "^\+.*(COMPLETE|DONE)" || true)
-fi
+# Find all ROADMAP.md files in the repo (root + subdirectories)
+ROADMAP_FILES=$(git -C "$PROJECT_ROOT" ls-files '*.md' 2>/dev/null | grep -i 'ROADMAP\.md$' || echo "ROADMAP.md")
+for RFILE in $ROADMAP_FILES; do
+    if git -C "$PROJECT_ROOT" diff HEAD~1 HEAD -- "$RFILE" >/dev/null 2>&1; then
+        FILE_CHANGES=$(git -C "$PROJECT_ROOT" diff HEAD~1 HEAD -- "$RFILE" 2>/dev/null \
+            | grep -cE "^\+.*(COMPLETE|DONE|\[x\])" || true)
+        ROADMAP_CHANGED=$((ROADMAP_CHANGED + FILE_CHANGES))
+    fi
+done
 
 if [ "$ROADMAP_CHANGED" -gt 0 ]; then
     # Update session-state.env (idempotent)

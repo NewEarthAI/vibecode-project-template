@@ -13,8 +13,6 @@ snapshot                                  → pre-destructive capture of WIP
   git add <explicit paths>                → commit-guardian inherits
   git commit
 git push --force-with-lease               → bash-guardian permits
-verify-push-landed.sh <branch>            → assert "pushed" ONLY on remote-SHA
-                                            match (exit 0); exit 1/2 = NOT landed
 [if no open PR]
   gh pr create                            → use .github/PULL_REQUEST_TEMPLATE if present
 ci-watch.sh <pr_number> --timeout 15      → exit 0 green, 1 red, 9 unknown
@@ -72,7 +70,7 @@ gh run view <playwright_run_id> --json jobs → extract duration
     → halt exit 2 + ask user (unfamiliar CI state)
 ```
 
-**Rationale**: A Playwright job duration <10 seconds is structurally impossible for a real test run (`actions/checkout` + `setup-node` alone take ~15s on the BuyBox-AI runner). Treating "didn't run" as "flake" silently ships unverified UI changes. The duration gate forces touched-surface verification when CI's coverage is absent. This rule was added after PR #289 shipped a "first seller-drawer Playwright E2E" that never actually executed on CI — defeating the trust-repair narrative the test was written for.
+**Rationale**: A Playwright job duration <10 seconds is structurally impossible for a real test run (`actions/checkout` + `setup-node` alone take ~15s on the SaaS app runner). Treating "didn't run" as "flake" silently ships unverified UI changes. The duration gate forces touched-surface verification when CI's coverage is absent. This rule was added after PR #289 shipped a "first seller-drawer Playwright E2E" that never actually executed on CI — defeating the trust-repair narrative the test was written for.
 
 **Three Playwright surfaces are available** when CI's Playwright didn't run. Pick by purpose:
 

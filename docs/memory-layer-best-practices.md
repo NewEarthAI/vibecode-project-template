@@ -1,6 +1,6 @@
 # Memory-Layer Best Practices
 
-> **Origin**: NewEarth AI Agency, W1 + W1.5 of the Q2 2026 Memory Architecture initiative (2026-04-26). This doc captures the portable patterns for adoption in any Claude Code project.
+> **Origin**: the agency, W1 + W1.5 of the Q2 2026 Memory Architecture initiative (2026-04-26). This doc captures the portable patterns for adoption in any Claude Code project.
 
 This is the operating manual for an agentic-AI project's memory layer — the disciplines that keep MEMORY.md findable, current, and actually loaded.
 
@@ -84,10 +84,10 @@ The hookify rule and routing entry are designed to work as-is with no customizat
 
 ## Stale-snapshot defense
 
-The rotation skill performs an audit on each invocation, but the highest-leverage check is during extraction of any inline content block: **re-query the source-of-truth before writing the topic file.** NewEarth's W1.5 rotation surfaced two regressions this way (action backlog had grown 2.5x, active monitor sources had dropped 67%) that the original snapshot had hidden for ~6 weeks.
+The rotation skill performs an audit on each invocation, but the highest-leverage check is during extraction of any inline content block: **re-query the source-of-truth before writing the topic file.** the agency's W1.5 rotation surfaced two regressions this way (action backlog had grown 2.5x, active monitor sources had dropped 67%) that the original snapshot had hidden for ~6 weeks.
 
 **Discipline**: when extracting an inline block that contains numerical claims, re-query before writing.
 
 ## Provenance
 
-This pattern originated in the NewEarth AI Agency hub during the W1 + W1.5 sessions of the Q2 2026 Memory Architecture initiative. The four-piece pattern is the portable extract; agency-specific adoption details (FTS migrations, Karpathy Wiki cherry-pick, ClawMem decay calibration) are NOT propagated to this template.
+This pattern originated in the the agency hub during the W1 + W1.5 sessions of the Q2 2026 Memory Architecture initiative. The four-piece pattern is the portable extract; agency-specific adoption details (FTS migrations, Karpathy Wiki cherry-pick, ClawMem decay calibration) are NOT propagated to this template.

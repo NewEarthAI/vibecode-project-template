@@ -2,7 +2,7 @@
 name: brand-visual-identity
 description: |
   Brand token management — manual definition and automated extraction from websites.
-  NewEarth AI brand colors, typography, and visual identity. Reverse-engineer design
+  the agency brand colors, typography, and visual identity. Reverse-engineer design
   systems from existing sites via Playwright. Source of truth for all brand tokens.
   For building themed components, use tailwind-shadcn-system instead.
   For reviewing existing UI designs, use design-review instead.
@@ -11,7 +11,7 @@ description: |
 version: 1.0
 classification: encoded-preference
 user-invocable: false
-note: L3 library — auto-loaded by /design-review and /newearth-ui-design when brand-token questions arise. Not a human entry point.
+note: L3 library — auto-loaded by /design-review and /ui-design-system when brand-token questions arise. Not a human entry point.
 triggers:
   - "brand colors"
   - "brand tokens"
@@ -48,7 +48,7 @@ NOT mutually exclusive.
 
 ---
 
-## NewEarth AI Brand Tokens
+## the agency Brand Tokens
 
 ### Colors
 

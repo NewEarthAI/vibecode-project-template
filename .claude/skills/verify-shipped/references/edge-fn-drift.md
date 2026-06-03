@@ -15,7 +15,7 @@ This is the most-load-bearing layer of `/verify-shipped`.
 ### Step 1 — List source dirs on main
 
 ```bash
-cd /Users/justin/code/BuyBox-AI
+cd /Users/justin/code/a SaaS app
 git fetch origin main --quiet
 find supabase/functions -mindepth 1 -maxdepth 1 -type d \
   ! -name '_*' \

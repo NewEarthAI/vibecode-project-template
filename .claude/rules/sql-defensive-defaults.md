@@ -1,6 +1,6 @@
 # SQL Defensive Defaults — Latent Timebombs in Column Defaults and plpgsql Side-Effect Writes
 
-**Origin**: 2026-05-14 — diagnosed a $400+ silent loss on the Nirvana fleet automation. Root cause was `lpad((nextval('conflict_seq'))::text, 4, '0')` in the `data_conflicts.conflict_id` column default. `lpad` truncates from the right when input exceeds target length, so once the sequence crossed 9,999, every 10 consecutive sequence values collapsed to identical 4-character suffixes, producing primary-key collisions on `data_conflicts`. The collisions rolled back the calling plpgsql function (`classify_media_final`) because its non-essential audit INSERT was not wrapped in `EXCEPTION`, leaving classified photos marked unclassified, which caused the n8n schedule trigger to re-pick them up every 10 minutes and re-call gpt-4o. Latent since function creation, activated 2026-04-15, detected 2026-05-13.
+**Origin**: 2026-05-14 — diagnosed a $400+ silent loss on the a logistics app fleet automation. Root cause was `lpad((nextval('conflict_seq'))::text, 4, '0')` in the `data_conflicts.conflict_id` column default. `lpad` truncates from the right when input exceeds target length, so once the sequence crossed 9,999, every 10 consecutive sequence values collapsed to identical 4-character suffixes, producing primary-key collisions on `data_conflicts`. The collisions rolled back the calling plpgsql function (`classify_media_final`) because its non-essential audit INSERT was not wrapped in `EXCEPTION`, leaving classified photos marked unclassified, which caused the n8n schedule trigger to re-pick them up every 10 minutes and re-call gpt-4o. Latent since function creation, activated 2026-04-15, detected 2026-05-13.
 
 **Scope**: every migration, every `CREATE OR REPLACE FUNCTION`, every `ALTER COLUMN ... SET DEFAULT`, every plpgsql block that performs a write that is NOT the function's primary purpose.
 
@@ -155,7 +155,7 @@ The user-facing rule for any edge function (Supabase Edge Functions / Vercel fun
 
 ## Failure precedents
 
-### 2026-05-14 — Nirvana `data_conflicts` lpad-truncation cascade
+### 2026-05-14 — a logistics app `data_conflicts` lpad-truncation cascade
 
 | Layer | What happened |
 |-------|---------------|

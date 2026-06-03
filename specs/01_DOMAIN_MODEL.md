@@ -1,8 +1,8 @@
-# NewEarth AI — Domain Model
+# the agency — Domain Model
 
 ## Core Entities
 
-### 1. Business (NewEarth AI)
+### 1. Business (the agency)
 The agency itself as a trackable entity.
 
 | Property | Type | Description |
@@ -57,7 +57,7 @@ Individual n8n workflows, Make scenarios, or edge functions.
 | project_id | reference | Parent project |
 | platform | enum | n8n, make, supabase_edge, custom |
 | n8n_workflow_id | integer | ID in n8n instance |
-| n8n_instance | string | newearthai or honeybird |
+| n8n_instance | string | your-org or your-instance |
 | trigger_type | enum | webhook, cron, manual, email, whatsapp, supabase_trigger |
 | status | enum | draft, active, paused, error, deprecated |
 | last_execution | timestamp | When it last ran |
@@ -81,13 +81,13 @@ Revenue and cost tracking across ventures.
 ## Entity Relationships
 
 ```
-NewEarth AI (Business)
+the agency (Business)
 ├── Clients (1:many)
 │   ├── Projects (1:many)
 │   │   ├── Automations (1:many)
 │   │   └── GitHub Repos (1:1 or 1:many)
 │   └── Financial Records (1:many) — revenue per client
-├── Internal Projects (1:many) — BuyBox AI, Property Business
+├── Internal Projects (1:many) — a SaaS app, Property Business
 │   ├── Automations (1:many)
 │   └── Financial Records (1:many)
 └── Financial Records (1:many) — agency-level costs

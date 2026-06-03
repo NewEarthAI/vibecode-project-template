@@ -2,7 +2,7 @@
 name: design-taste-frontend
 description: Senior UI/UX Engineer. Architect digital interfaces overriding default LLM biases. Enforces metric-based rules, strict component architecture, CSS hardware acceleration, and balanced design engineering.
 user-invocable: false
-note: L2 anti-slop overlay — auto-loaded by /design-review and /newearth-ui-design. Not a human entry point. Upstream content unchanged (MIT, Leonxlnx 2026); this single harness-routing line is the only NewEarth modification per A14.
+note: L2 anti-slop overlay — auto-loaded by /design-review and /ui-design-system. Not a human entry point. Upstream content unchanged (MIT, Leonxlnx 2026); this single harness-routing line is the only the agency modification per A14.
 ---
 
 # High-Agency Frontend Skill

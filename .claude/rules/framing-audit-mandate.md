@@ -27,7 +27,7 @@ Contract: `.claude/rules/mandatory-framing-audit-alignment.md`.
 
 A **framing audit** — checking that a question is the *right question* before answering it —
 is **compulsory before any load-bearing decision**. The absence of first-principles + systems
-thinking has been the single largest failure source in NewEarth's AI work: careful, thorough,
+thinking has been the single largest failure source in the agency's AI work: careful, thorough,
 multi-agent work converges *inside a flawed frame* and produces a confident wrong answer. The
 rigour on top of a wrong frame is wasted rigour.
 
@@ -39,7 +39,7 @@ to pears?". The frame was wrong; every hour of analysis on top of it was wasted.
 Phase 1 of the synthesis programme built five callable framing-audit primitives. They work.
 This rule makes them **non-optional**. A load-bearing decision made without the matching
 framing audit is an incomplete decision — and saying so is not pedantry. It is the highest-
-leverage defence NewEarth has against the recurring failure class.
+leverage defence the agency has against the recurring failure class.
 
 ## Announce vs. run — the scope distinction
 
@@ -86,6 +86,34 @@ the failure mode that makes the whole mechanism get ignored.
    Hands-On Calibration Gate firing, a `frame-criticism` classification — **do not proceed
    inside the frame**. Reframe first, then re-run the decision.
 5. On a clean verdict: proceed — the audit is now part of the decision record.
+
+## Falsifier-record classes (what counts as a demand record)
+
+When `/reduce-to-first-principles` asks "what is the operator-demand record this proposal
+answers?" the falsifier — the evidence that would invalidate the proposal's motivation — must
+come from one of the following valid record classes. The class is *equivalent* in weight; an
+arc-memory-documented cross-arc gap is as load-bearing as a verbatim user quote.
+
+| Record class | Example | Load-bearing? |
+|---|---|---|
+| **User quote** (verbatim) | "Chris said: 'I need to see the spread before I touch the offer'" | YES |
+| **Session-log entry** | continuation §6 names the gap with timestamp + decision | YES |
+| **Feedback memory file** | `feedback_<topic>.md` carries the failure precedent + fix | YES |
+| **Arc-memory-documented cross-arc gap** *(added 2026-05-20)* | one arc's PROGRESS-LOG / closure-council names a gap that a sibling arc inherits; the inheriting arc's leg has no independent demand record but the cross-arc handoff IS the record | YES |
+| **Doctrinal symmetry alone** ("mirrors prior leg / completes the symmetry") with NO record above | the proposal's only motivation is "Layer A had a Slice 2, so Layer B should have a Slice 2" | **NO — falsifier-not-found → DEFER** |
+
+The arc-memory-documented cross-arc gap class was extracted 2026-05-20 from PR #841
+(`docs(matrix-rehab-decouple): close Layer B arc — Slice 2 DEFERRED via framing audit`). The
+closure council's framing audit named "doctrinal symmetry is not demand" as the load-bearing
+distinction: if the only motivation for a build leg reduces to *"mirrors prior leg"* with no
+operator-demand record, the falsifier is not present and the leg must DEFER pending a
+revisit-trigger. The cross-arc gap class is the *positive* counterpart — a sibling arc's
+handoff DOES create demand, even when the inheriting arc has no direct user quote.
+
+When the only available record is doctrinal symmetry: route to DEFER with revisit-triggers,
+not to council-on-implementation-options. The cost of building inside a symmetry-only frame
+is the cost the canonical failure (2026-05-14) named — rigour on top of a wrong frame is
+wasted rigour.
 
 ## The five primitives (cite — never copy)
 

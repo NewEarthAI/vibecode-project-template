@@ -861,7 +861,7 @@ If any gate fails, return `ADVISORY_PENDING` with reasons.
 
 ---
 
-*Skill v1.0 authored 2026-05-12 in Session 4 of the Operational Intelligence Synthesis Programme. Operationalises Systems Thinking doctrine. Cites shared anti-anchoring guard library. Triple verification: Gate 1 deletion test PASS (named consumers: future dynamic-system diagnoses across NewEarth entities; cross-skill chain with `/decide-under-uncertainty`); Gate 2 code-council DEFERRED to fresh-context ceremony; Gate 3 real-decision test DEFERRED (anti-sycophancy second-party constraint).*
+*Skill v1.0 authored 2026-05-12 in Session 4 of the Operational Intelligence Synthesis Programme. Operationalises Systems Thinking doctrine. Cites shared anti-anchoring guard library. Triple verification: Gate 1 deletion test PASS (named consumers: future dynamic-system diagnoses across the agency entities; cross-skill chain with `/decide-under-uncertainty`); Gate 2 code-council DEFERRED to fresh-context ceremony; Gate 3 real-decision test DEFERRED (anti-sycophancy second-party constraint).*
 
 *v1.1 authored 2026-05-17 in Session 8. Adds DECISION mode — Primitive 2 of the First-Principles + Systems-Thinking skill suite (systems-thinking second-order audit). DECISION mode is fully additive: SYSTEM mode and its 7 acceptance tests are unchanged. Decision-mode design source: continuation §6 + Agency-Main discoveries report Requirement 2. Gate 2 code-council ran in Session 8; Gate 3 real-decision test is the Session 10 Hermes re-run (projecting the W4 native-FTS5 decision's second-order effects).*
 

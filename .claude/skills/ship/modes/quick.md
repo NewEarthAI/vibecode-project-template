@@ -18,9 +18,6 @@ git add <explicit paths from user or staged+tracked>
 git commit           → commit-guardian inherits
 git push                         → plain push (revert/new-commit is fast-forward)
                                    if rejected: fetch + rebase + retry, never --force
-                                   on rebase: rebase-conflict-guard.sh FIRST (code-file
-                                   conflict in unattended mode = HARD STOP, exit 3)
-verify-push-landed.sh <branch>   → assert "pushed" ONLY on remote-SHA match (exit 0)
 lock.sh release                  → idempotent; skipped if user ^C'd (TTL catches it)
 write ship-state.json with exit_code: 0 + rollback hint
 ```
@@ -35,7 +32,7 @@ write ship-state.json with exit_code: 0 + rollback hint
 
 - `git log -1` shows the new commit
 - `git status` shows clean or only unstaged-but-unchanged
-- `bash ../scripts/verify-push-landed.sh <branch>` exits 0 (remote SHA == local HEAD — `@{u}` is a local tracking ref and can be stale; the remote read cannot lie)
+- `git rev-parse @{u}` matches `git rev-parse HEAD` (push landed)
 - `.claude/ship-state.json` has `completed_at` + `exit_code: 0` + rollback command
 
 ## Output (human default)
@@ -56,8 +53,7 @@ write ship-state.json with exit_code: 0 + rollback hint
 ## Edge cases handled
 
 - **Nothing to commit**: exit 0 with "clean tree, nothing to ship" message (no push)
-- **Remote moved since last fetch**: plain `git push` rejects (non-fast-forward). Halt exit 1 with recovery: `git fetch && git rebase origin/<branch> && git push`. If that rebase conflicts, `rebase-conflict-guard.sh` HARD STOPS on any code-file conflict in unattended mode (exit 3) — never auto-`--ours/--theirs` (reversed semantics during rebase)
-- **Push exits 0 but nothing landed** (protected branch / swallowed hook / blip): `verify-push-landed.sh` catches the mismatch; "pushed" is never claimed on exit code alone
+- **Remote moved since last fetch**: plain `git push` rejects (non-fast-forward). Halt exit 1 with recovery: `git fetch && git rebase origin/<branch> && git push`
 - **^C mid-commit**: lock dir + state file persist (Bash tool calls are independent subshells; no trap is viable). Recovery: next `/ship` within 10 min hits exit 5 with the explicit `rm -rf .claude/ship-state.lock .claude/ship-state.json` recovery line in stderr; after 10-min TTL, next acquire auto-takes-over. Git's commit itself is atomic — either made or not.
 - **Push rejected by branch protection**: halt exit 1 with "branch protected — use `/ship pr` (Phase B)" message
 

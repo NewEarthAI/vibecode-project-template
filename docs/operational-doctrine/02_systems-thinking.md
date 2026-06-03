@@ -24,7 +24,7 @@ A bottleneck answered by TOC is a static-snapshot problem: at this moment, the b
 
 Three reasons:
 
-1. **It covers the dynamic-behaviour failure class that TOC structurally cannot.** TOC § 3.1 explicitly delegates this class to Systems Thinking. Without this doctrine, every dynamic problem in the workshop's domain (BuyBox-AI pipeline growth-and-regression, Nirvana Freight driver-acquisition feedback, NewEarth agency client-pipeline ramp) defaults to ad-hoc reasoning.
+1. **It covers the dynamic-behaviour failure class that TOC structurally cannot.** TOC § 3.1 explicitly delegates this class to Systems Thinking. Without this doctrine, every dynamic problem in the workshop's domain (a SaaS app pipeline growth-and-regression, a logistics app driver-acquisition feedback, the agency agency client-pipeline ramp) defaults to ad-hoc reasoning.
 
 2. **The 12-level leverage hierarchy (Meadows) is the most operationally cited intervention-ranking framework in the literature.** Twelve named, ordered leverage points, each with concrete intervention guidance, calibrated by 30+ years of practitioner application. No comparable artefact exists.
 
@@ -540,7 +540,7 @@ If this doctrine were deleted today, the following named downstream artefacts wo
 - Composite verdict: **ADVISORY** until Gate 2 returns PASS or ADVISORY (NOT BLOCKING) AND Gate 3 receives operator-supplied test case
 
 **Next milestone**: Gate 2 code-council invocation + operator-supplied Gate 3 case
-**Propagation status**: NOT YET propagated to other NewEarth entities. Per programme spec Session 5 is the first scheduled propagation event.
+**Propagation status**: NOT YET propagated to other the agency entities. Per programme spec Session 5 is the first scheduled propagation event.
 **Sibling doctrine**: `01_theory-of-constraints.md` — coexistence verified; scope boundaries explicit in Section 3.1 (this doctrine) and TOC §3.1 (sibling). Cross-doctrine consistency check required before Session 5 propagation.
 
 ---

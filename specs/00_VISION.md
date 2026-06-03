@@ -1,10 +1,10 @@
-# NewEarth AI — Vision & Strategy
+# the agency — Vision & Strategy
 
 ## Problem Statement
 
-AI automation agencies need a centralized system to manage clients, projects, automations, and business operations across multiple ventures. Currently, NewEarth AI's operational data is scattered across Airtable, Supabase, Google Drive, n8n, and email — making it impossible to get a unified view of business health, client status, and project progress.
+AI automation agencies need a centralized system to manage clients, projects, automations, and business operations across multiple ventures. Currently, the agency's operational data is scattered across Airtable, Supabase, Google Drive, n8n, and email — making it impossible to get a unified view of business health, client status, and project progress.
 
-**For whom**: NewEarth AI's 2-person founding team managing an AI automation agency, a SaaS product (BuyBox AI), and a property business.
+**For whom**: the agency's 2-person founding team managing an AI automation agency, a SaaS product (a SaaS app), and a property business.
 
 ## Solution
 
@@ -47,7 +47,7 @@ A central command center repo that:
 
 ## Strategic Direction
 
-NewEarth AI is evolving from an AI automation agency into an **AI transformation partner**:
+the agency is evolving from an AI automation agency into an **AI transformation partner**:
 1. **AI Maturity Audits** — Assess businesses' AI readiness (paid service)
 2. **Custom Proposals** — Based on audit findings
 3. **Implementation** — Build and automate with n8n, Supabase, AI

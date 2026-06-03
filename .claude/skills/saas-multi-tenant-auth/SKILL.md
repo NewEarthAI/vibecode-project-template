@@ -50,7 +50,7 @@ parameters:
     type: email
     default: noreply@example.com
 validated_on:
-  - "BuyBox-AI CM.32 (origin — 4 phases shipped 2026-04-19 to 2026-04-21, zero post-merge regressions)"
+  - "a SaaS app CM.32 (origin — 4 phases shipped 2026-04-19 to 2026-04-21, zero post-merge regressions)"
   - "Held-out: any Supabase + React project with RLS-on tables and a per-user auth.users base"
 ---
 
@@ -132,7 +132,7 @@ Always split into `FOR INSERT` / `FOR UPDATE` / `FOR DELETE` with explicit `WITH
 
 A policy with `USING (true)` makes the entire table readable by any authenticated user.
 
-> **Failure precedent**: BuyBox-AI's `dd_deal_reviews` shipped with `"Anyone can read reviews" USING (true)` — every authenticated user could read every other tenant's deal reviews. Closed in migration `20260420150000_cm32_t2_4_deal_reviews_rls.sql`.
+> **Failure precedent**: a SaaS app's `dd_deal_reviews` shipped with `"Anyone can read reviews" USING (true)` — every authenticated user could read every other tenant's deal reviews. Closed in migration `20260420150000_cm32_t2_4_deal_reviews_rls.sql`.
 
 If a table has no direct tenant column, scope via JOIN:
 ```sql
@@ -352,7 +352,7 @@ If any step fails, halt and surface the blocker before proceeding.
 
 ## Strategic Alignment
 
-**ROADMAP item(s) this advances**: Multi-tenant readiness for any SaaS-direction project. For BuyBox specifically: closes the "internal tool first, SaaS later" gap codified in `project_launch_sequencing_internal_first.md` — this skill is what shipping the SaaS layer looks like.
+**ROADMAP item(s) this advances**: Multi-tenant readiness for any SaaS-direction project. For a SaaS app specifically: closes the "internal tool first, SaaS later" gap codified in `project_launch_sequencing_internal_first.md` — this skill is what shipping the SaaS layer looks like.
 
 **ROADMAP item(s) this REJECTS**: None directly — this is a capability skill, not a feature.
 
@@ -368,6 +368,6 @@ If any step fails, halt and surface the blocker before proceeding.
 
 ## Version & maintenance
 
-- v1.0 — Initial skill, derived from BuyBox-AI CM.32 (2026-04-19 to 2026-04-21 ship cycle)
+- v1.0 — Initial skill, derived from a SaaS app CM.32 (2026-04-19 to 2026-04-21 ship cycle)
 - Update when: new failure mode discovered → add to pillars + pitfalls + pen-tests
 - Decommission when: Supabase ships a managed multi-tenant primitive that subsumes this entire stack (not anytime soon)

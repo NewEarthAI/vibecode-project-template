@@ -1,6 +1,6 @@
 # n8n Security Module
 
-> Deep n8n workflow security checks. Referenced by newearthai-security-review Tier 4.
+> Deep n8n workflow security checks. Referenced by your-org-security-review Tier 4.
 
 ## Webhook Authentication
 

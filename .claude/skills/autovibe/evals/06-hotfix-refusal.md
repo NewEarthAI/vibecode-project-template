@@ -5,7 +5,7 @@
 ## Setup
 
 ```bash
-cd ~/code/buybox-autovibe
+cd ~/code/the app-autovibe
 rm -rf .claude/autovibe-state.json .claude/autovibe-state.lock 2>/dev/null
 ```
 
@@ -61,7 +61,7 @@ This is a build-time check, not runtime — runs as part of CI / pre-commit:
 
 ```bash
 grep -rE "/ship[[:space:]]+hotfix|ship_hotfix|--mode=hotfix" \
-  ~/code/buybox-autovibe/.claude/skills/autovibe/ \
+  ~/code/the app-autovibe/.claude/skills/autovibe/ \
   | grep -vE "MUST NOT|refuse|human-only|never auto|NEVER auto|exit 9|hotfix-refusal|Hotfix"
 ```
 

@@ -12,7 +12,7 @@ Bootstrap new client projects using Claude Code project template. Implements PSB
 ## Prerequisites
 
 - GitHub CLI authenticated (`gh auth status`)
-- Template repo: `NewEarthAI/claude-code-project-template`
+- Template repo: `NewEarthAI/vibecode-project-template`
 
 ## Flow (4 Steps)
 
@@ -49,7 +49,7 @@ Bootstrap new client projects using Claude Code project template. Implements PSB
 
 ### Clone Template
 ```bash
-gh repo clone NewEarthAI/claude-code-project-template {{project_path}}
+gh repo clone NewEarthAI/vibecode-project-template {{project_path}}
 cd {{project_path}}
 rm -rf .git && git init  # Fresh git history
 ```
@@ -82,10 +82,10 @@ n8n_list_workflows()
 
 | Placeholder | Source | Example |
 |-------------|--------|---------|
-| `{{PROJECT_NAME}}` | Interview Q1 | "Nirvana Freight" |
+| `{{PROJECT_NAME}}` | Interview Q1 | "a logistics app" |
 | `{{PROJECT_TYPE}}` | Interview Q2 | "Logistics SaaS" |
 | `{{STACK}}` | Interview Q3 | "Supabase, n8n, React" |
-| `{{MCP_SERVERS}}` | Discovery | "supabase-nirvana, n8n-mcp" |
+| `{{MCP_SERVERS}}` | Discovery | "supabase-yourproject, n8n-mcp" |
 | `{{KEY_TABLES}}` | Discovery | "shipments, carriers, routes" |
 | `{{KEY_WORKFLOWS}}` | Discovery | "order-intake, dispatch-notify" |
 
@@ -100,41 +100,10 @@ n8n_list_workflows()
   □ Wildcard matchers tightened to exact server names
   □ mcp-server-guard configured and enabled
   □ safe-bash selfcheck passes: bash scripts/selfcheck-safe-bash.sh
-□ MACHINE-LEVEL: single-folder enforcement hook registered globally (see "Machine-Level Setup" below) — once per Mac, not per project
 □ /prime command tested
 □ First /plan command executed for initial task
 □ Client-specific skill created (if patterns emerge)
 ```
-
-## Machine-Level Setup — register the single-folder enforcement hook (ONCE PER MAC)
-
-The template ships `.claude/hooks/worktree-guard.sh`, which **blocks unsanctioned
-`git worktree add`** so the single-folder workflow (one folder, feature branches inside
-it — see `.claude/rules/worktree-discipline.md`) is enforced structurally, not by
-discipline. A `git pull` of the template delivers the hook FILE, but hook *registration*
-lives in your machine's global Claude Code settings (`~/.claude/settings.json`) — which a
-pull cannot touch. So **each Mac registers it once**. Run this in a terminal (idempotent;
-safe in projects that don't ship the hook; no-ops if already registered):
-
-```bash
-F=~/.claude/settings.json; mkdir -p ~/.claude; [ -f "$F" ] || echo '{}' > "$F"; \
-tmp=$(mktemp) && jq '
-  (.hooks.PreToolUse) //= []
-  | if [.hooks.PreToolUse[].hooks[]?.command] | any(test("worktree-guard.sh"))
-    then .
-    else .hooks.PreToolUse += [{
-      matcher: "Bash",
-      hooks: [{ type: "command",
-        command: "[ -f \"$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-guard.sh\" ] && bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-guard.sh\" || true",
-        timeout: 5 }]
-    }]
-    end
-' "$F" > "$tmp" && mv "$tmp" "$F" && echo "✅ worktree-guard registered globally"
-```
-
-Then restart Claude Code sessions (hooks load at session start). Verify:
-`jq '.hooks.PreToolUse' ~/.claude/settings.json`. Genuine parallel work opts in
-per-command with `ALLOW_PARALLEL_WORKTREE=1 git worktree add ...`.
 
 ## Anti-Patterns
 
@@ -142,9 +111,8 @@ per-command with `ALLOW_PARALLEL_WORKTREE=1 git worktree add ...`.
 |-------|-----|-------|
 | Skip interview | CLAUDE.md lacks context | Run full CONTEXT_QUESTIONS |
 | Hardcode secrets in .mcp.json | Security risk | Use environment variables |
-| Skip machine-level hook registration | Single-folder enforcement won't fire on that Mac (pull delivers the file, not the registration) | Run the global-register command once per Mac |
 | Start at Grade 5 | Over-engineering | Start Grade 2, evolve up |
-| Copy DispoDaddy skills directly | Project-specific | Use template's generic skills |
+| Copy  skills directly | Project-specific | Use template's generic skills |
 | Skip /prime after setup | Claude lacks project understanding | Always run /prime first |
 
 ## Creating Client-Specific Skills

@@ -20,7 +20,7 @@ description: |
   question (use /reduce-to-first-principles); standalone daily use (rejected —
   daily surfacing is the daily-plan flow's job).
 classification: capability-uplift
-version: 1.1
+version: 1.0
 created: 2026-05-18
 operationalises: none — net-new generative primitive; the generative complement to the all-diagnostic framing-audit skill suite
 spec: specs/11_DEFINE_DESTINATION_IMPLEMENTATION_PLAN.md
@@ -44,7 +44,7 @@ parameters:
 
 # /define-destination — Author a Project's Destination
 
-**Status**: v1.1 (Session 1 of the Goal-Ledger Build Programme — 2026-05-19; adds the Step 7.5 `/goal`-condition emitter. v1.0 — Define-Destination build, 2026-05-18)
+**Status**: v1.0 (Define-Destination build — 2026-05-18)
 **Skill spec**: `specs/11_DEFINE_DESTINATION_IMPLEMENTATION_PLAN.md` (v2 — operator-approved)
 **Class**: generative workshop skill — it AUTHORS an artefact. It is NOT a diagnostic skill; it does NOT carry the anti-anchoring guard (`.claude/skills/_shared/anti-anchoring-guard.md`). It is the one skill permitted to WRITE the `generative_primitive` provenance tag that the diagnostic suite's Branch D consumes.
 
@@ -158,7 +158,7 @@ The named scenario in which the Element 2 success test reads "pass" while the re
 
 ## Procedure
 
-The procedure runs in ten steps (1 through 9, with Step 7.5). Each gating step has a halt condition; the skill exits with a structured verdict at the first halt. The halt envelopes are tabulated in §Halt-Path Discipline.
+The procedure runs in nine steps. Each gating step has a halt condition; the skill exits with a structured verdict at the first halt. The halt envelopes are tabulated in §Halt-Path Discipline.
 
 ### Step 1 — Re-contextualise for THIS repo
 
@@ -205,70 +205,6 @@ The skill NEVER overwrites or deletes an existing `DESTINATION.md` without an ex
 ### Step 7 — Write DESTINATION.md
 
 Write `DESTINATION.md` at the project root in the format under §DESTINATION.md Format. The frontmatter MUST carry the `generative_primitive` provenance tag (`provenance`, `upstream_skill`, `generated_at`, `project_root`), the `reviewed` date (= `generated_at` on first authoring), the `scope_gate` branch, the `status`, and the `version`. `project_root` is the **absolute path** of the project root (the repo this skill was invoked in) — an absolute path, NEVER a bare directory name, so that two different repos that happen to share a directory name (a fork, a client clone, a test copy) cannot collide in a diagnostic skill's Branch D bounds check. The absolute path is available from the skill's execution context.
-
-### Step 7.5 — Emit a `/goal` completion condition (artefact-checkable milestones only)
-
-After `DESTINATION.md` is written, derive a ready-to-paste Claude Code `/goal` completion
-condition from the destination's backward chain (Element 5). This step runs ONLY on a clean
-author-mode completion (`verdict: PASS` or `verdict: DRAFT`, where Element 5 exists); it is
-skipped on every halt (no destination was authored, so there is nothing to derive from).
-
-**Why the backward chain, not Element 2.** The `/goal` evaluator is a fast model that judges
-only what the working session surfaces in the conversation — it cannot run tools. Element 2
-(the binary success test) is third-party-*observable* but is often a real-world metric
-(retention, revenue, adoption) that no single session can demonstrate in its transcript. So
-the condition is derived from the nearest milestone in Element 5's backward chain — the
-"first step from here" (the entry closest to the current state) — NOT from Element 2.
-
-- **7.5.1 — Select the nearest UNMET milestone.** Element 5's format mandates end-state →
-  first-step-from-here order, so the **last** entry is the nearest step. Select the nearest
-  entry whose condition is **not already true**; if the operator indicates the first step is
-  already done, advance toward the end-state to the first not-yet-true entry. **Empty-chain
-  guard**: if the chain has no entries, HALT Step 7.5 with `artefact_checkable: false` and
-  `decline_reason: "Element 5 backward chain is empty — no milestone to select"`.
-  **Order-sanity guard**: if the selected entry reads as the end-state itself (echoes
-  Element 1 / Element 2 language), the chain was authored against format — select from the
-  opposite end and record a `guards_fired` note "Element 5 order suspect — selected from the
-  other end". In DRAFT sub-mode the chain sits on hypotheses — proceed, but set
-  `derived_from: hypothesis`.
-- **7.5.2 — Classify the selected milestone. Artefact-checkable iff** its truth can be
-  demonstrated by a shell command whose stdout or exit code the session can surface — a file
-  exists (`test -f`), a count matches (`grep -c`), a test exits 0, a string is present, a
-  migration is listed as applied. **NOT artefact-checkable**: a real-world metric (retention
-  %, revenue, production user counts), a human judgement/opinion, or anything longitudinal or
-  external. **Borderline → classify NOT artefact-checkable**: if the check's reliability
-  depends on runtime context not guaranteed in a fresh session (network/auth, a remote, a PR
-  number, MCP availability), it is NOT artefact-checkable — note "checkability is
-  runtime-dependent" in `decline_reason`. Worked examples — *inside*: "the matching query
-  returns ≥1 row for a seeded fixture" (a local `grep -c`/test, no external dependency);
-  *outside*: "the PR is merged" (needs `gh` auth + the PR number + a remote →
-  runtime-dependent → NOT artefact-checkable).
-- **7.5.2b — Compute the decline list.** If the selected milestone is NOT artefact-checkable,
-  iterate the remaining chain entries nearest→farthest applying the 7.5.2 predicate to each.
-  The set classified artefact-checkable is the list the 7.5.4 decline emits (or "none" if
-  empty). This is the ONLY source of that list — it is never improvised from surface wording.
-- **7.5.3 — Artefact-checkable → emit the condition.** Phrase it so the working session must
-  RUN a **named, concrete executable check** (a specific shell command, file test, or tool
-  invocation — never a prose description of work done) and SURFACE its output (the evaluator
-  reads only the surfaced text):
-  > `/goal` the session has run `<concrete bash check>` and its surfaced output shows
-  > `<expected observable>` — re-run and re-surface each turn until it holds.
-
-  The emitted string MUST name an executable check, never a self-certifiable claim ("I have
-  done X", "the session has verified that it works"). This is the enforcement point for the
-  council's evaluator-false-positive finding: a condition the executing session could
-  self-attest without running a command is rejected here, not emitted. When
-  `derived_from: hypothesis`, **prefix the emitted string** with `(DRAFT — milestone is a
-  hypothesis; confirm the destination is out of DRAFT before treating this as authoritative)`
-  so the marker travels with the paste-ready string, not only the machine output.
-- **7.5.4 — NOT artefact-checkable → decline honestly. Never fabricate a check.** Emit:
-  > `/goal` cannot drive this destination directly — its nearest milestone (`<milestone>`)
-  > is `<a real-world outcome | runtime-dependent>` not demonstrable inside one session.
-  > Artefact-checkable milestones in this chain (from 7.5.2b): `<list, or "none">`. Use
-  > `/goal` on those; track the real-world test out-of-band.
-- **7.5.5 — Record** the result in the `goal_completion_condition` output block (§Output
-  Schema): the emitted condition OR the decline, the selected milestone, the
-  `artefact_checkable` verdict, and `derived_from` (`confirmed` | `hypothesis`).
 
 ### Step 8 — Hand-off recommendations (cite, never copy)
 
@@ -331,7 +267,7 @@ A `DESTINATION.md` is per-project content. It is **never templatised** and never
 
 ```yaml
 skill: define-destination
-version: 1.1
+version: 1.0
 verdict: <PASS | DRAFT | SCOPE_REFUSAL | INSUFFICIENT_INPUT | OVERWRITE_BLOCKED>
 mode: <author | review>
 scope_gate_branch: <yes | no_forever | not_yet>
@@ -360,14 +296,6 @@ recipe:                       # omitted on SCOPE_REFUSAL / INSUFFICIENT_INPUT
   element_5_backward_chain: <list[string]>
   calibration_used: <string>
 
-goal_completion_condition:    # Step 7.5 output; omitted on every halt (no destination authored)
-  artefact_checkable: <bool>            # true → a /goal condition emitted; false → honest decline
-  selected_milestone: <string>          # the nearest Element-5 milestone Step 7.5 evaluated
-  derived_from: <confirmed | hypothesis> # hypothesis when scope_gate_branch == not_yet
-  condition: <string | null>            # ready-to-paste /goal condition (a tool-checkable
-                                        # surfaced-output check), OR null when declined
-  decline_reason: <string | null>       # populated ONLY when artefact_checkable == false
-
 provenance_tag:               # the tag written into DESTINATION.md frontmatter; omitted when no file written
   provenance: generative_primitive
   upstream_skill: define-destination
@@ -382,7 +310,7 @@ recommended_action: <string>
 
 invocation_metadata:
   timestamp: <ISO 8601 UTC>
-  skill_version: 1.1
+  skill_version: 1.0
   invocation_id: <uuid>
 ```
 
@@ -399,7 +327,7 @@ The procedure has FOUR halt points. Each MUST emit a complete, well-formed envel
 | Overwrite blocked (Step 6) | Review choice (b) without `confirm_overwrite: true` | `verdict: OVERWRITE_BLOCKED`; `mode: review`; `destination_file.written: false`; `destination_file.reviewed_advanced: false`; `destination_file.status` unchanged; `recommended_action` instructs re-invocation with explicit confirmation |
 | Review-unchanged / abandon (Step 6) | Review choice (a) or (c) | `verdict: PASS`; `mode: review`; `destination_file.written: false` (no new content authored). For **(a)** `destination_file.reviewed_advanced: true` — the `reviewed` frontmatter date is touched to today (a confirmed review). For **(c)** `destination_file.reviewed_advanced: false` — nothing changed at all. |
 
-A clean author-mode completion emits `verdict: PASS` (`scope_gate: yes`) or `verdict: DRAFT` (`scope_gate: not_yet`), with `destination_file.written: true` and `reviewed_advanced: true`. `mode` is `author` on every halt that occurs before mode could be `review` — Step 2 (mode detection) runs before Steps 3 and 4, so `mode` is always populated. **Step 7.5 runs ONLY on a clean author-mode completion** (after Step 7 writes the file, and only when Element 5 is populated — see Step 7.5.1's empty-chain guard); it is skipped on all four halts, and the `goal_completion_condition` block is omitted from every halt envelope.
+A clean author-mode completion emits `verdict: PASS` (`scope_gate: yes`) or `verdict: DRAFT` (`scope_gate: not_yet`), with `destination_file.written: true` and `reviewed_advanced: true`. `mode` is `author` on every halt that occurs before mode could be `review` — Step 2 (mode detection) runs before Steps 3 and 4, so `mode` is always populated.
 
 ---
 
@@ -441,7 +369,7 @@ A clean author-mode completion emits `verdict: PASS` (`scope_gate: yes`) or `ver
 
 ## Tests — Required Before Skill Ships
 
-Behavioural acceptance tests per `specs/11` §5 (Tests 1-10) + `specs/12` §5 Session 1 (Test 11). The skill cannot be considered shipped until all eleven return correct behaviour.
+Behavioural acceptance tests per `specs/11` §5. The skill cannot be considered shipped until all ten return correct behaviour.
 
 ### Test 1 — Happy path (a project with a measurable end-state)
 
@@ -529,28 +457,6 @@ Behavioural acceptance tests per `specs/11` §5 (Tests 1-10) + `specs/12` §5 Se
 
 **Verification**: `/reduce-to-first-principles` `anti_anchoring.hypothesis_provenance == generative_primitive`; `anti_anchoring.verdict ∈ {AGREED, DISAGREED, INCONCLUSIVE}` (NOT `validate_upstream_*`, NOT a block); the destination is accepted as input.
 
-### Test 11 — `/goal` emitter (artefact-checkable vs honest decline vs DRAFT)
-
-**Input**: Sub-cases: (11a) Test 1's destination, Element 5's nearest milestone is
-artefact-checkable; (11b) the nearest milestone is a real-world metric and NO chain entry is
-artefact-checkable; (11c) a `scope_gate: not_yet` DRAFT destination whose nearest milestone
-is artefact-checkable.
-
-**Expected**: 11a — a ready-to-paste `/goal` condition NAMING a concrete executable check the
-session must run and surface, never a self-certifiable claim. 11b — an honest decline; no
-fabricated check; the 7.5.2b-computed artefact-checkable list (or "none"). 11c — as 11a PLUS
-the paste-ready string carries the `(DRAFT — milestone is a hypothesis…)` prefix.
-
-**Verification**: 11a — `goal_completion_condition.artefact_checkable == true`; `.condition`
-names a concrete shell command / file test / tool call (NOT a prose description of work) and
-contains no self-attestation phrasing ("I have/we have done", "the session has verified");
-`.decline_reason == null`. 11b — `.artefact_checkable == false`; `.condition == null`;
-`.decline_reason` names the milestone and its class (real-world vs runtime-dependent); the
-emitted list derives from 7.5.2b. 11c — `.derived_from == hypothesis` AND the emitted
-condition string begins with the DRAFT prefix. All — `.selected_milestone` is the nearest
-*unmet* Element-5 entry. Halt cross-check: in Test 2 (`SCOPE_REFUSAL`) and Test 4
-(`INSUFFICIENT_INPUT`) the `goal_completion_condition` block is absent from the envelope.
-
 ---
 
 ## Verification Gates (Self-Check Before Returning PASS / DRAFT)
@@ -565,7 +471,6 @@ condition string begins with the DRAFT prefix. All — `.selected_milestone` is 
 | Provenance tag | `DESTINATION.md` frontmatter carries `provenance: generative_primitive`, `upstream_skill`, `generated_at`, `project_root`, `reviewed` |
 | Overwrite safety | In review mode, no write occurred without `confirm_overwrite: true` AND an archived prior version |
 | Hand-offs | `hand_offs` cites `/reduce-to-first-principles`, `/map-feedback-loops`, and the council pre-mortem by name; no procedure reproduced |
-| `/goal` condition | On a clean author-mode completion with Element 5 populated, `goal_completion_condition` is populated; the selected milestone is the nearest *unmet* entry; an emitted `.condition` NAMES a concrete executable check (shell command / file test / tool call), never a self-certifiable claim, and carries the DRAFT prefix when `derived_from: hypothesis`; a non-artefact-checkable or runtime-dependent milestone yields an honest decline with a 7.5.2b-computed list, never a fabricated check; the block is omitted on every halt and on an empty Element 5 |
 
 If any gate fails self-check, the skill does not return `PASS` / `DRAFT` — it returns the appropriate halt verdict with the gap named.
 
@@ -574,7 +479,7 @@ If any gate fails self-check, the skill does not return `PASS` / `DRAFT` — it 
 ## Strategic Alignment
 
 **ROADMAP item(s) this advances**:
-- The workshop North Star Metric — Propagation Rate: this skill is built to be propagated (Phase E) to ≥2 NewEarth entities, a direct NSM event.
+- The workshop North Star Metric — Propagation Rate: this skill is built to be propagated (Phase E) to ≥2 the agency entities, a direct NSM event.
 - Methodology codification: a validated destination-authoring practice fills the named generative gap in the otherwise all-diagnostic framing-audit suite.
 
 **ROADMAP item(s) this REJECTS**:
@@ -598,5 +503,3 @@ If any gate fails self-check, the skill does not return `PASS` / `DRAFT` — it 
 ---
 
 *Skill v1.0 authored 2026-05-18 in the Define-Destination build (Phase B). The generative complement to the all-diagnostic framing-audit skill suite — it authors the destination the suite audits. Net-new; no doctrine doc. Writes the `generative_primitive` provenance tag consumed by the diagnostic suite's Branch D (shipped Phase A, 2026-05-18). Plan: `specs/11_DEFINE_DESTINATION_IMPLEMENTATION_PLAN.md` v2, operator-approved.*
-
-*v1.1 — Session 1 of the Goal-Ledger Build Programme (2026-05-19): added Step 7.5, which emits a tool-verifiable `/goal` completion condition derived from the nearest artefact-checkable milestone in Element 5's backward chain, and declines honestly when none is. Closes the council's `/goal`-evaluator-false-positive finding at the emit point. Spec: `specs/12_GOAL_LEDGER_BUILD_PROGRAMME.md` v3.*

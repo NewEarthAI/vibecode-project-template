@@ -8,14 +8,14 @@
 
 ### Day 0 — 2026-05-13 (Wednesday) — the bill that woke us up
 
-Justin sees an OpenAI line item: ≈$21 in a single day on an API key labelled "Nirvana Freight - AI Workbook". The previous baseline was $5/day max. Three days of accumulating spend ($17 → $18 → $21) suggested something was wrong but had been quietly running for a while.
+Justin sees an OpenAI line item: ≈$21 in a single day on an API key labelled "a logistics app - AI Workbook". The previous baseline was $5/day max. Three days of accumulating spend ($17 → $18 → $21) suggested something was wrong but had been quietly running for a while.
 
 ### Day 1 — 2026-05-14 (Thursday) — three wrong hypothesis branches before the right one
 
-Initial inventory grep'd every OpenAI consumer across three repos (Nirvana, BuyBox, NewEarth Agency) and surfaced ~11 candidates. I burned ~45 minutes per hypothesis branch chasing the wrong leads:
+Initial inventory grep'd every OpenAI consumer across three repos (a logistics app, a SaaS app, the agency Agency) and surfaced ~11 candidates. I burned ~45 minutes per hypothesis branch chasing the wrong leads:
 
-1. **First wrong branch — Podio webhook**: pattern-matched on a HomePros partner integration that went live 2026-05-12 (matching the spike start date). Built a whole theory about cross-project key leakage from a BuyBox / Honeybird n8n workflow into the Nirvana OpenAI project namespace.
-2. **Second wrong branch — BuyBox edge functions**: hunted four BuyBox extraction functions (`extract-deal-flyer`, `extract-mortgage-statement`, `extract-portfolio-tape`, `handle-deal-intake`) that all hard-code gpt-4o. Another parallel Claude session in the BuyBox repo cleared them by checking the audit log table.
+1. **First wrong branch — Podio webhook**: pattern-matched on a HomePros partner integration that went live 2026-05-12 (matching the spike start date). Built a whole theory about cross-project key leakage from a SaaS app / your instance n8n workflow into the a logistics app OpenAI project namespace.
+2. **Second wrong branch — a SaaS app edge functions**: hunted four a SaaS app extraction functions (`extract-deal-flyer`, `extract-mortgage-statement`, `extract-portfolio-tape`, `handle-deal-intake`) that all hard-code gpt-4o. Another parallel Claude session in the SaaS app repo cleared them by checking the audit log table.
 3. **Third wrong branch — n8n retry config**: theorised the Visual AI Media Classifier had `retries: 6` configured in its OpenAI HTTP node, multiplying calls 6× per photo.
 
 The actual root cause surfaced only after Justin pasted a **screenshot of the n8n execution error pane** showing:
@@ -98,11 +98,11 @@ The Day 1 lessons — never combine string-truncation functions (`lpad`/`rpad`/`
 
 ---
 
-## Intended Use In NewEarth AI Agency Repo
+## Intended Use In the agency Repo
 
-The skill is being pushed to the NewEarth AI Agency template repo for use across all client projects (Nirvana Freight, BuyBox AI, future clients). When pulled in:
+The skill is being pushed to the the agency template repo for use across all client projects (a logistics app, a SaaS app, future clients). When pulled in:
 
-1. **Cross-client cost attribution**: every NewEarth AI client project shares the same OpenAI account but should bill into separate projects. This skill's Phase 2 is the authoritative attribution methodology when keys leak across projects.
+1. **Cross-client cost attribution**: every the agency client project shares the same OpenAI account but should bill into separate projects. This skill's Phase 2 is the authoritative attribution methodology when keys leak across projects.
 
 2. **LLM usage monitoring** (planned in agency repo): Justin has identified two candidate repos to build the per-workflow / per-edge-function dashboard against:
    - 🌐 `https://github.com/NewEarthAI/llm-performance-tracker.git` — performance + cost tracking
@@ -141,7 +141,7 @@ For future audit reviewers — these are the specific traps the v2 skill prevent
 
 | Trap | Failure precedent | v2 mechanism that prevents it |
 |------|-------------------|-------------------------------|
-| Attribution by OpenAI project name | Day 1: key labelled "Nirvana Freight - AI Workbook" was the WHOLE Nirvana OpenAI namespace, not a specific workload | Phase 2 mandates key-value verification at the plug-in point, not the label |
+| Attribution by OpenAI project name | Day 1: key labelled "a logistics app - AI Workbook" was the WHOLE a logistics app OpenAI namespace, not a specific workload | Phase 2 mandates key-value verification at the plug-in point, not the label |
 | Counting only callers, not multipliers | Day 1+2: pod-ocr-backfill is one caller × 720 cron firings/day = the real disaster | Phase 1b is mandatory; the caller × firer × multiplier table must be produced |
 | Declaring victory on DB persistence | Day 1: lpad fix moved DB rate 6× while API rate moved 0% | Phase 7 mandates two-level verification (DB + billing-API hourly rate) |
 | Backfill jobs deployed and forgotten | pod-ocr-backfill was deployed weeks ago; no one was watching | No-backfilling rule + hookify gate now block silent deploy |

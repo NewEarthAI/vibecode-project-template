@@ -2,7 +2,7 @@
 name: no-backfill-without-permission
 enabled: true
 event: PreToolUse
-tool_matcher: mcp__supabase-(nirvana|buyboxai|newearthai)__(apply_migration|execute_sql|deploy_edge_function)
+tool_matcher: mcp__supabase-(a-logistics-app|the appai|your-org)__(apply_migration|execute_sql|deploy_edge_function)
 action: warn
 ---
 

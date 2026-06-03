@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "purpose": "Team identity registry for collaboration skills (/collab, daily-plan, council, ship). Each skill resolves the current user via `gh api user --jq .login` and looks up their entry here. Copy this to .claude/team.json and fill in your team. Loaded contextually; not a memory file.",
+  "founders": {
+    "your-github-handle": {
+      "name": "Your Name",
+      "github_primary": "your-github-handle",
+      "git_email": "you@example.com",
+      "role": "Builder / Architect",
+      "responsibilities": ["What you own"],
+      "telegram_handle": "@you",
+      "ships_via": "/ship + /code-council"
+    },
+    "teammate-github-handle": {
+      "name": "Teammate Name",
+      "github_primary": "teammate-github-handle",
+      "git_email": "teammate@example.com",
+      "role": "Operator / Distributor",
+      "responsibilities": ["What they own"],
+      "telegram_handle": "@teammate",
+      "ships_via": "/ship"
+    }
+  }
+}

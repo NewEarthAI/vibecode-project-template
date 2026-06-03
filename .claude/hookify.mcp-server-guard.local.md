@@ -21,5 +21,3 @@ Use the correct project server instead.
 1. The `tool_matcher` regex with blocked server patterns
 2. The active/blocked server lists above
 3. Set `enabled: true`
-
-**Hub repo note**: This hook is intentionally disabled in the Agency hub repo (`NewEarth AI Agency - Main`) because the hub legitimately needs all MCP servers for cross-entity operations. In client-specific repos (nirvana-freight, buybox-ai), enable this guard and configure blocked servers to prevent cross-entity writes.

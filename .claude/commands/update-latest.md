@@ -16,7 +16,7 @@ Works on any project — no local clone required. Fetches directly from GitHub.
 
 Check `.claude/template-source.md`:
 - If it exists → read `repo` URL from it (format: `https://github.com/owner/repo`)
-- If it doesn't exist → use default: `https://github.com/cassandrasnyman/claude-code-project-template`
+- If it doesn't exist → use default: `https://github.com/NewEarthAI/vibecode-project-template`
   Then ask: "Is this the right template repo URL? (y / paste different URL)"
 
 Parse `owner` and `repo` from the URL for GitHub MCP calls.
@@ -108,40 +108,6 @@ Template has: +8 lines (added DROP SCHEMA block)
 ## Step 5: Post-install setup
 
 After applying files, run setup steps for newly installed components.
-
-### Obsidian autopilot bootstrap (ALWAYS runs after every /update-latest)
-
-**5-PRE. Run bootstrap-obsidian.sh:**
-
-Whenever the SessionStart aggregator hook OR the obsidian example config is in
-the applied set (or already present in the project), invoke the bootstrap
-script. It is idempotent — running it on an already-configured repo is a no-op
-beyond a heartbeat report. Running it on a fresh repo creates the per-machine
-config with the auto-detected repo slug, verifies the Keychain entry, and
-smoke-tests the SessionStart vault block.
-
-```bash
-if [ -x .claude/scripts/bootstrap-obsidian.sh ]; then
-  bash .claude/scripts/bootstrap-obsidian.sh
-fi
-```
-
-The script handles every step a new repo needs for obsidian autopilot parity
-with BuyBox / Agency-Main:
-- Creates `.claude/obsidian-second-brain.local.md` if missing, with the three
-  shared agency values pre-filled and the per-repo scope slug auto-detected
-  from the folder name (e.g. `nirvana-freight` → `vault_scope_slug: "nirvana-freight"`).
-- Adds `vault_scope_slug` to an existing config that doesn't have one (so
-  upgrading from an older template version is one /update-latest away).
-- Verifies the macOS Keychain entry exists (the one Justin's Macs use across
-  the entire fleet). If absent, prints the exact command to provision it and
-  exits non-zero so the operator sees it.
-- Smoke-tests the SessionStart vault block and prints the first row, so the
-  operator confirms with their own eyes that the vault loop is live.
-
-After this runs cleanly, the repo is FULLY obsidian-connected on the read
-side. The write side (Stop chain: session-summarizer → vault-capture →
-auto-sync-artifacts) is wired in step 5b below if those hooks were applied.
 
 ### If any shell hooks were added (sql-guardian.sh, session-summarizer.sh):
 

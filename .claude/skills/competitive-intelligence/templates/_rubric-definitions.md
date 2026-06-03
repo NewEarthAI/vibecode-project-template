@@ -3,7 +3,7 @@
 > Single source of truth for 0-5 scoring across all competitor profiles in this catalog.
 > Without consistent definitions, "3" means different things to different sessions → catalog becomes noise.
 
-**This file defines a generic 7-dimension starter rubric.** Replace dimensions with domain-specific ones on first customization (e.g., a PropTech project replaces with `underwriting_ai`, `buybox_matching`, `crm_integration_depth`, etc.). When dimensions change, bump `schema_version` in the profile template and in all existing profiles.
+**This file defines a generic 7-dimension starter rubric.** Replace dimensions with domain-specific ones on first customization (e.g., a PropTech project replaces with `underwriting_ai`, `the app_matching`, `crm_integration_depth`, etc.). When dimensions change, bump `schema_version` in the profile template and in all existing profiles.
 
 ---
 

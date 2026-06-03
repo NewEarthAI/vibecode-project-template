@@ -11,13 +11,13 @@ description: |
   popover + React Query realtime race), serial mode for realtime-subscribed tests, auth
   token from Playwright storageState, zero-skip discipline. Rejects input:focus races,
   duplicate-text matches, UI-driven cleanup in realtime components. Composes with
-  e2e-test and newearth-ui-design.
+  e2e-test and ui-design-system.
 version: 1.0
 classification: encoded-preference
 created: 2026-04-23
 updated: 2026-04-23
 validated_on:
-  - buybox_seller_drawer_property_detail_sheet
+  - the app_seller_drawer_property_detail_sheet
 triggers:
   - bulletproof the drawer
   - lock down the modal
@@ -330,7 +330,7 @@ Before considering the perimeter "bulletproof", all these must be true:
 | Composes with | When |
 |---|---|
 | `e2e-test` | Orchestrates the broader test suite; drawer-perimeter specs are ONE input |
-| `newearth-ui-design` | Defines the drawer components BEING tested — design + test co-evolve |
+| `ui-design-system` | Defines the drawer components BEING tested — design + test co-evolve |
 | `guided-tour` | If tours render on first load, tour-dismissal must be in Playwright globalSetup |
 
 ## Escape Hatches
@@ -354,4 +354,4 @@ If a surface genuinely can't be tested without environmental seeding (rare):
 - Pattern 7: Access token needed for REST cleanup; storageState parse pattern not documented elsewhere.
 - Pattern 8: Graceful skip masked an SOP-gate data dependency; user (correctly) pushed back that "skip is a failure mode."
 
-Validated against BuyBox-AI seller drawer 2026-04-23 — 3 tests PASS in 20.9s.
+Validated against a SaaS app seller drawer 2026-04-23 — 3 tests PASS in 20.9s.

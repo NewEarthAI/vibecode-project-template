@@ -7,18 +7,18 @@ description: |
   deploy workflow creation, Vercel env var setup, Supabase auth redirect updates,
   DNS cutover sequence with MX record protection, and post-cutover cleanup.
   DNS-provider-agnostic (GoDaddy, Namecheap, Cloudflare, etc.) with handoff
-  protocol for domains managed by third parties. Preserves the newearth-ui-design
+  protocol for domains managed by third parties. Preserves the ui-design-system
   system during migration (design tokens, component recipes, audit scripts) and
   provides post-migration design audit verification.
-  Battle-tested on BuyBox-AI (April 2026). Handles dual-deploy race conditions,
+  Battle-tested on a SaaS app (April 2026). Handles dual-deploy race conditions,
   Vercel token scoping gotchas, and encrypted env var corruption.
 version: 2.1
 classification: encoded-preference
 created: 2026-04-06
 updated: 2026-04-10
 validated_on:
-  - BuyBox-AI (React 18 + Vite + Supabase, 45 edge functions, GoDaddy DNS, April 2026)
-  - Nirvana Freight (planned — third-party DNS provider)
+  - a SaaS app (React 18 + Vite + Supabase, 45 edge functions, GoDaddy DNS, April 2026)
+  - a logistics app (planned — third-party DNS provider)
 parameters:
   - name: project_name
     type: string
@@ -51,7 +51,7 @@ parameters:
 
 # Lovable to Vercel Production Migration
 
-> Battle-tested protocol from BuyBox-AI migration (April 2026). Every gotcha listed here caused a real failure.
+> Battle-tested protocol from a SaaS app migration (April 2026). Every gotcha listed here caused a real failure.
 
 ---
 
@@ -98,17 +98,17 @@ For each `supabase/functions/*/index.ts`:
 | `lovable.dev` URLs in `index.html` | CLEANUP (OG images) |
 | Lovable URLs in docs | CLEANUP |
 
-### 1.3a Design System Preservation Check (newearth-ui-design)
+### 1.3a Design System Preservation Check (ui-design-system)
 
 Before starting migration, verify the design system files are present and DO NOT TOUCH them during any migration phase. These files are pure source code and have zero deployment coupling — they belong to the source-code layer, not the hosting layer.
 
 | File / Path | Action |
 |-------------|--------|
-| `src/index.css` (or wherever tokens.css is imported) | PRESERVE — contains NewEarth CSS variables |
+| `src/index.css` (or wherever tokens.css is imported) | PRESERVE — contains the agency CSS variables |
 | `src/styles/tokens.css` (if present) | PRESERVE — design tokens source of truth |
 | `tailwind.config.ts` `darkMode: 'class'` setting | PRESERVE — dark mode toggle depends on this |
-| `src/components/ui/*.tsx` | PRESERVE — shadcn-ui primitives with NewEarth theming |
-| `.claude/skills/newearth-ui-design/` | PRESERVE — the design system skill itself |
+| `src/components/ui/*.tsx` | PRESERVE — shadcn-ui primitives with the agency theming |
+| `.claude/skills/ui-design-system/` | PRESERVE — the design system skill itself |
 
 **Rule**: this migration is a CDN swap, not a redesign. No visual changes during migration. If you find yourself editing a component's className during Phase 1-3, stop — that's scope creep.
 
@@ -307,9 +307,9 @@ Save this as `specs/dns-change-request-{{production_domain}}.md` and share with 
 
 **KEY DIFFERENCE from v1.0:** Do NOT disconnect Lovable before DNS cutover. Both hosts serve identical code. Lovable stays as a rollback target. Disconnect only after 48h of stable Vercel serving.
 
-### Verified Timing (from BuyBox-AI cutover 2026-04-07)
+### Verified Timing (from a SaaS app cutover 2026-04-07)
 
-| Step | Expected | Actual (BuyBox) |
+| Step | Expected | Actual (a SaaS app) |
 |------|----------|-----------------|
 | Add domain to Vercel | 30s | 30s (API call) |
 | DNS propagation | Up to TTL | **Instant** (local), ~30 min (global) |
@@ -352,9 +352,9 @@ MX and A/CNAME are independent DNS record types. Changing A/CNAME does NOT affec
 
 ---
 
-## Phase 5: Post-Migration Design Audit (newearth-ui-design)
+## Phase 5: Post-Migration Design Audit (ui-design-system)
 
-Once Vercel has been serving stably for 48h and the migration is closed out, run the NewEarth UI design audit scripts to get a baseline of design debt in the migrated codebase. This is a READ-ONLY audit — it does not change any code. The output becomes a backlog for a future focused cleanup session, never an "urgent fix" list.
+Once Vercel has been serving stably for 48h and the migration is closed out, run the the agency UI design audit scripts to get a baseline of design debt in the migrated codebase. This is a READ-ONLY audit — it does not change any code. The output becomes a backlog for a future focused cleanup session, never an "urgent fix" list.
 
 ### Rationale
 
@@ -367,9 +367,9 @@ The migration phase intentionally does not touch component code. But the migrati
 
 ```bash
 # From the project root, after migration is verified stable:
-bash .claude/skills/newearth-ui-design/scripts/audit-forbidden-patterns.sh . 2>&1 | tee audit-forbidden-post-migration.txt
-bash .claude/skills/newearth-ui-design/scripts/audit-colors.sh . 2>&1 | tee audit-colors-post-migration.txt
-bash .claude/skills/newearth-ui-design/scripts/audit-hover-consistency.sh . 2>&1 | tee audit-hover-post-migration.txt
+bash .claude/skills/ui-design-system/scripts/audit-forbidden-patterns.sh . 2>&1 | tee audit-forbidden-post-migration.txt
+bash .claude/skills/ui-design-system/scripts/audit-colors.sh . 2>&1 | tee audit-colors-post-migration.txt
+bash .claude/skills/ui-design-system/scripts/audit-hover-consistency.sh . 2>&1 | tee audit-hover-post-migration.txt
 ```
 
 ### Compare Against Pre-Migration Baseline
@@ -392,10 +392,10 @@ and hand off to a dedicated cleanup session that can work through items in small
 
 ### Reference
 
-See [.claude/skills/newearth-ui-design/SKILL.md](../newearth-ui-design/SKILL.md) for the design system itself. Key documents:
+See [.claude/skills/ui-design-system/SKILL.md](../ui-design-system/SKILL.md) for the design system itself. Key documents:
 - `references/anti-vibe-coded.md` — what the audits are checking and why
 - `references/color-discipline.md` — rationale for pastel / unsemantic color rejections
-- `references/silver-signature.md` — the NewEarth hover curve and metallic accent system
+- `references/silver-signature.md` — the the agency hover curve and metallic accent system
 
 ---
 
@@ -450,7 +450,7 @@ See [.claude/skills/newearth-ui-design/SKILL.md](../newearth-ui-design/SKILL.md)
 | Assume DNS propagation takes 24h | With low TTL, often instant locally, ~30 min globally |
 | Edit tokens.css / component className during migration | Preserve design system — run audit in Phase 5 instead |
 | Fix audit findings during migration | Save to backlog file; cleanup is a separate session |
-| Delete `.claude/skills/newearth-ui-design/` thinking it's Lovable-specific | It's framework-agnostic — preserve across all hosts |
+| Delete `.claude/skills/ui-design-system/` thinking it's Lovable-specific | It's framework-agnostic — preserve across all hosts |
 
 ---
 

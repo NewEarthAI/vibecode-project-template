@@ -5,7 +5,7 @@
 ## Setup
 
 ```bash
-cd ~/code/buybox-autovibe
+cd ~/code/the app-autovibe
 rm -rf .claude/autovibe-state.json .claude/autovibe-state.lock 2>/dev/null
 ```
 

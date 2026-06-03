@@ -322,7 +322,7 @@ Implementation before verification criteria are authored = horizontal slicing tr
 
 ## Path resolution — use `git rev-parse` (added 2026-05-06 amendment A6)
 
-Verification commands MUST use `git rev-parse --show-toplevel` to resolve repo root, not hardcoded `/Users/justin/code/BuyBox-AI/` paths. Hardcoded paths fail when a chat opens in a different worktree path.
+Verification commands MUST use `git rev-parse --show-toplevel` to resolve repo root, not hardcoded `/Users/justin/code/a SaaS app/` paths. Hardcoded paths fail when a chat opens in a different worktree path.
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -350,7 +350,7 @@ For the Acquisition Co-Pilot arc specifically (single-Mac per Justin 2026-05-06)
 
 **Observation**: when two parallel autovibe chats run independent multi-lens code-council passes on the SAME diff (typically a P0 fix), they converge on the SAME defect-set with high reliability. This is a positive validation signal for the council protocol — and it informs how to handle the second chat's findings without producing duplicate PRs.
 
-**The pattern (canonical 2026-05-14 precedent — Killer Bee dedup-graveyard fix)**:
+**The pattern (canonical 2026-05-14 precedent — Edge Case dedup-graveyard fix)**:
 
 1. Chat A ships PR #743 (Layers 1+2+3 read-side defence) at 21:32 UTC. Chat A's session pauses for a browser smoke test against production.
 2. Chat B (parallel autovibe, fresh from `feat/post-webinar-stabilisation` after PR #743 merged) runs `/code-council` on the merged code, finds a CRITICAL `silent-failure-hunter` finding: WRITE-side null-pollution in the new-property INSERT path.

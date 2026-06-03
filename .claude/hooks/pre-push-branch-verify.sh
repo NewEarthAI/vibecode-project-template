@@ -16,12 +16,44 @@
 
 set -uo pipefail
 
+# Kill-switch per .claude/rules/hook-profile-gating.md (no-suffix convention):
+#   export HOOK_PRE_PUSH_BRANCH_VERIFY=0   # disable in this shell
+HOOK_DISABLE_VAR="HOOK_PRE_PUSH_BRANCH_VERIFY"
+HOOK_DISABLE_VAL="$(printf '%s' "${!HOOK_DISABLE_VAR:-}" | tr '[:upper:]' '[:lower:]')"
+case "$HOOK_DISABLE_VAL" in
+  0|false|no|off|disabled)
+    echo "pre-push-branch-verify: DISABLED via ${HOOK_DISABLE_VAR}=${!HOOK_DISABLE_VAR}" >&2
+    echo '{}'
+    exit 0
+    ;;
+esac
+
 input=$(cat)
 
-# Gate 2: fast-path — bail unless "git push" appears in raw JSON
+# Gate 2a: fast-path — bail unless "git commit" OR "git push" appears in raw JSON
 case "$input" in
-  *'"git push'*) ;;
+  *'"git push'*|*'"git commit'*) ;;
   *) echo '{}'; exit 0 ;;
+esac
+
+# Gate 2b: commit branch (commit-on-wrong-branch class — added 2026-05-27 after the
+# branch-flip incident where a sibling chat switched HEAD mid-session). Emit a
+# `[branch-context]` heartbeat to stderr naming the current branch. Non-blocking
+# advisory — visible to chat + operator before the commit lands.
+case "$input" in
+  *'"git commit'*)
+    cur_for_commit=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    if [ -n "$cur_for_commit" ] && [ "$cur_for_commit" != "HEAD" ]; then
+      echo "[branch-context] About to commit on: ${cur_for_commit}" >&2
+      echo "[branch-context] If this is NOT the branch you expected, abort and run: git switch <correct-branch>" >&2
+    fi
+    # Fall through to push-mismatch logic only if both keywords present (chained
+    # command like `git commit && git push`); otherwise exit clean.
+    case "$input" in
+      *'"git push'*) ;;
+      *) echo '{}'; exit 0 ;;
+    esac
+    ;;
 esac
 
 # Gate 3: extract command + parse target

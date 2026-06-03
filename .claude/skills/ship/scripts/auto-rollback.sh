@@ -100,37 +100,8 @@ fi
 # --- 6. Push (plain push — revert is always fast-forward; --force is not needed AND
 # would violate the NEVER force-push-main rule in operational-guardrails.md) ---
 if [ "$do_push" = "1" ]; then
-  # Reject a branch name that begins with '-' — git would read it as a flag
-  # (e.g. --force) rather than a ref (code-council 2026-05-19 IMPORTANT).
-  case "$branch" in
-    -*) echo "auto-rollback: refusing — branch '$branch' starts with '-' (would be read as a git flag)" >&2
-        rm -f /tmp/rollback-revert.$$; exit 3 ;;
-  esac
-  git push origin "$branch" >&2 2>&1
-  push_rc=$?
-  if [ "$push_rc" -eq 0 ]; then
-    # exit 0 is NOT proof it landed — verify against the remote SHA directly
-    # (council 2026-05-19: "pushed reported when nothing pushed"). Distinguish
-    # verifier exit 1 (SHA mismatch — push truly did not land) from exit 2
-    # (could not reach remote — status UNKNOWN), so the operator's recovery
-    # action is correct during a production incident (code-council IMPORTANT).
-    verify_rc=0
-    bash "$SCRIPT_DIR/verify-push-landed.sh" "$branch" >&2 2>&1 || verify_rc=$?
-    if [ "$verify_rc" -eq 0 ]; then
-      echo "auto-rollback: push VERIFIED landed on origin/$branch" >&2
-    elif [ "$verify_rc" -eq 2 ]; then
-      echo "auto-rollback: could not reach origin to verify the push (ls-remote failed)" >&2
-      echo "  Production status UNKNOWN — do NOT report rolled-back. Retry:" >&2
-      echo "    git fetch origin $branch && bash $SCRIPT_DIR/verify-push-landed.sh $branch" >&2
-      rm -f /tmp/rollback-revert.$$
-      exit 3
-    else
-      echo "auto-rollback: push exited 0 but remote SHA does NOT match — push did NOT land" >&2
-      echo "  Production is still broken. Do NOT report rolled-back. Recovery:" >&2
-      echo "    git fetch origin $branch && git rebase origin/$branch && git push origin $branch" >&2
-      rm -f /tmp/rollback-revert.$$
-      exit 3
-    fi
+  if git push origin "$branch" >&2 2>&1; then
+    echo "auto-rollback: push succeeded" >&2
   else
     echo "auto-rollback: push failed — branch protection or remote moved" >&2
     echo "  If branch is protected, open a revert PR instead:" >&2

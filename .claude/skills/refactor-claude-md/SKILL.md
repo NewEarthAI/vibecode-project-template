@@ -167,7 +167,7 @@ This skill encodes findings from 30+ sources (Feb 2026):
 - **`.claude/rules/` directory**: Officially supported (Jan 2026), auto-loaded, optional `paths:` frontmatter
 - **`@import` syntax**: Official for composing external files into context
 - **Path-scoped rules**: Only load when editing matching files — automatic token savings
-- **BuyBox AI case study**: 405 → 92 lines (77% reduction), ~40-50% session start token savings
+- **a SaaS app case study**: 405 → 92 lines (77% reduction), ~40-50% session start token savings
 
 ---
 

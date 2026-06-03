@@ -1,8 +1,8 @@
-# NewEarth AI — System Architecture
+# the agency — System Architecture
 
 ## Overview
 
-NewEarth AI operates as an AI-augmented data pipeline platform. The architecture follows a **hub-and-spoke model** with n8n as the central automation hub, Supabase as the data layer, and AI (OpenAI/LangChain) at strategic decision points.
+the agency operates as an AI-augmented data pipeline platform. The architecture follows a **hub-and-spoke model** with n8n as the central automation hub, Supabase as the data layer, and AI (OpenAI/LangChain) at strategic decision points.
 
 ## System Diagram
 
@@ -25,7 +25,7 @@ NewEarth AI operates as an AI-augmented data pipeline platform. The architecture
 │  └──────────────┘   │ Decide       │   └──────────────┘         │
 │                     └──────────────┘                              │
 │                                                                    │
-│  n8n-newearthai (agency)  │  n8n-honeybird (BuyBox AI)           │
+│  n8n-your-org (agency)  │  n8n-your-instance (a SaaS app)           │
 └─────────────────────────────┬────────────────────────────────────┘
                               │
                               ▼
@@ -33,8 +33,8 @@ NewEarth AI operates as an AI-augmented data pipeline platform. The architecture
 │                      DATA LAYER (Supabase)                        │
 │                                                                    │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────┐ │
-│  │ supabase-nirvana│  │supabase-dispo-  │  │supabase-mid-     │ │
-│  │ (cross-project) │  │daddy (BuyBox)   │  │atlantic (Prop)   │ │
+│  │ supabase-yourproject│  │supabase-dispo-  │  │supabase-mid-     │ │
+│  │ (cross-project) │  │daddy (a SaaS app)   │  │atlantic (Prop)   │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────────┘ │
 │                                                                    │
 │  Tables │ RPCs │ Edge Functions │ Realtime                        │

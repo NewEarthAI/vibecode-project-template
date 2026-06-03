@@ -32,7 +32,7 @@ parameters:
     description: "Adversarial search patterns (lawsuits, layoffs, exec tracking). OFF by default."
 validated_on:
   - "Generic 7-dim rubric (template fallback)"
-  - "PropTech 11-dim rubric (BuyBox strategic-intelligence-skeleton-design spec — binding verified when strategy/ scaffolded)"
+  - "PropTech 11-dim rubric (a SaaS app strategic-intelligence-skeleton-design spec — binding verified when strategy/ scaffolded)"
   - "Platform-SaaS competitor profile + JTBD analysis"
   - "SEO/GEO domain audit"
 triggers:

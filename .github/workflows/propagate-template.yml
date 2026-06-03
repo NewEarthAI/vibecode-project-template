@@ -85,7 +85,7 @@ jobs:
 
           # Build PR body
           PR_BODY="## Template Update — ${DATE}\n\n"
-          PR_BODY+="Auto-generated PR from [claude-code-project-template](https://github.com/NewEarthAI/claude-code-project-template).\n\n"
+          PR_BODY+="Auto-generated PR from [claude-code-project-template](https://github.com/NewEarthAI/vibecode-project-template).\n\n"
 
           if [ -n "$SAFE_FILES" ]; then
             PR_BODY+="### Auto-safe files (generic, no project-specific content)\n"

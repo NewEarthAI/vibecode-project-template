@@ -10,14 +10,7 @@ Copy TEMPLATE-MANAGED files from this project to the template repo, generalise p
 
 ### 1. Read template source config
 
-- Read `.claude/template-source.md` to get `local_path` (where the template repo lives on disk) and `repo` (the GitHub URL — e.g., `https://github.com/NewEarthAI/claude-code-project-template`).
-- **Resolve `local_path` per-machine.** `local_path` is stored `~`-relative (e.g. `~/Documents/GitHub/claude-code-project-template`) so it resolves on any operator's Mac — Justin's, Cassandra's, or a future adopter's. Expand the leading `~` to `$HOME` before use; never pass the raw `~`-string into a quoted context (quotes suppress `~` expansion):
-  ```bash
-  RAW_PATH="<local_path from template-source.md frontmatter>"
-  TEMPLATE_PATH="${RAW_PATH/#\~/$HOME}"          # expand leading ~ to $HOME (per-machine)
-  [ -d "$TEMPLATE_PATH/.git" ] || { echo "Template repo not cloned at $TEMPLATE_PATH — clone it: git clone <repo> \"$TEMPLATE_PATH\""; exit 1; }
-  ```
-  Use the expanded `$TEMPLATE_PATH` everywhere `{local_path}` appears in the steps below.
+- Read `.claude/template-source.md` to get `local_path` (where the template repo lives on disk) and `repo` (the GitHub URL — e.g., `https://github.com/NewEarthAI/vibecode-project-template`).
 - Read `CHANGELOG.md` in the template repo to see the last entry date and format.
 - Verify the template repo is in a clean state (no in-progress rebase / merge / cherry-pick): `cd {local_path} && git status --porcelain && [ ! -d .git/rebase-merge ] && [ ! -d .git/rebase-apply ] && [ ! -f .git/MERGE_HEAD ]`. If unclean, HALT and surface the state — never push on top of a half-finished sibling operation.
 
@@ -45,20 +38,20 @@ Before writing ANY file to the template repo, run the full generalisation pass. 
 **Tool-name generalisation** (regex-replace):
 | Project-specific | Template-generic |
 |---|---|
-| `mcp__supabase-buyboxai__*` / `mcp__supabase-newearthai__*` / `mcp__supabase-nirvana__*` | `mcp__supabase-{{project}}__*` |
-| `mcp__n8n-mcp-honeybird__*` / `mcp__n8n-mcp-newearthai__*` | `mcp__n8n-mcp-{{instance}}__*` |
+| `mcp__supabase-yourproject__*` / `mcp__supabase-yourproject__*` / `mcp__supabase-yourproject__*` | `mcp__supabase-{{project}}__*` |
+| `mcp__n8n-yourinstance__*` / `mcp__n8n-yourinstance__*` | `mcp__n8n-mcp-{{instance}}__*` |
 | `mcp__followupboss-mcp__*` | `mcp__{{crm}}-mcp__*` (kept generic — FollowUpBoss is widely useful; only strip if context demands) |
 | `mcp__wassenger__*` | `mcp__{{whatsapp}}__*` |
-| `mcp__airtable-mcp-newearthai__*` | `mcp__airtable-mcp-{{instance}}__*` |
-| `mcp__redis-nirvana__*` | `mcp__redis-{{instance}}__*` |
+| `mcp__airtable__*` | `mcp__airtable-mcp-{{instance}}__*` |
+| `mcp__redis__*` | `mcp__redis-{{instance}}__*` |
 
 **Project-identity generalisation** (regex-replace):
 | Project-specific | Template-generic |
 |---|---|
-| `BuyBox-AI` / `BuyBox` / `buybox-ai.com` | `{{project_name}}` (preserve casing) |
-| `Honeybird` / `HomePros` / `Killer Bee` / `iSpeed2Lead` / `Trevor` / `Yuri` / `Chris` / `Justin` / `Mike Penez` | `{{partner_name}}` (entity-aware — preserve role context if needed for a precedent example) |
+| `a SaaS app` / `a SaaS app` / `the app-ai.com` | `{{project_name}}` (preserve casing) |
+| `your instance` / `HomePros` / `Edge Case` / `iSpeed2Lead` / `Trevor` / `Yuri` / `Chris` / `Justin` / `Mike Penez` | `{{partner_name}}` (entity-aware — preserve role context if needed for a precedent example) |
 | Supabase project refs (`rkjbdjxihppklvlbfywp`, `cqjkroyfbqaynxihfowq`, etc. — 20-char alphanumeric) | `{{supabase_project_ref}}` |
-| Vercel team slug `teamnewearthaias-projects` | `{{vercel_team_slug}}` |
+| Vercel team slug `teamyour-orgas-projects` | `{{vercel_team_slug}}` |
 | Repo paths starting with `/Users/justin/` | `{{user_home}}/code/{{repo_stem}}/` for project-rooted; `~/.claude/` for global |
 | Specific git SHAs cited in prose (e.g., `03f8cc7e`, `b2012ff9`) | `{{commit_sha}}` IF they're cited as illustrative; PRESERVE if the SHA is being cited as a verifiable precedent ("PR #173 SHA 12abc34 caught X"). Decision rule: keep when the SHA is forensic evidence; strip when it's just a recency marker. |
 
@@ -73,7 +66,7 @@ Before writing ANY file to the template repo, run the full generalisation pass. 
 |---|---|
 | Specific dates in doctrine examples ("2026-04-20 drawer incident") | KEEP — these are historical precedents that anchor the rule's credibility. NEVER strip dates from failure-precedent sections. |
 | Calendar markers like "next L10 meeting", "EOD Friday Pretoria time" | Strip — these are project-local scheduling refs |
-| Specific webinar / event dates ("2026-05-14 Killer Bee webinar") | Strip — these are project-local |
+| Specific webinar / event dates ("2026-05-14 Edge Case webinar") | Strip — these are project-local |
 
 **Strict-exclusion list (NEVER push, even if listed as template-managed)**:
 - `ROADMAP.md` — project-specific lane content
@@ -90,7 +83,7 @@ Before writing ANY file to the template repo, run the full generalisation pass. 
 **Verification gate (mandatory before write)**:
 After running all substitutions, grep the generalised file for any remaining project-specific tokens. If ANY hit, HALT and report which token survived. Example check:
 ```bash
-grep -nE '(BuyBox-AI|Honeybird|HomePros|Killer Bee|iSpeed2Lead|Trevor|Yuri|Justin|rkjbdjxihppklvlbfywp|teamnewearthaias)' <generalised-file>
+grep -nE '(a SaaS app|your instance|HomePros|Edge Case|iSpeed2Lead|Trevor|Yuri|Justin|rkjbdjxihppklvlbfywp|teamyour-orgas)' <generalised-file>
 ```
 Empty result = pass. Any hit = surface, ask user to disambiguate (keep as historical precedent vs strip).
 

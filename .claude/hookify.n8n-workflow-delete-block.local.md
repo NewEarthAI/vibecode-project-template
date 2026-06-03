@@ -2,7 +2,7 @@
 name: n8n-workflow-delete-block
 enabled: true
 event: PreToolUse
-tool_matcher: mcp__n8n-mcp-.*__n8n_delete_workflow|mcp__n8n-mcp-.*__n8n_delete_multiple_workflows
+tool_matcher: mcp__n8n-mcp-*__n8n_delete_workflow|mcp__n8n-mcp-*__n8n_delete_multiple_workflows
 action: block
 ---
 

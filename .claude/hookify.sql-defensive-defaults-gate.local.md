@@ -2,13 +2,13 @@
 name: sql-defensive-defaults-gate
 enabled: true
 event: PreToolUse
-tool_matcher: mcp__supabase-(nirvana|buyboxai|newearthai)__(apply_migration|execute_sql)
+tool_matcher: mcp__supabase-(a-logistics-app|the appai|your-org)__(apply_migration|execute_sql)
 action: warn
 ---
 
 **[SMART WARN] SQL defensive-defaults check — latent timebomb patterns**
 
-Triggered when the migration / SQL body matches any of these high-risk patterns. These are the two patterns that caused the 2026-05-14 Nirvana `data_conflicts` cascade (~$435 silent loss, 29 days latent before detection).
+Triggered when the migration / SQL body matches any of these high-risk patterns. These are the two patterns that caused the 2026-05-14 a logistics app `data_conflicts` cascade (~$435 silent loss, 29 days latent before detection).
 
 ## Pattern A — string-truncation on counter-derived defaults
 
@@ -50,7 +50,7 @@ SQL DEFENSIVE DEFAULTS — PATTERN B:
 
 ## Root cause precedent
 
-**2026-05-14, Nirvana fleet automation** — `data_conflicts.conflict_id` default used `lpad(nextval()::text, 4, '0')`. Sequence crossed 9,999 on 2026-04-15. From then on, 9 out of every 10 audit-log inserts produced duplicate `conflict_id` values, causing PK collisions. The calling function `classify_media_final` had no `EXCEPTION` wrapper on its audit INSERT, so each collision rolled back the entire classification. WhatsApp photos stayed marked unclassified; n8n's 10-minute schedule trigger kept re-picking them up; gpt-4o was re-called 6× per photo. Bug was invisible to all static analysis — only the OpenAI billing dashboard surfaced it (~$15/day for 29 days = ~$435 silent loss).
+**2026-05-14, a logistics app fleet automation** — `data_conflicts.conflict_id` default used `lpad(nextval()::text, 4, '0')`. Sequence crossed 9,999 on 2026-04-15. From then on, 9 out of every 10 audit-log inserts produced duplicate `conflict_id` values, causing PK collisions. The calling function `classify_media_final` had no `EXCEPTION` wrapper on its audit INSERT, so each collision rolled back the entire classification. WhatsApp photos stayed marked unclassified; n8n's 10-minute schedule trigger kept re-picking them up; gpt-4o was re-called 6× per photo. Bug was invisible to all static analysis — only the OpenAI billing dashboard surfaced it (~$15/day for 29 days = ~$435 silent loss).
 
 ---
 **Reference**: 📄 `.claude/rules/sql-defensive-defaults.md`

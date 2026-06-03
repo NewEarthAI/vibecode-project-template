@@ -6,7 +6,7 @@
 
 ```bash
 # In a healthy worktree off main, single-line fix in a *.md file
-cd ~/code/buybox-autovibe
+cd ~/code/the app-autovibe
 echo "fix" >> README.md  # synthetic 1-line change
 git add README.md
 ```

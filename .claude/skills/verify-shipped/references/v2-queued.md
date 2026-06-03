@@ -71,8 +71,8 @@ gh pr list --author "@me" --state merged --search "merged:>=$(date -v-7d '+%Y-%m
   fix: gh pr checks 471  &&  fix the failing check  &&  gh pr merge 471 --squash --admin
 [OPEN_DRAFT] #469 "wip: experimental" on wip/exp, 9 days old (>7d threshold)
   fix: convert to ready (gh pr ready 469) OR close (gh pr close 469)
-[MERGED_NOT_CLEANED] #468 merged on feat/bar 3 days ago — worktree still at /Users/justin/code/buybox-bar
-  fix: git worktree remove /Users/justin/code/buybox-bar
+[MERGED_NOT_CLEANED] #468 merged on feat/bar 3 days ago — worktree still at /Users/justin/code/the app-bar
+  fix: git worktree remove /Users/justin/code/the app-bar
        git branch -D feat/bar
        git push origin --delete feat/bar 2>/dev/null
 ```
@@ -94,7 +94,7 @@ gh pr list --author "@me" --state merged --search "merged:>=$(date -v-7d '+%Y-%m
 
 ```bash
 # Last successful production deploy (state=READY, target=production, in main project)
-vercel ls --json --scope=teamnewearthaias-projects buy-box-ai \
+vercel ls --json --scope=teamyour-orgas-projects buy-box-ai \
   | jq '[.[] | select(.target == "production" and .state == "READY")] | first'
 # Returns the most recent successful production deploy
 # Extract: .createdAt (epoch ms — convert to seconds)
@@ -121,13 +121,13 @@ git log -1 --format=%ct origin/main
 
 Findings on Justin's primary Mac (2026-05-07):
 - ✅ `vercel` CLI installed at `/opt/homebrew/bin/vercel` (v50.39.0)
-- ✅ `vercel whoami` returns `newearthai` (the team scope BuyBox lives under)
+- ✅ `vercel whoami` returns `your-org` (the team scope a SaaS app lives under)
 - ❌ `VERCEL_TOKEN` env var NOT set
 - ✅ `/ship` skill uses `vercel whoami` as its auth-precheck (CLI is the canonical pattern in this repo)
 
 **Implementation rule for v1.2**:
 1. Pre-check: `vercel whoami` — must return non-empty
-2. If CLI not authenticated: emit `[skip] Layer 4 — vercel CLI not authenticated. Run vercel login --scope=newearthai to enable.` and exit Layer 4 with 0 issues
+2. If CLI not authenticated: emit `[skip] Layer 4 — vercel CLI not authenticated. Run vercel login --scope=your-org to enable.` and exit Layer 4 with 0 issues
 3. Do NOT fall back to `VERCEL_TOKEN` REST scrape — it adds a second auth surface to maintain without delivering parallel value
 
 **Why no fallback**:

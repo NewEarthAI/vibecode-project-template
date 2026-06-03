@@ -71,13 +71,14 @@ Trap: `state.sh release` on INT/TERM/EXIT
 Resume points (see `modes/planned.md` §Crash-Resume):
 - forge_needed → restart at forge step
 - plan_in_progress → re-enter plan mode
-- council_pending → restart at /council
 - execute_pending → restart at /execute
 - ship_pending → restart at /ship
 
+(council_pending retired 2026-05-23 — strategy council no longer in the autofire loop.)
+
 ## Hookify
 
-`auto-council-on-plan.local.md` rule from template repo: **uninstalled**. /autovibe is the explicit trigger. Manual ExitPlanMode does NOT auto-fire council. One trigger, one path. Cleaner mental model.
+`auto-council-on-plan.local.md` rule from template repo: **uninstalled**, AND no longer relevant — strategy council was retired from the autovibe autofire loop on 2026-05-23 because the 8-agent deliberation reliably produced rabbit-hole detours and work never actually finished. The forged prompt + master-continuation-prompt already carry the structured framing council was supposed to add. Goal-audit at step 2a (1-minute first-principles check on the GOAL) is the surviving framing safety. `/code-council` at step 7 (DIFF reviewer) is unaffected — different beast, different purpose. `/council` itself survives as a MANUAL operator skill outside autovibe for strategic deliberations that genuinely need multi-perspective lensing.
 
 ## How to revise
 

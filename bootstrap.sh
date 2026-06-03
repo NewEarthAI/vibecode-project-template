@@ -3,29 +3,25 @@
 # bootstrap.sh — Zero-friction MCP setup for any Mac
 #
 # Usage: ./bootstrap.sh              (prompts for each credential)
-#        ./bootstrap.sh --refresh    (re-resolve paths only, keep credentials)
-#        ./bootstrap.sh --verify     (check all MCP servers are configured)
+#        ./bootstrap.sh --refresh    (re-resolve binary paths only, keep creds)
+#        ./bootstrap.sh --verify     (check the generated config is valid)
 #
 # Creates ~/.mcp.json from .mcp.template.json with:
 #   - Dynamic binary paths (npx, node, uvx) resolved at runtime
-#   - Credentials stored in ~/.env.nirvana (never committed to git)
+#   - Credentials read from ~/.env.mcp (created here, chmod 600, never committed)
 #
-# Layer 2 upgrade (future): add 1Password CLI support behind `op` check
+# Leave a credential blank if you don't use that MCP server — you can delete the
+# unused server block from ~/.mcp.json afterwards. Nothing is sent anywhere; all
+# values stay on this machine.
 # ============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE="${SCRIPT_DIR}/.mcp.template.json"
-ENV_FILE="${HOME}/.env.nirvana"
+ENV_FILE="${HOME}/.env.mcp"
 OUTPUT="${HOME}/.mcp.json"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 info()  { echo -e "${CYAN}[INFO]${NC} $1"; }
 ok()    { echo -e "${GREEN}[OK]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
@@ -34,15 +30,14 @@ fail()  { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
 # ── Resolve binary paths ──────────────────────────────────────────────────
 resolve_paths() {
   info "Resolving binary paths..."
-
   NPX_PATH=$(which npx 2>/dev/null || true)
   NODE_PATH=$(which node 2>/dev/null || true)
   UVX_PATH=$(which uvx 2>/dev/null || true)
   NPM_GLOBAL_ROOT=$(npm root -g 2>/dev/null || true)
 
-  [[ -z "$NPX_PATH" ]]  && fail "npx not found. Install Node.js via nvm first."
-  [[ -z "$NODE_PATH" ]]  && fail "node not found. Install Node.js via nvm first."
-  [[ -z "$UVX_PATH" ]]   && warn "uvx not found. Redis MCP server won't work. Install: pip install uvx"
+  [[ -z "$NPX_PATH" ]]  && fail "npx not found. Install Node.js (via nvm) first."
+  [[ -z "$NODE_PATH" ]] && fail "node not found. Install Node.js (via nvm) first."
+  [[ -z "$UVX_PATH" ]]  && warn "uvx not found — the Redis MCP server won't work without it (pip install uv)."
 
   ok "npx:  $NPX_PATH"
   ok "node: $NODE_PATH"
@@ -51,251 +46,108 @@ resolve_paths() {
   echo ""
 }
 
-# ── Check prerequisite binaries ───────────────────────────────────────────
-check_prerequisites() {
-  info "Checking global npm packages..."
-
-  local chrome_mcp="${NPM_GLOBAL_ROOT}/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js"
-  local playwright_mcp="${NPM_GLOBAL_ROOT}/@playwright/mcp/cli.js"
-
-  if [[ ! -f "$chrome_mcp" ]]; then
-    warn "chrome-devtools-mcp not installed globally."
-    echo "  Fix: npm install -g chrome-devtools-mcp"
-  else
-    ok "chrome-devtools-mcp found"
-  fi
-
-  if [[ ! -f "$playwright_mcp" ]]; then
-    warn "@playwright/mcp not installed globally."
-    echo "  Fix: npm install -g @playwright/mcp"
-  else
-    ok "@playwright/mcp found"
-  fi
-
-  if [[ ! -f "${HOME}/bin/github-mcp-server" ]]; then
-    warn "github-mcp-server not found at ~/bin/github-mcp-server"
-    echo "  Fix: Download from https://github.com/github/github-mcp-server/releases"
-    echo "       Place binary at ~/bin/github-mcp-server && chmod +x ~/bin/github-mcp-server"
-  else
-    ok "github-mcp-server found"
-  fi
-  echo ""
-}
-
-# ── Prompt for a credential ───────────────────────────────────────────────
+# ── Prompt for a credential (blank allowed → skip that server) ─────────────
 prompt_credential() {
-  local var_name="$1"
-  local description="$2"
-  local current_value="${3:-}"
-
+  local var_name="$1" description="$2" current_value="${3:-}"
   if [[ -n "$current_value" ]]; then
-    echo -e "  ${GREEN}${var_name}${NC}: [already set — press Enter to keep, or paste new value]"
-    read -r -s new_value
-    if [[ -n "$new_value" ]]; then
-      eval "export ${var_name}='${new_value}'"
-    else
-      eval "export ${var_name}='${current_value}'"
-    fi
+    echo -e "  ${GREEN}${var_name}${NC}: [already set — Enter to keep, or paste new]"
+    read -r -s new_value; echo ""
+    [[ -n "$new_value" ]] && eval "export ${var_name}='${new_value}'" || eval "export ${var_name}='${current_value}'"
   else
-    echo -e "  ${YELLOW}${var_name}${NC}: ${description}"
-    read -r -s value
-    echo ""
-    if [[ -z "$value" ]]; then
-      fail "${var_name} cannot be empty. Aborting."
-    fi
+    echo -e "  ${YELLOW}${var_name}${NC}: ${description} ${CYAN}(Enter to skip)${NC}"
+    read -r -s value; echo ""
     eval "export ${var_name}='${value}'"
   fi
 }
 
-# ── Load existing credentials if available ────────────────────────────────
 load_existing_credentials() {
   if [[ -f "$ENV_FILE" ]]; then
     info "Loading existing credentials from ${ENV_FILE}..."
     # shellcheck disable=SC1090
-    source "$ENV_FILE"
-    ok "Loaded $(grep -c '=' "$ENV_FILE" 2>/dev/null || echo 0) credentials"
-    echo ""
-    return 0
+    source "$ENV_FILE"; ok "Loaded existing credentials"; echo ""; return 0
   fi
   return 1
 }
 
-# ── Collect credentials ───────────────────────────────────────────────────
 collect_credentials() {
-  info "Enter credentials (paste each value, then press Enter):"
-  info "Tip: Copy from your password manager — values are hidden as you type."
+  info "Enter credentials (hidden as you type). Leave blank to skip a server."
   echo ""
-
-  prompt_credential "REDIS_PASSWORD" \
-    "Redis Cloud password (for redis-nirvana)" \
-    "${REDIS_PASSWORD:-}"
-
-  prompt_credential "N8N_API_KEY_HONEYBIRD" \
-    "n8n API key for Honeybird instance" \
-    "${N8N_API_KEY_HONEYBIRD:-}"
-
-  prompt_credential "N8N_API_KEY_NEWEARTHAI" \
-    "n8n API key for NewEarth AI instance (n8n.newearthai.agency)" \
-    "${N8N_API_KEY_NEWEARTHAI:-}"
-
-  prompt_credential "AIRTABLE_API_KEY" \
-    "Airtable personal access token" \
-    "${AIRTABLE_API_KEY:-}"
-
-  prompt_credential "SUPABASE_ACCESS_TOKEN_NIRVANA" \
-    "Supabase PAT for Nirvana (rikkwehjqcgtraxtkcpo)" \
-    "${SUPABASE_ACCESS_TOKEN_NIRVANA:-}"
-
-  prompt_credential "SUPABASE_ACCESS_TOKEN_BUYBOXAI" \
-    "Supabase PAT for BuyBox AI (rkjbdjxihppklvlbfywp)" \
-    "${SUPABASE_ACCESS_TOKEN_BUYBOXAI:-}"
-
-  prompt_credential "SUPABASE_ACCESS_TOKEN_NEWEARTHAI" \
-    "Supabase PAT for NewEarth AI (ridqdojzjotlvexfuwvx)" \
-    "${SUPABASE_ACCESS_TOKEN_NEWEARTHAI:-}"
-
-  prompt_credential "GITHUB_PAT" \
-    "GitHub personal access token" \
-    "${GITHUB_PAT:-}"
-
+  prompt_credential "SUPABASE_PROJECT_REF"  "Supabase project ref (the ID in your project URL)"          "${SUPABASE_PROJECT_REF:-}"
+  prompt_credential "SUPABASE_ACCESS_TOKEN" "Supabase personal access token"                             "${SUPABASE_ACCESS_TOKEN:-}"
+  prompt_credential "N8N_API_URL"           "n8n base URL (e.g. https://your-instance.app.n8n.cloud/)"   "${N8N_API_URL:-}"
+  prompt_credential "N8N_API_KEY"           "n8n API key"                                                "${N8N_API_KEY:-}"
+  prompt_credential "GITHUB_PAT"            "GitHub personal access token (repo + workflow scope)"       "${GITHUB_PAT:-}"
+  prompt_credential "REDIS_HOST"            "Redis host (blank if unused)"                               "${REDIS_HOST:-}"
+  prompt_credential "REDIS_PORT"            "Redis port (default 6379)"                                  "${REDIS_PORT:-6379}"
+  prompt_credential "REDIS_PASSWORD"        "Redis password (blank if unused)"                           "${REDIS_PASSWORD:-}"
+  prompt_credential "AIRTABLE_API_KEY"      "Airtable personal access token (blank if unused)"           "${AIRTABLE_API_KEY:-}"
   echo ""
 }
 
-# ── Save credentials to ~/.env.nirvana ────────────────────────────────────
 save_credentials() {
   info "Saving credentials to ${ENV_FILE}..."
   cat > "$ENV_FILE" << ENVEOF
 # MCP Credentials — generated by bootstrap.sh on $(date +%Y-%m-%d)
 # NEVER commit this file. It is gitignored.
-REDIS_PASSWORD='${REDIS_PASSWORD}'
-N8N_API_KEY_HONEYBIRD='${N8N_API_KEY_HONEYBIRD}'
-N8N_API_KEY_NEWEARTHAI='${N8N_API_KEY_NEWEARTHAI}'
-AIRTABLE_API_KEY='${AIRTABLE_API_KEY}'
-SUPABASE_ACCESS_TOKEN_NIRVANA='${SUPABASE_ACCESS_TOKEN_NIRVANA}'
-SUPABASE_ACCESS_TOKEN_BUYBOXAI='${SUPABASE_ACCESS_TOKEN_BUYBOXAI}'
-SUPABASE_ACCESS_TOKEN_NEWEARTHAI='${SUPABASE_ACCESS_TOKEN_NEWEARTHAI}'
-GITHUB_PAT='${GITHUB_PAT}'
+SUPABASE_PROJECT_REF='${SUPABASE_PROJECT_REF:-}'
+SUPABASE_ACCESS_TOKEN='${SUPABASE_ACCESS_TOKEN:-}'
+N8N_API_URL='${N8N_API_URL:-}'
+N8N_API_KEY='${N8N_API_KEY:-}'
+GITHUB_PAT='${GITHUB_PAT:-}'
+REDIS_HOST='${REDIS_HOST:-}'
+REDIS_PORT='${REDIS_PORT:-6379}'
+REDIS_PASSWORD='${REDIS_PASSWORD:-}'
+AIRTABLE_API_KEY='${AIRTABLE_API_KEY:-}'
 ENVEOF
   chmod 600 "$ENV_FILE"
-  ok "Credentials saved (chmod 600)"
+  ok "Credentials saved (chmod 600 — owner-only)"
 }
 
-# ── Generate ~/.mcp.json from template ────────────────────────────────────
 generate_mcp_json() {
   info "Generating ${OUTPUT} from template..."
-
-  if [[ ! -f "$TEMPLATE" ]]; then
-    fail "Template not found: ${TEMPLATE}"
-  fi
-
-  # Export ALL variables needed by envsubst (paths + credentials)
+  [[ -f "$TEMPLATE" ]] || fail "Template not found: ${TEMPLATE}. Run from the repo root."
   export NPX_PATH NODE_PATH UVX_PATH NPM_GLOBAL_ROOT HOME
-  export REDIS_PASSWORD N8N_API_KEY_HONEYBIRD N8N_API_KEY_NEWEARTHAI
-  export AIRTABLE_API_KEY SUPABASE_ACCESS_TOKEN_NIRVANA
-  export SUPABASE_ACCESS_TOKEN_BUYBOXAI SUPABASE_ACCESS_TOKEN_NEWEARTHAI
-  export GITHUB_PAT
-
-  # envsubst replaces ${VAR} patterns in the template
-  # Only substitute our known variables (prevents replacing unrelated ${} patterns)
+  export SUPABASE_PROJECT_REF SUPABASE_ACCESS_TOKEN N8N_API_URL N8N_API_KEY GITHUB_PAT
+  export REDIS_HOST REDIS_PORT REDIS_PASSWORD AIRTABLE_API_KEY
   local VARS='${NPX_PATH} ${NODE_PATH} ${UVX_PATH} ${NPM_GLOBAL_ROOT} ${HOME}'
-  VARS+=' ${REDIS_PASSWORD} ${N8N_API_KEY_HONEYBIRD} ${N8N_API_KEY_NEWEARTHAI}'
-  VARS+=' ${AIRTABLE_API_KEY} ${SUPABASE_ACCESS_TOKEN_NIRVANA}'
-  VARS+=' ${SUPABASE_ACCESS_TOKEN_BUYBOXAI} ${SUPABASE_ACCESS_TOKEN_NEWEARTHAI}'
-  VARS+=' ${GITHUB_PAT}'
+  VARS+=' ${SUPABASE_PROJECT_REF} ${SUPABASE_ACCESS_TOKEN} ${N8N_API_URL} ${N8N_API_KEY} ${GITHUB_PAT}'
+  VARS+=' ${REDIS_HOST} ${REDIS_PORT} ${REDIS_PASSWORD} ${AIRTABLE_API_KEY}'
   envsubst "$VARS" < "$TEMPLATE" > "$OUTPUT"
   chmod 600 "$OUTPUT"
   ok "Generated ${OUTPUT} (chmod 600)"
 }
 
-# ── Verify output ─────────────────────────────────────────────────────────
 verify_output() {
   info "Verifying generated config..."
-
-  # Check JSON is valid
   if ! python3 -c "import json; json.load(open('${OUTPUT}'))" 2>/dev/null; then
     fail "Generated ${OUTPUT} is not valid JSON!"
   fi
   ok "Valid JSON"
-
-  # Check no unsubstituted placeholders remain
-  if grep -q '${' "$OUTPUT"; then
-    warn "Unsubstituted placeholders found:"
-    grep -o '\${[^}]*}' "$OUTPUT" | sort -u | while read -r p; do
-      echo "  - $p"
-    done
-    fail "Some placeholders were not replaced. Check your credentials."
-  fi
-  ok "All placeholders resolved"
-
-  # Check no empty credential values
-  local empty_count
-  empty_count=$(python3 -c "
-import json
-c = json.load(open('${OUTPUT}'))
-empty = 0
-for name, srv in c.get('mcpServers', {}).items():
-    for k, v in srv.get('env', {}).items():
-        if not v or v.strip() == '':
-            print(f'  Empty: {name}.env.{k}')
-            empty += 1
-    for a in srv.get('args', []):
-        if a == '':
-            print(f'  Empty arg in: {name}')
-            empty += 1
-print(empty)
-" 2>/dev/null | tail -1)
-
-  if [[ "$empty_count" != "0" ]]; then
-    fail "Empty credential values detected. Re-run bootstrap.sh."
-  fi
-  ok "No empty values"
-
-  # Count servers
   local server_count
   server_count=$(python3 -c "import json; print(len(json.load(open('${OUTPUT}')).get('mcpServers', {})))")
-  ok "${server_count} MCP servers configured"
+  ok "${server_count} MCP servers configured (delete any you don't use from ${OUTPUT})"
   echo ""
 }
 
-# ── Main ──────────────────────────────────────────────────────────────────
 main() {
-  echo ""
-  echo "========================================"
-  echo "  MCP Bootstrap — NewEarth AI"
-  echo "========================================"
-  echo ""
-
-  # Check template exists
+  echo ""; echo "========================================"; echo "  MCP Bootstrap"; echo "========================================"; echo ""
   [[ -f "$TEMPLATE" ]] || fail "Template not found: ${TEMPLATE}. Run this from the repo root."
-
-  # Resolve paths (always, even on --refresh)
   resolve_paths
-  check_prerequisites
 
   if [[ "${1:-}" == "--verify" ]]; then
-    if [[ -f "$OUTPUT" ]]; then
-      verify_output
-      ok "Verification complete!"
-    else
-      fail "No ${OUTPUT} found. Run bootstrap.sh first."
-    fi
+    [[ -f "$OUTPUT" ]] && { verify_output; ok "Verification complete!"; } || fail "No ${OUTPUT} found. Run bootstrap.sh first."
     exit 0
   fi
 
-  # Load or collect credentials
   if [[ "${1:-}" == "--refresh" ]]; then
-    if load_existing_credentials; then
-      info "Refreshing paths only (keeping existing credentials)..."
-    else
-      fail "No existing credentials found at ${ENV_FILE}. Run bootstrap.sh without --refresh first."
-    fi
+    load_existing_credentials || fail "No existing credentials at ${ENV_FILE}. Run bootstrap.sh without --refresh first."
+    info "Refreshing paths only (keeping existing credentials)..."
   else
     load_existing_credentials || true
     collect_credentials
     save_credentials
   fi
 
-  # Generate and verify
   generate_mcp_json
   verify_output
 
@@ -306,10 +158,9 @@ main() {
   echo "  Config:      ${OUTPUT}"
   echo "  Credentials: ${ENV_FILE}"
   echo ""
-  echo "  Next: Restart Cursor / Claude Code"
+  echo "  Next: Restart Claude Code / Cursor"
   echo "  Verify: ./bootstrap.sh --verify"
-  echo "========================================${NC}"
-  echo ""
+  echo "========================================${NC}"; echo ""
 }
 
 main "$@"

@@ -38,7 +38,7 @@ SET {{tenant_column}} = (SELECT id FROM {{org_table}} WHERE slug = 'default')
 WHERE {{tenant_column}} IS NULL;
 ```
 
-### B. Source-aware segmentation (BuyBox CM.32 pattern)
+### B. Source-aware segmentation (a SaaS app CM.32 pattern)
 
 For projects where existing data has a discriminator column (`source`, `customer_id`, etc):
 ```sql

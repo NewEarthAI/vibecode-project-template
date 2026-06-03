@@ -2,104 +2,279 @@
 # pocock-implicit-activation.sh — UserPromptSubmit hook
 #
 # PURPOSE
-#   Detect work-class signals in user prompts (e.g. "why is this broken",
-#   "stress test this plan", "refactor this") and inject a one-line
-#   "Pocock skill candidates" hint into Claude's context. NOT auto-fire —
-#   discoverability boost so Claude considers the right skill without
-#   requiring the user to use exact trigger phrases from a skill description.
+#   Layer 2 of the Pocock Implicit-Activation Programme. Surfaces a one-line
+#   `[pocock-hint] consider: X` nudge when patterns match the bug-class,
+#   plan-stress-test, refactor, or unfamiliar-code work classes — without
+#   forcing the user to type the exact trigger phrase from a Pocock skill's
+#   description field.
 #
-# COMPOSES WITH
-#   - .claude/rules/pocock-implicit-activation.md (self-discipline rule)
-#   - .claude/rules/pre-completion-pocock-check.md (verification gate)
-#   - All Pocock skills + tdd-design-companion rule (Spec 22 adoption 2026-05-02)
+#   The hook NUDGES; it never invokes. The rule
+#   (~/.claude/rules/pocock-implicit-activation.md, project-mirrored at
+#   .claude/rules/pocock-implicit-activation.md when present) is the doctrine
+#   that tells Claude what to do with the nudge.
+#
+# ESCALATION (added 2026-05-20)
+#   After the 2nd hint in the same session WITHOUT a Pocock invocation, the
+#   hook escalates with a louder message:
+#     "Pocock hint fired twice without invocation. Either invoke
+#      /pocock-diagnose now OR explicitly state why you're proceeding
+#      without it."
+#   Rationale: a single ignored hint is acceptable (judgment call); two ignored
+#   hints in one session signals the hook is being routed around rather than
+#   judged. The escalation prompts a decision, not a halt.
+#
+# OUTPUT
+#   JSON envelope on stdout when the hint fires:
+#     {"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"..."}}
+#   Silent on every non-trigger.
 #
 # EXIT
-#   Always 0 (advisory only — never blocks). Output goes to stdout as
-#   additionalContext for Claude.
+#   Always 0 in hook mode — advisory only, NEVER blocks a tool call.
+#   --self-test mode: 0 if all cases pass, 1 if any fail.
 #
-# COUNCIL CONTEXT
-#   2026-05-02 Spec 22 Pocock adoption council (8 agents) flagged:
-#     "User shouldn't have to use exact trigger phrases — discoverability
-#      via implicit activation closes the gap between owning the skill
-#      and actually invoking it."
-#
-# PERFORMANCE BUDGET
-#   <50ms per invocation. Bash-native pattern matching, no external CLI.
+# SELF-TEST
+#   bash .claude/hooks/pocock-implicit-activation.sh --self-test
 
 set -uo pipefail
 
-# Read prompt from stdin (Claude Code passes {"prompt": "..."} JSON)
-INPUT=$(cat)
+# Session-scoped counter for escalation. CLAUDE_SESSION_ID is preferred when
+# present; fall back to a stable per-shell sentinel so the counter persists
+# across invocations within the same session.
+COUNTER_DIR="${TMPDIR:-/tmp}"
+SESSION_ID="${CLAUDE_SESSION_ID:-default}"
+COUNTER_FILE="${COUNTER_DIR}/pocock-hint-count-${SESSION_ID}"
 
-# Extract the prompt text. Handle both raw text + JSON-wrapped forms.
-if echo "$INPUT" | head -c 1 | grep -q '{'; then
-  # JSON form — extract .prompt field. Use python (universal) since jq
-  # may not be on every Mac and we want this hook to be portable.
-  PROMPT=$(echo "$INPUT" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("prompt",""))' 2>/dev/null || echo "$INPUT")
-else
-  PROMPT="$INPUT"
+PYCODE=$(cat <<'PYEOF'
+import sys, json, re, os
+
+COUNTER_FILE = os.environ.get("POCOCK_COUNTER_FILE", "/tmp/pocock-hint-count-default")
+
+# Detection classes — most-specific first. One match wins.
+try:
+    _BUG = re.compile(
+        r"\b(bug|broken|throwing|failing|crash|timeout|perf regression"
+        r"|error|exception|stack ?trace|500|404|why is this failing)\b")
+    _PLAN_GRILL = re.compile(
+        r"\b(stress[- ]?test|grill|challenge this (design|plan|spec)"
+        r"|fuzzy|domain language|sharpen the (plan|spec))\b")
+    _REFACTOR = re.compile(
+        r"\b(refactor|tangled|extract (this|the)|ball of mud|deepen"
+        r"|shallow module|simplif(y|ying) this|clean(ing)? up this code)\b")
+    _UNFAMILIAR = re.compile(
+        r"\bexplain this code\b|\bi don.?t know this area\b"
+        r"|\bhow does this (fit|work)\b|\bzoom out\b")
+except re.error as exc:
+    sys.stderr.write("pocock-implicit-activation: regex compile error: %s\n" % exc)
+    sys.exit(0)
+
+_CLASSES = [
+    (_BUG,         "/pocock-diagnose",        "bug-class signal — consider /pocock-diagnose (6-phase feedback loop)"),
+    (_PLAN_GRILL,  "/pocock-grill-with-docs", "plan/spec stress-test signal — consider /pocock-grill-with-docs"),
+    (_REFACTOR,    "/pocock-improve-codebase-architecture", "refactor signal — consider /pocock-improve-codebase-architecture (deep modules)"),
+    (_UNFAMILIAR,  "/pocock-zoom-out",        "unfamiliar-code signal — consider /pocock-zoom-out"),
+]
+
+# Skip lists — already invoking a Pocock tool, or running a trivial slash command.
+SKIP_POCOCK = ("/pocock-diagnose", "/pocock-grill-with-docs",
+               "/pocock-improve-codebase-architecture", "/pocock-zoom-out")
+SKIP_TRIVIAL = ("/commit", "/push", "/ship", "/setup", "/daily-plan", "/prime")
+SKIP_PREFIXES = SKIP_POCOCK + SKIP_TRIVIAL
+
+
+def detect(lower):
+    for rx, primitive, body in _CLASSES:
+        if rx.search(lower):
+            return primitive, body
+    return None, None
+
+
+def read_counter():
+    try:
+        with open(COUNTER_FILE, "r") as fh:
+            raw = fh.read().strip()
+            return int(raw) if raw else 0
+    except Exception:
+        return 0
+
+
+def write_counter(n):
+    try:
+        with open(COUNTER_FILE, "w") as fh:
+            fh.write(str(n))
+    except Exception:
+        pass  # counter is best-effort; never crash a session
+
+
+def reset_counter():
+    try:
+        os.unlink(COUNTER_FILE)
+    except Exception:
+        pass
+
+
+def envelope(ctx):
+    return json.dumps({"hookSpecificOutput": {
+        "hookEventName": "UserPromptSubmit",
+        "additionalContext": ctx}})
+
+
+def process(raw):
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return ""
+    if not isinstance(data, dict):
+        return ""
+
+    event = data.get("hook_event_name")
+    if event and event != "UserPromptSubmit" and "prompt" not in data:
+        return ""
+
+    prompt = (data.get("prompt") or "").strip()
+    lower = prompt.lower()
+    if len(lower) < 8:
+        return ""
+
+    # If the user is invoking a Pocock skill, reset the counter and stay silent.
+    if lower.lstrip().startswith(SKIP_POCOCK):
+        reset_counter()
+        return ""
+
+    # Trivial commands — stay silent, don't touch the counter.
+    if lower.lstrip().startswith(SKIP_TRIVIAL):
+        return ""
+
+    primitive, body = detect(lower)
+    if not primitive:
+        return ""
+
+    count = read_counter() + 1
+    write_counter(count)
+
+    if count >= 2:
+        msg = ("[pocock-hint ESCALATION] %s\n"
+               "Pocock hint fired twice without invocation. "
+               "Either invoke %s now OR explicitly state why you're "
+               "proceeding without it.\n"
+               "Doctrine: ~/.claude/rules/pocock-implicit-activation.md"
+               % (body, primitive))
+    else:
+        msg = ("[pocock-hint] consider: %s\n"
+               "Doctrine: ~/.claude/rules/pocock-implicit-activation.md"
+               % body)
+
+    return envelope(msg)
+
+
+def run_self_test():
+    cases = [
+        ("A  bug-class fires /pocock-diagnose hint (1st = standard)",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"this is throwing a 500 error in production"}',
+         lambda o: "[pocock-hint]" in o and "/pocock-diagnose" in o and "ESCALATION" not in o,
+         True),  # reset counter before
+        ("B  2nd consecutive hint escalates",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"this code is broken and failing"}',
+         lambda o: "ESCALATION" in o and "twice without invocation" in o,
+         False),
+        ("C  invoking /pocock-diagnose resets + stays silent",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"/pocock-diagnose start the loop"}',
+         lambda o: o == "",
+         False),
+        ("D  post-reset, next bug-class is standard again",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"why is this failing again"}',
+         lambda o: "[pocock-hint]" in o and "ESCALATION" not in o,
+         False),
+        ("E  refactor-class fires /pocock-improve-codebase-architecture",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"can we refactor this tangled module"}',
+         lambda o: "[pocock-hint" in o and "/pocock-improve-codebase-architecture" in o,
+         True),  # reset to test category in isolation
+        ("F  plan-grill fires /pocock-grill-with-docs",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"stress-test this plan for me"}',
+         lambda o: "/pocock-grill-with-docs" in o,
+         True),
+        ("G  unfamiliar-code fires /pocock-zoom-out",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"explain this code area, I do not know it"}',
+         lambda o: "/pocock-zoom-out" in o,
+         True),
+        ("H  non-trigger stays silent",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"what time is it"}',
+         lambda o: o == "",
+         True),
+        ("I  trivial slash command stays silent",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"/ship quick"}',
+         lambda o: o == "",
+         True),
+        ("J  short prompt stays silent",
+         '{"hook_event_name":"UserPromptSubmit","prompt":"hi"}',
+         lambda o: o == "",
+         True),
+        ("K  malformed JSON returns empty",
+         'not json',
+         lambda o: o == "",
+         True),
+    ]
+    passed = failed = 0
+    print("pocock-implicit-activation self-test")
+    print("=====================================")
+    for name, payload, check, reset_before in cases:
+        if reset_before:
+            reset_counter()
+        try:
+            out = process(payload)
+            ok = bool(check(out))
+        except Exception as exc:
+            ok, out = False, "EXC:%s" % exc
+        if ok:
+            print("  PASS  %s" % name)
+            passed += 1
+        else:
+            print("  FAIL  %s  (got: %r)" % (name, out[:160]))
+            failed += 1
+    reset_counter()  # clean up after self-test
+    print("=====================================")
+    if failed == 0:
+        print("pocock-implicit-activation self-test: ALL PASS (%d/%d)" % (passed, passed))
+        sys.exit(0)
+    print("pocock-implicit-activation self-test: %d FAILURE(S) (%d/%d)"
+          % (failed, passed, passed + failed), file=sys.stderr)
+    sys.exit(1)
+
+
+def main():
+    mode = sys.argv[1] if len(sys.argv) > 1 else "run"
+    if mode in ("selftest", "--self-test"):
+        run_self_test()
+        return
+    out = process(sys.stdin.read())
+    if out:
+        print(out)
+    sys.exit(0)
+
+
+main()
+PYEOF
+)
+
+# Mode dispatch
+MODE="run"
+[ "${1:-}" = "--self-test" ] && MODE="selftest"
+
+# Export counter file path so python sub-process sees it
+export POCOCK_COUNTER_FILE="${COUNTER_FILE}"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  if [ "$MODE" = "selftest" ]; then
+    echo "SKIP: python3 not available — cannot run self-test"
+    exit 0
+  fi
+  echo "pocock-implicit-activation: python3 absent — hook degraded" >&2
+  exit 0
 fi
 
-# Lowercase for case-insensitive matching. Strip newlines.
-LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]' | tr '\n' ' ')
-
-# Skip if prompt is trivially short or matches negation patterns
-[ ${#LOWER} -lt 8 ] && exit 0
-
-# Skip if user is explicitly invoking a non-Pocock workflow that takes precedence
-case "$LOWER" in
-  /commit*|/push*|/ship*|/setup*|/daily-plan*|/prime*) exit 0 ;;
-esac
-
-# ──────────────────────────────────────────────────────────────────────────
-# Pattern detection — work classes that map to Pocock skills.
-# Order matters: most specific first. We surface AT MOST one hint per turn
-# to avoid noise. If multiple match, the first match wins.
-# ──────────────────────────────────────────────────────────────────────────
-
-CANDIDATES=""
-
-# Class 1 — DEBUG / DIAGNOSE signals (highest priority — most error-prone class)
-if echo "$LOWER" | grep -qE '\b(broken|throwing|crashing|failing|fails|fail\b|hang(s|ing)?|stuck|errored?|exception|stack trace|why is this|what.{1,12}wrong|doesn.t work|isn.t working|not working|timeout|timing out|slow|regress(ion|ed)|perf(ormance)? (issue|problem)|silent(ly)? fail)' 2>/dev/null; then
-  CANDIDATES="pocock-diagnose"
+if [ "$MODE" = "selftest" ]; then
+  python3 -c "$PYCODE" selftest </dev/null
+  exit $?
 fi
 
-# Class 2 — PLAN GRILLING / DOMAIN-LANGUAGE signals
-if [ -z "$CANDIDATES" ] && echo "$LOWER" | grep -qE '\b(grill|stress[- ]test|challenge (this|my|the) (plan|design|approach)|fuzzy|sharpen|domain (model|language|glossary)|context\.md|adr|architecture decision|ubiquitous)' 2>/dev/null; then
-  CANDIDATES="pocock-grill-with-docs"
-fi
-
-# Class 3 — REFACTOR / DEEPENING signals
-if [ -z "$CANDIDATES" ] && echo "$LOWER" | grep -qE '\b(refactor|deepen|extract module|tangled|messy code|ball of mud|coupled|tightly coupled|shallow module|deep module|architecture (review|audit|clean)|spaghetti|code smell)' 2>/dev/null; then
-  CANDIDATES="pocock-improve-codebase-architecture"
-fi
-
-# Class 4 — UNFAMILIAR CODE / ORIENTATION signals
-if [ -z "$CANDIDATES" ] && echo "$LOWER" | grep -qE '\b(zoom out|don.t know this|unfamiliar|explain this (code|module|file)|what does this|how does this fit|map of|higher.level (view|perspective))' 2>/dev/null; then
-  CANDIDATES="pocock-zoom-out"
-fi
-
-# Class 5 — TEST WRITING signals
-if [ -z "$CANDIDATES" ] && echo "$LOWER" | grep -qE '\b(write tests?|tdd|test[- ]driven|red[- ]green[- ]refactor|test[- ]first|failing test|regression test|unit test|integration test)' 2>/dev/null; then
-  CANDIDATES="superpowers:test-driven-development + .claude/rules/tdd-design-companion.md"
-fi
-
-# Class 6 — TOKEN EFFICIENCY signals
-if [ -z "$CANDIDATES" ] && echo "$LOWER" | grep -qE '\b(be brief|less tokens?|shorter|compact|terse|tldr|caveman|condense|reduce verbosity|too verbose|too long)' 2>/dev/null; then
-  CANDIDATES="caveman"
-fi
-
-# No match → silent exit (most prompts shouldn't trigger)
-[ -z "$CANDIDATES" ] && exit 0
-
-# ──────────────────────────────────────────────────────────────────────────
-# Output: minimal context-injection line. One sentence, prefixed for visibility,
-# names the candidate skill(s) + the implicit-activation rule.
-# ──────────────────────────────────────────────────────────────────────────
-
-cat <<EOF
-[pocock-hint] Work class detected → consider: ${CANDIDATES}.
-Read .claude/rules/pocock-implicit-activation.md before claiming completion.
-EOF
-
+python3 -c "$PYCODE" run
 exit 0

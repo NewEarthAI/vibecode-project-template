@@ -1,7 +1,7 @@
 ---
 name: data-table-design
 description: |
-  Use when designing or fixing data tables for any NewEarth AI / BuyBox / agency
+  Use when designing or fixing data tables for any the agency / a SaaS app / agency
   project — pipeline tables, dashboards, lists, KPI grids, anything rendering
   rows × columns of business data. Codifies the seven non-negotiable rules:
   (1) headers ALWAYS centred, (2) cells centred by default, (3) long-text streams
@@ -15,11 +15,11 @@ description: |
 version: 1.0
 classification: encoded-preference
 user-invocable: false
-note: L3 library — auto-loaded by /design-review and /newearth-ui-design when a tabular surface is detected. Not a human entry point.
+note: L3 library — auto-loaded by /design-review and /ui-design-system when a tabular surface is detected. Not a human entry point.
 created: 2026-05-03
 updated: 2026-05-03
 validated_on:
-  - BuyBox-AI seller pipeline table (10 column sections, 80+ columns)
+  - a SaaS app seller pipeline table (10 column sections, 80+ columns)
   - Header-cell centroid stack-up across all financial / count / badge / address columns
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep]
 companion_skills:
@@ -29,10 +29,10 @@ companion_skills:
   - frontend-design (general production-grade UI)
 ---
 
-# Data Table Design — NewEarth AI Standard
+# Data Table Design — the agency Standard
 
 > Every table in every agency project should obey these rules by default. The
-> patterns below shipped on BuyBox-AI's pipeline (2026-05-03) after three rounds
+> patterns below shipped on a SaaS app's pipeline (2026-05-03) after three rounds
 > of UX feedback distilled the rule set down to what actually reads cleanly.
 
 ---
@@ -159,7 +159,7 @@ display) runs the value through `formatStreetAddress()` which:
 City and county also get title-cased (no abbreviation pass — they're
 proper nouns).
 
-Reference implementation: `src/lib/formatters.ts` in BuyBox-AI. Copy
+Reference implementation: `src/lib/formatters.ts` in a SaaS app. Copy
 verbatim into other agency projects — it's project-agnostic.
 
 ---
@@ -168,7 +168,7 @@ verbatim into other agency projects — it's project-agnostic.
 
 ### Step 1 — Drop in the formatter helpers
 
-Copy `src/lib/formatters.ts` from BuyBox-AI to the target project. The file
+Copy `src/lib/formatters.ts` from a SaaS app to the target project. The file
 exports:
 
 - `toTitleCase(str)` — title-case with state/direction preservation + ordinals
@@ -286,7 +286,7 @@ cell: ({ row }) => {
 ### Step 6 — Tighten column widths to content max-width
 
 Don't size to header-label width. Size to the longest realistic cell content.
-Examples from BuyBox-AI:
+Examples from a SaaS app:
 
 | Column | Old size | New size | Reasoning |
 |---|---|---|---|
@@ -309,7 +309,7 @@ property types, status codes, etc.) that are unreadable to non-experts.
 Always map code → plain-English label + colour severity, with the technical
 code in a tooltip for the user who needs it.
 
-Reference: BuyBox-AI flood-zone column maps `X / B / C` → "Low Risk" green,
+Reference: a SaaS app flood-zone column maps `X / B / C` → "Low Risk" green,
 `A*` → "High Risk · AE" orange, `V*` → "Coastal · VE" red, `D` → "Pending"
 grey, anything else → raw code with neutral pill. Tooltip carries the FEMA
 zone description in plain English.
@@ -373,7 +373,7 @@ Before claiming a new table is "neat":
 
 ---
 
-## Related Files (BuyBox-AI reference implementation)
+## Related Files (a SaaS app reference implementation)
 
 | File | Purpose |
 |---|---|
@@ -402,6 +402,6 @@ column-id naming.
 
 ---
 
-*Skill version: 1.0 | Created 2026-05-03 from BuyBox-AI pipeline-table redesign.
+*Skill version: 1.0 | Created 2026-05-03 from a SaaS app pipeline-table redesign.
 Encoded preference — the model can write tables, but agency-quality tables
 require these specific opinions.*

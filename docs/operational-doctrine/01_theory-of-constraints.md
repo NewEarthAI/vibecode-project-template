@@ -22,7 +22,7 @@ primary_sources:
 
 ## 1. Purpose
 
-This doctrine converts Eliyahu Goldratt's Theory of Constraints (TOC) from an academic management framework into operational guidance suitable for executable use by AI agents and human operators inside the NewEarth ecosystem.
+This doctrine converts Eliyahu Goldratt's Theory of Constraints (TOC) from an academic management framework into operational guidance suitable for executable use by AI agents and human operators inside the the agency ecosystem.
 
 It exists to answer one question fast: **where is the binding constraint in this system, and what is the highest-leverage intervention available right now?**
 
@@ -514,10 +514,10 @@ The real-decision test is the third gate of the triple verification. Per Amendme
 
 ### 12.1 Test case (substitute per Amendment A2 — pending operator confirmation)
 
-**Suggested case**: Nirvana Freight dispatcher bottleneck. Single dispatcher's manual approval gated load assignment, capping daily throughput at ~40 loads despite carrier capacity for 65+.
+**Suggested case**: a logistics app dispatcher bottleneck. Single dispatcher's manual approval gated load assignment, capping daily throughput at ~40 loads despite carrier capacity for 65+.
 
 **Actual decision at the time** (illustrative — operator confirms or substitutes):
-The Nirvana Freight team noticed daily load-assignment throughput plateauing at ~40 loads/day despite carrier capacity for 65+. The actual decision made was to **hire a second dispatcher** to share the approval workload. Cost: ~$55k/year fully-loaded. Lead time to onboarding: ~6 weeks.
+The a logistics app team noticed daily load-assignment throughput plateauing at ~40 loads/day despite carrier capacity for 65+. The actual decision made was to **hire a second dispatcher** to share the approval workload. Cost: ~$55k/year fully-loaded. Lead time to onboarding: ~6 weeks.
 
 **Actual outcome**: After the new dispatcher onboarded, throughput rose to ~58 loads/day. The intervention worked but did not fully close the throughput gap (still ~7 loads/day short of capacity). Cost-per-additional-load: roughly $5/load over 12 months.
 
@@ -547,7 +547,7 @@ The Nirvana Freight team noticed daily load-assignment throughput plateauing at 
 
 **Caveat**: this test case was selected by the doctrine's author in Session 1, not by an independent party. Per council Amendment B (Devil's Advocate), a second test case nominated by a different operator/agent BEFORE re-application would strengthen the verdict from PASS to STRONG-PASS. Session 2 should nominate such a case (a non-real-estate decision per Reliability Engineer Assumption C).
 
-**Session 2 status (2026-05-11): STRONG-PASS upgrade DEFERRED.** Reason: Gate 3 (real-decision test) requires actual-outcome ground-truth data captured BEFORE the doctrine is applied — i.e., the operator names a real past decision they made, writes down what they actually did and what actually happened, then the doctrine is applied. Self-nomination by the doctrine author OR doctrine-author-generated synthetic test cases violate the anti-sycophancy criterion (Gate 3 Component 2 of `doctrine-verification-gate.md`). Three test-case classes named in continuation prompt for operator selection: (a) n8n workflow pipeline bottleneck, (b) Vercel deploy pipeline bottleneck, (c) NewEarth agency-side intake bottleneck. Until operator supplies actual-outcome data for one of these (or substitutes their own past decision), TOC doctrine remains **ADVISORY**. Recommended elicitation question: "Name one past decision in {category} where you intervened to increase throughput — what did you actually do, what was the cost, what was the actual outcome?"
+**Session 2 status (2026-05-11): STRONG-PASS upgrade DEFERRED.** Reason: Gate 3 (real-decision test) requires actual-outcome ground-truth data captured BEFORE the doctrine is applied — i.e., the operator names a real past decision they made, writes down what they actually did and what actually happened, then the doctrine is applied. Self-nomination by the doctrine author OR doctrine-author-generated synthetic test cases violate the anti-sycophancy criterion (Gate 3 Component 2 of `doctrine-verification-gate.md`). Three test-case classes named in continuation prompt for operator selection: (a) n8n workflow pipeline bottleneck, (b) Vercel deploy pipeline bottleneck, (c) the agency agency-side intake bottleneck. Until operator supplies actual-outcome data for one of these (or substitutes their own past decision), TOC doctrine remains **ADVISORY**. Recommended elicitation question: "Name one past decision in {category} where you intervened to increase throughput — what did you actually do, what was the cost, what was the actual outcome?"
 
 ### 12.2 What "non-trivial insight" means in this test
 
@@ -632,7 +632,7 @@ The doctrine has earned its slot. Deletion test PASSES.
 **Status**: **ADVISORY** — all three gates returned acceptable verdicts:
 - Deletion test: **PASS** (Section 13 — four load-bearing downstream consumers)
 - Code-council (B5 rubric): **ADVISORY** — all axes scored ≥70 but 3 Critical Application-Checklist gaps prompted ADVISORY downgrade; 3 Critical items patched in v0.2; 2 Important items remain as named gaps (see `council/code-reviews/2026-05-10-toc-doctrine.md`)
-- Real-decision test (A1 + A2 counterfactual): **PASS** with caveat — Nirvana dispatcher case shows substantive difference between doctrine recommendation (exploit-then-evaluate) and default action (hire-directly), with credible cost-leverage argument. Caveat: case was author-selected; Session 2 should nominate a second test case from a non-author party for STRONG-PASS upgrade.
+- Real-decision test (A1 + A2 counterfactual): **PASS** with caveat — a logistics app dispatcher case shows substantive difference between doctrine recommendation (exploit-then-evaluate) and default action (hire-directly), with credible cost-leverage argument. Caveat: case was author-selected; Session 2 should nominate a second test case from a non-author party for STRONG-PASS upgrade.
 **Remaining Important items** (do not block this version; addressed in next revision):
 - Section 3.3 redirect needs specific stakeholder-mapping reference named
 - Principle 3's ">10x capacity ratio" exception needs either primary-source citation or "project-invented" framing

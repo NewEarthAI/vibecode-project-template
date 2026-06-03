@@ -1,8 +1,0 @@
-# app_reviews/
-
-Feedback loop outputs go here (Grade 4+).
-
-File patterns:
-- *_review.md — Code/architecture review results
-- bug-*-resolution.md — Bug reproduction and resolution plans
-- test-*-results.md — Test execution results

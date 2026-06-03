@@ -37,7 +37,7 @@ For each PR, classify:
 
 ### FAILING_CI — required check failing
 - Trigger: any `statusCheckRollup` entry with `state == "FAILURE"` or `conclusion == "FAILURE"`
-- Filter for the *required* checks per BuyBox-AI doctrine: `typecheck`, `check`, `Vercel`, `Bundle-secrets + paid-API governance`. Playwright FAILURE/CANCELLED is the known-flaky pattern (see `operational-guardrails.md` BuyBox-AI CI § admin-merge heuristic) — render as `[INFO]` not `[FAILING_CI]`.
+- Filter for the *required* checks per a SaaS app doctrine: `typecheck`, `check`, `Vercel`, `Bundle-secrets + paid-API governance`. Playwright FAILURE/CANCELLED is the known-flaky pattern (see `operational-guardrails.md` a SaaS app CI § admin-merge heuristic) — render as `[INFO]` not `[FAILING_CI]`.
 - Output: `[FAILING_CI] PR #<N> "<title>" — <check-name> = FAILURE`
 - Fix: `gh pr checks <N> --watch && gh run rerun <run-id>` (or fix the underlying issue)
 
@@ -112,8 +112,8 @@ This dedup happens in SKILL.md Phase 7, NOT in Layer 3 itself. Layer 3 emits raw
 LAYER 3 (PRs): 3 issues
   [FAILING_CI] PR #471 "feat: drawer design Wave H" — typecheck = FAILURE
     fix: gh pr checks 471 --watch  (or fix the type error locally)
-  [MERGED_NOT_CLEANED] PR #481 "Track 1: match_score truthiness fix" merged 4 days ago — worktree at /Users/justin/code/buybox-track1, branch feat/track1
-    fix: git worktree remove /Users/justin/code/buybox-track1 && git branch -D feat/track1 && git push origin --delete feat/track1
+  [MERGED_NOT_CLEANED] PR #481 "Track 1: match_score truthiness fix" merged 4 days ago — worktree at /Users/justin/code/the app-track1, branch feat/track1
+    fix: git worktree remove /Users/justin/code/the app-track1 && git branch -D feat/track1 && git push origin --delete feat/track1
   [STALE_OPEN_PR] PR #463 "WIP: telegram dedup" — 12 days old, no activity since 2026-04-25
     fix: ship, close, or comment explaining the wait state
   [INFO] PR #492 "feat(verify-shipped): v1.0 foundation" — ready to merge (informational)
@@ -146,7 +146,7 @@ Well under the `quick` tier wall-clock budget.
 
 ## References
 
-- `operational-guardrails.md` BuyBox-AI CI § — admin-merge heuristic explains why Playwright FAILURE/CANCELLED is the known-flaky pattern (rendered as `[INFO]`, not `[FAILING_CI]`)
+- `operational-guardrails.md` a SaaS app CI § — admin-merge heuristic explains why Playwright FAILURE/CANCELLED is the known-flaky pattern (rendered as `[INFO]`, not `[FAILING_CI]`)
 - `loading-state-invariants.md` Invariant 7 — partner-facing data-fidelity merge gate (the doctrinal witness for why merged-not-deployed matters)
 - `pipeline-philosophy.md` Principle 3a — one state, one primary surface (the dedup discipline that justifies Layer 2/3 cross-reference)
 - `walk-branches.sh` — Layer 2 implementation (Layer 3 dedups against STALE_LOCAL outputs from this script)

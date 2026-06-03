@@ -10,7 +10,7 @@
 
 **Auto-loaded via**: `code-review-domain-routing.md` Edge Functions + Frontend/React domain on PRs touching `supabase/functions/**/*.ts`, `src/integrations/supabase/**`, any `*.ts`/`*.tsx` that calls `.from(...)` followed by `.ilike(...)` / `.like(...)` / `.match(...)`.
 
-**Origin**: 2026-05-14 Killer Bee dedup-graveyard P0 incident (GitHub #739, PR #743 + #744 + #745). 26 fresh wholesaler submissions lost to a single stale placeholder row via JavaScript template-literal interpolation of `null` values producing the literal pattern `%null%null%` against a graveyard row whose `normalized_address` literally contained "null" twice.
+**Origin**: 2026-05-14 Edge Case dedup-graveyard P0 incident (GitHub #739, PR #743 + #744 + #745). 26 fresh wholesaler submissions lost to a single stale placeholder row via JavaScript template-literal interpolation of `null` values producing the literal pattern `%null%null%` against a graveyard row whose `normalized_address` literally contained "null" twice.
 
 ---
 
@@ -24,7 +24,7 @@ const pattern = `%${x}%${x}%`
 // pattern === '%null%null%'  ← matches any row whose target contains "null" twice
 ```
 
-When this pattern is fed to Postgres `ILIKE`, it matches ANY row containing those words. The killer-bee bug class: partner intake stored the address only in `full_address`, leaving the structured columns `NULL`. The edge function then built ILIKE patterns from those NULL columns and matched a graveyard row from 2026-05-11 whose `normalized_address` was the developer-side smoke test `<p>9876 Oak Drive, Phoenix, AZ 85003 — BUYBOX SMOKE #3 Please Delete</p>, null, null null`. 26 real wholesaler submissions over 4 days absorbed silently into that one stale row.
+When this pattern is fed to Postgres `ILIKE`, it matches ANY row containing those words. The edge-case bug class: partner intake stored the address only in `full_address`, leaving the structured columns `NULL`. The edge function then built ILIKE patterns from those NULL columns and matched a graveyard row from 2026-05-11 whose `normalized_address` was the developer-side smoke test `<p>9876 Oak Drive, Phoenix, AZ 85003 — EXAMPLE SMOKE #3 Please Delete</p>, null, null null`. 26 real wholesaler submissions over 4 days absorbed silently into that one stale row.
 
 Same trap applies to `normalize_address` writes, idempotency-key construction, regex patterns, and any string that later becomes a dedup target.
 
@@ -121,9 +121,9 @@ A non-zero count of any of these in the last 24 hours indicates a near-miss for 
 
 ## Failure Precedent
 
-**2026-05-14 — Killer Bee form dedup-graveyard P0 (GitHub #739)**
+**2026-05-14 — Edge Case form dedup-graveyard P0 (GitHub #739)**
 
-- `bb_submit_killerbee_deal` RPC stored `full_address` only; left `street_address`/`city`/`state`/`zip` NULL.
+- `submit_intake_deal` RPC stored `full_address` only; left `street_address`/`city`/`state`/`zip` NULL.
 - `process-submission` edge function called `parseStreetComponents(null)` → all-null result → v2 dedup RPC skipped.
 - Fallback ILIKE built `%null%null%` pattern → matched 2026-05-11 graveyard row `7337e842-...`.
 - 26 submissions over 4 days silently absorbed into the graveyard.

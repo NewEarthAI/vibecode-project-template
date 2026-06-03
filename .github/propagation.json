@@ -2,8 +2,8 @@
   "description": "Template propagation config — controls auto-PR creation in downstream repos",
   "target_repos": [
     "NewEarthAI/Agency-Main",
-    "NewEarthAI/BuyBox-AI",
-    "NewEarthAI/nirvana-freight-fleet-insights-automation"
+    "NewEarthAI/a SaaS app",
+    "NewEarthAI/a-logistics-app-freight-fleet-insights-automation"
   ],
   "file_tiers": {
     "auto_safe": {

@@ -68,7 +68,7 @@ What the skill diagnoses is a **framing**. It takes a stated question — a prop
 1. **What is the irreducible question beneath the framing?** The deepest question whose answer still changes the action in front of the operator.
 2. **What did the framing add on top of that irreducible question?** Every added constraint, presupposition, and smuggled conclusion, named in a delta table.
 
-The skill exists because of a real failure. On 2026-05-14 the NewEarth agency ran a three-phase competitor evaluation that converged eight agents unanimously on a verdict — inside a flawed frame. A protocol gate named "reproducibility check" (irreducible purpose: *test whether the competitor's claim holds up when run in our environment*) had silently become a build-cost estimate. Nobody reduced the gate to its irreducible question and noticed the method no longer answered it. This skill is the callable tool that performs that reduction on demand, before a framing error compounds through a multi-phase chain.
+The skill exists because of a real failure. On 2026-05-14 the the agency agency ran a three-phase competitor evaluation that converged eight agents unanimously on a verdict — inside a flawed frame. A protocol gate named "reproducibility check" (irreducible purpose: *test whether the competitor's claim holds up when run in our environment*) had silently become a build-cost estimate. Nobody reduced the gate to its irreducible question and noticed the method no longer answered it. This skill is the callable tool that performs that reduction on demand, before a framing error compounds through a multi-phase chain.
 
 **Use this skill when**:
 - A proposal, claim, or protocol gate is about to drive a decision and its framing has not been audited

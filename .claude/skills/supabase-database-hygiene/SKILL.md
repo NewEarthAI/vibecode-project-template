@@ -5,7 +5,7 @@ description: |
 classification: capability-uplift
 version: "1.0.0"
 metadata:
-  created_by: newearthai
+  created_by: your-org
   created_date: "2026-03-26"
   battle_tested: true
   validated_on:

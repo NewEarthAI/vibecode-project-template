@@ -42,27 +42,6 @@ resolve_repo_root() {
   git rev-parse --show-toplevel 2>/dev/null || pwd
 }
 
-resolve_primary_root() {
-  # The PRIMARY checkout's root — identical from every worktree of the same
-  # repo. This is the load-bearing path for the heartbeat layer: the writer
-  # (running inside ANY worktree) and the janitor (reading from the primary)
-  # MUST agree on one shared `.claude/worktrees/` dir, or the heartbeat
-  # mechanism silently fails (Edge Case Finder, council 2026-05-25).
-  #
-  # `git rev-parse --show-toplevel` returns the CURRENT worktree's path
-  # (different per worktree) — wrong. `--git-common-dir` returns the SHARED
-  # `.git` (same for every worktree); its parent is the single primary root.
-  # The common-dir may be relative (when invoked from the primary checkout) or
-  # absolute (from a linked worktree) — handle both.
-  local common
-  common="$(git rev-parse --git-common-dir 2>/dev/null)" || return 1
-  [ -n "$common" ] || return 1
-  case "$common" in
-    /*) ( cd "$(dirname "$common")" 2>/dev/null && pwd ) ;;
-    *)  ( cd "$(git rev-parse --show-toplevel 2>/dev/null)/$(dirname "$common")" 2>/dev/null && pwd ) ;;
-  esac
-}
-
 resolve_memory_path() {
   # Three-tier resolution:
   #   1. <repo_root>/.claude/memory/MEMORY.md (per-project, may be gitignored)
@@ -208,7 +187,7 @@ emit_prs_section() {
 #
 # Reports a single one-liner summarising the readiness of the toolchain that
 # Claude Code sessions most commonly need: gh CLI auth, Supabase CLI presence,
-# MCP server count, nirvana-agent VPS reachability. Non-blocking by design —
+# MCP server count, a-logistics-app-agent VPS reachability. Non-blocking by design —
 # any failure prints a visible warning but never aborts the briefing.
 #
 # Origin: 2026-05-08 /apply-insights run. Recurring friction: sessions stalled
@@ -256,12 +235,12 @@ except Exception:
   print(0)" 2>/dev/null || echo 0)
   fi
 
-  # VPS reachability — only probe if nirvana-agent is in ssh config (avoids
+  # VPS reachability — only probe if a-logistics-app-agent is in ssh config (avoids
   # noisy "host not found" on machines that don't have the alias)
   local vps_status="n/a"
-  if [ -f "$HOME/.ssh/config" ] && grep -q "^Host nirvana-agent" "$HOME/.ssh/config" 2>/dev/null; then
+  if [ -f "$HOME/.ssh/config" ] && grep -q "^Host a-logistics-app-agent" "$HOME/.ssh/config" 2>/dev/null; then
     if ssh -o ConnectTimeout=2 -o BatchMode=yes -o StrictHostKeyChecking=no \
-         -q nirvana-agent exit 2>/dev/null; then
+         -q a-logistics-app-agent exit 2>/dev/null; then
       vps_status="warm"
     else
       vps_status="unreachable"
@@ -270,7 +249,7 @@ except Exception:
 
   # One-liner output. Loud only on failure.
   echo '```'
-  echo "gh=${gh_status}  supabase-cli=${sb_cli}  mcp-servers=${mcp_count}  nirvana-vps=${vps_status}"
+  echo "gh=${gh_status}  supabase-cli=${sb_cli}  mcp-servers=${mcp_count}  a-logistics-app-vps=${vps_status}"
   echo '```'
 
   # Visible warning if any check failed — separate line so the model notices
@@ -282,215 +261,6 @@ except Exception:
 }
 
 # ---------------------------------------------------------------------------
-# Vault auto-read — the 5 most-recently-updated shared-vault notes
-# ---------------------------------------------------------------------------
-# Surfaces recent Obsidian vault notes from the shared knowledge database into
-# the SessionStart briefing — the read half of the Obsidian autopilot. Every
-# repo wired to the same parent vault (parent hub + child repos) sees the same
-# shared notes; there is no per-repo vault.
-#
-# Config-driven by design: the database URL + the Keychain item that holds the
-# read credential are read from the per-machine, gitignored
-# .claude/obsidian-second-brain.local.md — so THIS file carries no
-# project-specific reference and works for any adopter who runs /setup.
-#
-# Silent-skip (degrades, never blocks the briefing) when ANY of:
-#   - no .claude/obsidian-second-brain.local.md on this repo/machine
-#   - that config has no supabase_url: or no keychain_item:
-#   - the read credential is missing from the macOS Keychain
-#   - curl exits non-zero or exceeds 3s, or jq fails to parse the response
-# Total budget: 3 seconds.
-
-emit_vault_section() {
-  local repo_root="$1"
-  local cfg="$repo_root/.claude/obsidian-second-brain.local.md"
-  [ -f "$cfg" ] || return  # no obsidian config on this repo — silent skip
-
-  # Parse YAML frontmatter (between the first two '---' lines).
-  local supabase_url kc_item vault_scope_slug
-  supabase_url=$(awk '/^---$/{if(++c==2) exit} c==1 && /supabase_url:/{gsub(/.*supabase_url:[[:space:]]*"?/,""); gsub(/"[[:space:]]*$/,""); print}' "$cfg")
-  kc_item=$(awk '/^---$/{if(++c==2) exit} c==1 && /keychain_item:/{gsub(/.*keychain_item:[[:space:]]*"?/,""); gsub(/"[[:space:]]*$/,""); print}' "$cfg")
-  # Optional per-repo scope filter (added 2026-05-23) — when set, restricts
-  # vault block to rows whose source_path contains this slug (case-insensitive
-  # ilike). When absent, returns the full vault (Agency-Main parent behaviour).
-  # Each downstream repo sets its own slug:
-  #   vault_scope_slug: "{client-1}"        # repo 1
-  #   vault_scope_slug: "{client-2}"        # repo 2
-  vault_scope_slug=$(awk '/^---$/{if(++c==2) exit} c==1 && /vault_scope_slug:/{gsub(/.*vault_scope_slug:[[:space:]]*"?/,""); gsub(/"[[:space:]]*$/,""); print}' "$cfg")
-  [ -n "$supabase_url" ] || return  # config has no supabase_url — silent skip
-  [ -n "$kc_item" ] || return       # config has no keychain_item — silent skip
-
-  local svc_key
-  svc_key=$(security find-generic-password -s "$kc_item" -a "service_role" -w 2>/dev/null)
-  [ -n "$svc_key" ] || return  # read credential not in this Mac's Keychain — silent skip
-
-  # Over-fetch 20 rows then dedup-by-path in jq → 5 distinct notes (the
-  # append-only audit trail means one path can have many rows). When the
-  # per-repo scope slug is set, add a case-insensitive ilike filter on
-  # source_path (PostgREST: %2A = url-encoded asterisk).
-  local query='select=source_path,source_title,updated_at&source_type=eq.vault_note&order=updated_at.desc&limit=20'
-  if [ -n "$vault_scope_slug" ]; then
-    query="select=source_path,source_title,updated_at&source_type=eq.vault_note&source_path=ilike.%2A${vault_scope_slug}%2A&order=updated_at.desc&limit=20"
-  fi
-  local response
-  response=$(curl -sS --max-time 3 \
-    -H "apikey: $svc_key" \
-    -H "Authorization: Bearer $svc_key" \
-    "${supabase_url}/rest/v1/knowledge_items?${query}" 2>/dev/null) || return
-
-  # F1 fix (code-council 2026-05-22): jq -e + array-type check.
-  # `jq 'length'` on a PostgREST error envelope (`{"code":"PGRST301",...}`)
-  # returns 4 (key count), bypasses the count>0 guard, and emits an empty
-  # vault block with no operator signal that auth is broken. Force array
-  # type-check + log auth-likely failure to ~/.claude/sessionstart-vault.log.
-  local count
-  count=$(printf '%s' "$response" | jq -e 'if type=="array" then length else error("not-an-array") end' 2>/dev/null) || {
-    local vault_log="$HOME/.claude/sessionstart-vault.log"
-    mkdir -p "$(dirname "$vault_log")" 2>/dev/null
-    {
-      printf '[%s] vault query returned non-array response (likely auth-expired or schema drift); response head: ' \
-        "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      printf '%s' "$response" | head -c 200
-      echo
-    } >> "$vault_log" 2>/dev/null
-    echo "### 📓 Recent vault activity"
-    echo "_(vault read failed — likely auth expired or schema drift; see \`~/.claude/sessionstart-vault.log\`)_"
-    echo ""
-    return
-  }
-  [ -n "$count" ] && [ "$count" != "null" ] || return
-
-  if [ -n "$vault_scope_slug" ]; then
-    echo "### 📓 Recent vault activity — ${vault_scope_slug}-scoped (top 5 distinct notes by recency)"
-  else
-    echo "### 📓 Recent vault activity (top 5 distinct notes by recency)"
-  fi
-  if [ "$count" -eq 0 ]; then
-    echo "_(no vault notes yet — vault-sync hasn't found anything new, or the vault is empty)_"
-    echo ""
-    return
-  fi
-  echo "_(source: \`knowledge_items\` where \`source_type='vault_note'\`)_"
-  echo '```'
-  printf '%s' "$response" | jq -r '
-    group_by(.source_path)
-    | map(max_by(.updated_at))
-    | sort_by(.updated_at) | reverse
-    | .[0:5]
-    | .[] | "  \(.updated_at | .[0:10])  \(.source_title // "(no title)")  —  \(.source_path)"
-  ' 2>/dev/null
-  echo '```'
-  echo ""
-}
-
-# ---------------------------------------------------------------------------
-# Heartbeat writer — the liveness signal the janitor reads (council 2026-05-25)
-# ---------------------------------------------------------------------------
-#
-# Writes `<primary>/.claude/worktrees/<current-worktree-basename>.heartbeat`
-# containing a UTC epoch timestamp, every session start. This is the WRITE half
-# of the armed-janitor layer; `sweep-stale-worktrees.sh` Check 4 is the READ
-# half. Both resolve the dir via the shared primary root (resolve_primary_root)
-# so a worktree session and the primary-run janitor agree on one location.
-#
-# Returns a one-line status on stdout (rides the visible session-start signal
-# so a broken writer is visible EVERY session — Reliability Engineer
-# non-shippable flag, council 2026-05-25). Never crashes the briefing: any
-# failure prints "FAILED (<reason>)" and returns non-zero; the caller keeps
-# going. Atomic write (temp + mv) so the janitor never reads a half-written
-# file. NOT a PID — a SessionStart hook is a throwaway subprocess; $$ dies
-# instantly. Timestamp-freshness is the correct signal across the hook boundary
-# (mirrors cross-chat-collision-detect.sh's timestamp-marker choice).
-
-emit_heartbeat() {
-  local primary basename_wt hb_dir hb_file tmp now
-  primary="$(resolve_primary_root)" || { echo "FAILED (not a git repo)"; return 1; }
-  [ -n "$primary" ] || { echo "FAILED (primary root empty)"; return 1; }
-
-  # The CURRENT worktree's basename keys the heartbeat (the primary writes its
-  # own basename; each linked worktree writes its own). show-toplevel is the
-  # current worktree here — correct, this is the thing whose liveness we record.
-  local cur_toplevel
-  cur_toplevel="$(git rev-parse --show-toplevel 2>/dev/null)"
-  [ -n "$cur_toplevel" ] || { echo "FAILED (no worktree toplevel)"; return 1; }
-  basename_wt="$(basename "$cur_toplevel")"
-
-  hb_dir="$primary/.claude/worktrees"
-  mkdir -p "$hb_dir" 2>/dev/null || { echo "FAILED (mkdir $hb_dir)"; return 1; }
-  hb_file="$hb_dir/${basename_wt}.heartbeat"
-  now="$(date -u +%s)"
-
-  # Atomic: write temp in the same dir, then mv (rename is atomic on the same
-  # filesystem) so a concurrent janitor read never sees a partial file.
-  tmp="$(mktemp "$hb_dir/.hb.XXXXXX" 2>/dev/null)" || { echo "FAILED (mktemp)"; return 1; }
-  printf '%s\n' "$now" > "$tmp" 2>/dev/null || { rm -f "$tmp"; echo "FAILED (write)"; return 1; }
-  mv -f "$tmp" "$hb_file" 2>/dev/null || { rm -f "$tmp"; echo "FAILED (rename)"; return 1; }
-
-  echo "$basename_wt @ $(date -u +%H:%M:%SZ)"
-  return 0
-}
-
-# ---------------------------------------------------------------------------
-# Fleet / collision section — auto-surface /where at session start (council
-# 2026-05-25; operator said YES to auto-run). LOUD ⚠️ at the TOP of the
-# briefing on a real two-worktree same-file clash; otherwise a quiet one-line
-# all-clear. Composes where.sh (exit 1 = collision, exit 0 = clean) — never
-# rebuilds the git logic. Budget ≤3s; degrades gracefully if where.sh absent.
-# ---------------------------------------------------------------------------
-#
-# Returns TWO things via a sentinel-prefixed stdout the caller parses:
-#   first line:  "COLLISION" or "CLEAN" or "SKIP"
-#   rest:        the human-readable section body (markdown)
-# The caller hoists the body to the TOP of the briefing when the first line is
-# COLLISION, so the warning is impossible to miss.
-
-emit_fleet_collision_section() {
-  local primary="$1"
-  local where_script="$primary/.claude/skills/where/scripts/where.sh"
-  if [ ! -f "$where_script" ]; then
-    printf 'SKIP\n'
-    return 0
-  fi
-
-  # Run where.sh scoped to THIS repo only (the session-start view is "am I
-  # colliding here right now" — the full fleet sweep is the manual /where).
-  # WHERE_REPOS overrides the repo set; point it at the primary so we get a
-  # fast, bounded read. Capture rc WITHOUT a pipe (shell-portability §1).
-  local out rc tmp
-  tmp="$(mktemp 2>/dev/null || echo "/tmp/agg-where.$$.$RANDOM")"
-  ( cd "$primary" 2>/dev/null && WHERE_REPOS="$primary" bash "$where_script" ) > "$tmp" 2>/dev/null
-  rc=$?
-  out="$(cat "$tmp" 2>/dev/null)"
-  rm -f "$tmp"
-
-  # where.sh exit contract: 1 = collision detected, 0 = clean, 2 = no repos.
-  if [ "$rc" -eq 1 ]; then
-    # Extract just the collision bullet lines (after the COLLISION verdict line)
-    # so the briefing stays tight. Fall back to the whole output if parsing fails.
-    local collisions
-    collisions="$(printf '%s\n' "$out" | sed -n '/COLLISION/,/Whichever session commits second/p' 2>/dev/null)"
-    [ -z "$collisions" ] && collisions="$out"
-    printf 'COLLISION\n'
-    printf '### ⚠️ FILE COLLISION — two sessions editing the same file RIGHT NOW\n'
-    printf '_(auto-surfaced at session start — STOP and reconcile before writing)_\n'
-    printf '```\n%s\n```\n\n' "$collisions"
-    return 0
-  elif [ "$rc" -eq 0 ]; then
-    # Pull the one-line worktree count for a quiet all-clear.
-    local wt_line
-    wt_line="$(printf '%s\n' "$out" | grep -cE '📄 ' 2>/dev/null)"
-    wt_line=$(printf '%s' "$wt_line" | tr -dc '0-9' | head -c 4); wt_line=${wt_line:-0}
-    printf 'CLEAN\n'
-    printf '### 🟢 Fleet check\n'
-    printf '_No file is being edited in two places at once — safe to run parallel sessions. (%s worktree view(s) scanned.)_\n\n' "$wt_line"
-    return 0
-  else
-    printf 'SKIP\n'
-    return 0
-  fi
-}
-
-# ---------------------------------------------------------------------------
 # Briefing assembly
 # ---------------------------------------------------------------------------
 
@@ -499,28 +269,6 @@ build_briefing() {
   local brief_script="$repo_root/.claude/skills/prime-lite/scripts/brief.sh"
   local heartbeat_items=0
   local body=""
-
-  # ── Liveness heartbeat (silent side-effect, status surfaced) ──────────────
-  # Write THIS worktree's heartbeat first so a session that crashes later still
-  # recorded liveness. Status rides the visible signal: a broken writer shows
-  # "heartbeat: FAILED ..." at every session start (Reliability Engineer flag).
-  local hb_status
-  hb_status="$(emit_heartbeat)"
-  local hb_rc=$?
-  if [ "$hb_rc" -eq 0 ]; then
-    heartbeat_items=$((heartbeat_items + 1))
-  fi
-
-  # ── Fleet / collision (auto /where) — built now, hoisted to TOP on clash ──
-  local primary_root fleet_raw fleet_verdict fleet_body
-  primary_root="$(resolve_primary_root)"
-  [ -n "$primary_root" ] || primary_root="$repo_root"
-  fleet_raw="$(emit_fleet_collision_section "$primary_root")"
-  fleet_verdict="$(printf '%s\n' "$fleet_raw" | head -1)"
-  fleet_body="$(printf '%s\n' "$fleet_raw" | tail -n +2)"
-  if [ "$fleet_verdict" != "SKIP" ]; then
-    heartbeat_items=$((heartbeat_items + 1))
-  fi
 
   if [ -f "$brief_script" ]; then
     # prime-lite brief is the trusted base layer; we don't modify it.
@@ -557,34 +305,11 @@ build_briefing() {
   body="${body}${preflight_section}"
   heartbeat_items=$((heartbeat_items + 1))
 
-  # Vault auto-read — top 5 recent shared-vault notes from the knowledge
-  # database. Silent-skip when no obsidian config exists on this repo/machine
-  # or on any failure; 3-second budget.
-  local vault_section
-  vault_section=$(emit_vault_section "$repo_root")
-  if [ -n "$vault_section" ]; then
-    body="${body}${vault_section}"
-    heartbeat_items=$((heartbeat_items + 1))
-  fi
-
-  # Fleet/collision placement. On COLLISION → hoist to the very TOP of body so
-  # the ⚠️ is impossible to miss (operator's "I always know what's going on").
-  # On CLEAN → quiet one-liner appended at the end. SKIP → nothing.
-  if [ "$fleet_verdict" = "COLLISION" ]; then
-    body="${fleet_body}
-
-${body}"
-  elif [ "$fleet_verdict" = "CLEAN" ]; then
-    body="${body}${fleet_body}"
-  fi
-
   # Heartbeat — visible signal that the hook actually fired (Reliability
-  # Engineer non-shippable flag). The liveness-marker status rides this same
-  # line so a broken heartbeat-writer is visible at EVERY session start.
+  # Engineer non-shippable flag).
   local body_bytes=${#body}
-  local hb_marker_line="heartbeat: ${hb_status}"
   local heartbeat
-  heartbeat="**Session context loaded: ${heartbeat_items} sections, ${body_bytes} bytes · ${hb_marker_line}**"
+  heartbeat="**Session context loaded: ${heartbeat_items} sections, ${body_bytes} bytes**"
   printf '%s\n\n%b' "$heartbeat" "$body"
 }
 
@@ -679,59 +404,6 @@ run_self_test() {
     check "T7 MEMORY truncation: head -80 caps at 80 lines" false
   fi
   rm -f "$tmp_mem"
-
-  # T8 — resolve_primary_root agrees with the shared common-dir parent. From any
-  # worktree this MUST equal the parent of `git rev-parse --git-common-dir`.
-  local prim expected_common expected_prim
-  prim=$(resolve_primary_root)
-  expected_common=$(git rev-parse --git-common-dir 2>/dev/null)
-  if [ -n "$expected_common" ]; then
-    case "$expected_common" in
-      /*) expected_prim=$(cd "$(dirname "$expected_common")" 2>/dev/null && pwd) ;;
-      *)  expected_prim=$(cd "$(git rev-parse --show-toplevel 2>/dev/null)/$(dirname "$expected_common")" 2>/dev/null && pwd) ;;
-    esac
-  fi
-  if [ -n "$prim" ] && [ "$prim" = "$expected_prim" ]; then
-    check "T8 resolve_primary_root matches shared common-dir parent" true
-  else
-    check "T8 resolve_primary_root matches shared common-dir parent (got '$prim' vs '$expected_prim')" false
-  fi
-
-  # T9 — emit_heartbeat writes a parseable UTC timestamp to the shared dir and
-  # reports a non-FAILED status. Read it back and confirm it's numeric + recent.
-  local hb_out hb_rc hb_dir hb_basename hb_path hb_val now_t
-  hb_out=$(emit_heartbeat); hb_rc=$?
-  hb_dir="$prim/.claude/worktrees"
-  hb_basename=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")
-  hb_path="$hb_dir/${hb_basename}.heartbeat"
-  if [ "$hb_rc" -eq 0 ] && [ -f "$hb_path" ]; then
-    hb_val=$(tr -dc '0-9' < "$hb_path" | head -c 12)
-    now_t=$(date -u +%s)
-    if [ -n "$hb_val" ] && [ "$((now_t - hb_val))" -ge 0 ] && [ "$((now_t - hb_val))" -lt 120 ]; then
-      check "T9 emit_heartbeat wrote a fresh numeric timestamp (status: $hb_out)" true
-    else
-      check "T9 emit_heartbeat timestamp not fresh/numeric (val: '$hb_val')" false
-    fi
-  else
-    check "T9 emit_heartbeat wrote file + reported ok (rc=$hb_rc, status: $hb_out)" false
-  fi
-
-  # T10 — the heartbeat status rides the visible session-start line.
-  if [[ "$briefing" == *"heartbeat: "* ]]; then
-    check "T10 heartbeat status appears in the visible session-start line" true
-  else
-    check "T10 heartbeat status appears in the visible session-start line" false
-  fi
-
-  # T11 — fleet/collision section returns a known verdict (COLLISION/CLEAN/SKIP)
-  # and never crashes. (We don't assert which — depends on live worktree state.)
-  local fleet_out fleet_v
-  fleet_out=$(emit_fleet_collision_section "$prim")
-  fleet_v=$(printf '%s\n' "$fleet_out" | head -1)
-  case "$fleet_v" in
-    COLLISION|CLEAN|SKIP) check "T11 fleet section returns a known verdict (got: $fleet_v)" true ;;
-    *) check "T11 fleet section returns a known verdict (got: '$fleet_v')" false ;;
-  esac
 
   echo "==========================================="
   if [ "$fail" -eq 0 ]; then

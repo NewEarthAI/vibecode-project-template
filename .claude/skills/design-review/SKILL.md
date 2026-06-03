@@ -1,17 +1,17 @@
 ---
 name: design-review
 description: |
-  The NewEarth Design Suite entry point for reviewing and fixing UI/UX on a running website,
+  The the agency Design Suite entry point for reviewing and fixing UI/UX on a running website,
   a screenshot, a Figma link, or a code path. Pulls the FULL three-layer stack — L1 identity
   contracts (PRODUCT.md + DESIGN.md), L2 anti-slop overlay (design-taste-frontend), and L3
-  house specialty skills (newearth-ui-design + data-table-design + kpi-dashboard-design +
+  house specialty skills (ui-design-system + data-table-design + kpi-dashboard-design +
   brand-visual-identity) — and grades the surface against ALL layers in one pass. Priority-
   weighted rules with numeric thresholds (contrast ratios, touch targets, CLS, variance
   ceilings per surface type). Iterative screenshot → fix → verify loop. Use this when the
   request is "review this UI", "design audit", "make this perfect", "look at this page and
   fix what's wrong", or any signal that the user wants a deep multi-layer critique against
-  NewEarth brand standards. For BUILDING components/theming, use tailwind-shadcn-system
-  or newearth-ui-design directly. For HOLISTIC website audit (SEO, legal, security), use
+  the agency brand standards. For BUILDING components/theming, use tailwind-shadcn-system
+  or ui-design-system directly. For HOLISTIC website audit (SEO, legal, security), use
   audit-website.
 version: 2.0
 classification: capability-uplift
@@ -43,15 +43,15 @@ paths:
   - "clients/**/*.html"
 ---
 
-# Design Review — NewEarth Design Suite Entry Point
+# Design Review — the agency Design Suite Entry Point
 
-> Priority-weighted UI/UX review with iterative verification. The single surface that pulls the FULL NewEarth Design Suite — L1 brand identity + L2 anti-slop dial baselines + L3 house specialty rules — and grades any input (URL, screenshot, Figma link, or code path) against every layer in one pass.
+> Priority-weighted UI/UX review with iterative verification. The single surface that pulls the FULL the agency Design Suite — L1 brand identity + L2 anti-slop dial baselines + L3 house specialty rules — and grades any input (URL, screenshot, Figma link, or code path) against every layer in one pass.
 
 ---
 
 ## Mandatory Design Suite Contract — READ BEFORE ANY REVIEW
 
-This skill is the **entry point for the entire NewEarth Design Suite v2 three-layer stack**. Before producing any verdict, suggestion, or fix, you MUST load the full stack in the order below. Skipping a layer makes the review meaningless — it produces generic "looks fine" output instead of the brand-aligned critique the operator asked for.
+This skill is the **entry point for the entire the agency Design Suite v2 three-layer stack**. Before producing any verdict, suggestion, or fix, you MUST load the full stack in the order below. Skipping a layer makes the review meaningless — it produces generic "looks fine" output instead of the brand-aligned critique the operator asked for.
 
 ### Stack to load on every invocation
 
@@ -60,7 +60,7 @@ This skill is the **entry point for the entire NewEarth Design Suite v2 three-la
 | **L1 — Identity** | `PRODUCT.md` at repo root | Register, audience, tone, brand personality |
 | **L1 — Visual system** | `DESIGN.md` at repo root | Colour palette (OKLCH), typography defaults + escalation paths, elevation, motion, **variance ceilings per surface type** (hero 10 / product UI 7 / dashboard 12) |
 | **L2 — Anti-slop overlay** | `.claude/skills/design-taste-frontend/SKILL.md` | `DESIGN_VARIANCE` / `MOTION_INTENSITY` / `VISUAL_DENSITY` dial baselines (8/6/4), 10+ dial-driven bans |
-| **L3 — House signature** | `.claude/skills/newearth-ui-design/SKILL.md` + `references/anti-vibe-coded.md` | 22 absolute NEVER rules, silver signature, hairline borders, 300ms hover curve, DM Sans + JetBrains Mono, monochrome-first discipline |
+| **L3 — House signature** | `.claude/skills/ui-design-system/SKILL.md` + `references/anti-vibe-coded.md` | 22 absolute NEVER rules, silver signature, hairline borders, 300ms hover curve, DM Sans + JetBrains Mono, monochrome-first discipline |
 | **L3 — Specialty (conditional)** | Load BASED on what's being reviewed: |
 | ↳ if tables on the page | `.claude/skills/data-table-design/SKILL.md` | 7 non-negotiable table rules |
 | ↳ if KPI cards on the page | `.claude/skills/kpi-dashboard-design/SKILL.md` | KPI selection + visualisation discipline |
@@ -71,15 +71,15 @@ This skill is the **entry point for the entire NewEarth Design Suite v2 three-la
 If `PRODUCT.md` OR `DESIGN.md` OR `.claude/skills/design-taste-frontend/SKILL.md` is missing, halt immediately and surface this error:
 
 ```
-ERROR (design-review): NewEarth Design Suite contract files missing.
+ERROR (design-review): the agency Design Suite contract files missing.
 Expected at repo root: PRODUCT.md, DESIGN.md
 Expected skill:        .claude/skills/design-taste-frontend/SKILL.md
 
-Phase 3 of the NewEarth Design Suite v2 build has not completed.
+Phase 3 of the the agency Design Suite v2 build has not completed.
 Refusing to produce a review until the brand contract layer exists —
-a review without L1 contracts is generic critique, not NewEarth review.
+a review without L1 contracts is generic critique, not the agency review.
 
-Run: bash .claude/skills/newearth-ui-design/scripts/preflight-contract-files.sh
+Run: bash .claude/skills/ui-design-system/scripts/preflight-contract-files.sh
 Then: run impeccable teach (interactive, Justin in the loop) to author L1.
 
 Ref: continuations/NEWEARTH-DESIGN-SUITE-V2-MASTER-CONTINUATION-2026-05-13.md §15 (A1, A2, A6).
@@ -89,17 +89,17 @@ Sibling L3 specialty skills (data-table-design, kpi-dashboard-design, brand-visu
 
 ### Auto-loaded libraries (operator never invokes these directly)
 
-The L2 + specialty L3 skills below are **libraries**, not human entry points. Their `user-invocable: false` frontmatter hides them from the slash-command picker. They get loaded by THIS skill (and by `/newearth-ui-design` for builds) on a conditional basis. If you ever feel the urge to "/kpi-dashboard-design" something — don't. Just `/design-review` the surface and the right libraries pull themselves in.
+The L2 + specialty L3 skills below are **libraries**, not human entry points. Their `user-invocable: false` frontmatter hides them from the slash-command picker. They get loaded by THIS skill (and by `/ui-design-system` for builds) on a conditional basis. If you ever feel the urge to "/kpi-dashboard-design" something — don't. Just `/design-review` the surface and the right libraries pull themselves in.
 
 | Library | When this skill loads it |
 |---|---|
 | `design-taste-frontend` (L2) | Always — every review |
-| `newearth-ui-design` (L3 house) | Always — every review |
+| `ui-design-system` (L3 house) | Always — every review |
 | `data-table-design` | When the surface contains tabular row × column displays |
 | `kpi-dashboard-design` | When the surface contains KPI cards / metric grids |
 | `brand-visual-identity` | When the surface raises brand-token questions (palette, typography, contrast against brand identity) |
 
-The same library list powers `/newearth-ui-design` during builds — that skill loads them when generating tables, KPI grids, or brand-asset surfaces respectively. Two human-facing entry points (`/design-review` for audit, `/newearth-ui-design` for build), one shared library set underneath. That's the whole architecture.
+The same library list powers `/ui-design-system` during builds — that skill loads them when generating tables, KPI grids, or brand-asset surfaces respectively. Two human-facing entry points (`/design-review` for audit, `/ui-design-system` for build), one shared library set underneath. That's the whole architecture.
 
 ### Application order during review
 
@@ -203,7 +203,7 @@ If the operator says **"make this perfect"** or any equivalent quality-push sign
 
 ## Review Process
 
-### Step 0: Load the NewEarth Design Suite stack (MANDATORY)
+### Step 0: Load the the agency Design Suite stack (MANDATORY)
 
 Before anything else, follow the Mandatory Design Suite Contract section at the top of this file. Halt loudly if any L1/L2 contract is missing. Load conditional L3 specialty skills based on what the input surface contains (tables → load data-table-design; KPI cards → load kpi-dashboard-design; brand-token questions → load brand-visual-identity).
 

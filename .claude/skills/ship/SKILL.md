@@ -149,8 +149,6 @@ Two callers share ONE code path. Only the output serializer differs.
 | `scripts/ci-watch.sh` | local | `gh pr checks --watch` wrapper with 15m timeout + exit 9 UNKNOWN. |
 | `scripts/smoke.sh` | local | Post-deploy Vercel pre-check + HTTP 200 + sha-header match + 3× retry with 10s backoff. |
 | `scripts/auto-rollback.sh` | local | `git revert <sha>` + push + squash-conflict enumeration + 3-path recovery. |
-| `scripts/rebase-conflict-guard.sh` | local | Unattended HARD STOP on any code-file conflict during a rebase/merge (the `--ours/--theirs` reversed-semantics data-loss class). Exit 3 = halt for human; exit 0 = no/docs-only conflicts. Call BEFORE any unattended conflict side-pick. |
-| `scripts/verify-push-landed.sh` | local | `git ls-remote` SHA-match — the ONLY way "pushed" is asserted. Exit 0 only when remote branch SHA == local HEAD. |
 
 ---
 
@@ -159,8 +157,7 @@ Two callers share ONE code path. Only the output serializer differs.
 **NEVER**:
 - Work from `~/Documents/GitHub/` or any iCloud/OneDrive/Dropbox path (`path-check.sh` halts with exit 6)
 - `git push --force` — always `--force-with-lease` (`bash-guardian.sh` blocks plain `--force`)
-- `git checkout --ours/--theirs` on code files during rebase — rebase semantics are reversed from merge; auto-resolution in this direction fires hook cascades and corrupts state. **ACTIVE GATE (not just doctrine)**: in any unattended flow, run `bash scripts/rebase-conflict-guard.sh --mode unattended --dir <worktree>` BEFORE any conflict side-pick. Exit 3 = code-file conflict = HARD STOP, surface for human, do NOT auto-resolve. Exit 0 = no conflicts or docs-only (docs auto-resolution permitted WITH logging). Exit 2 = no conflict state.
-- Report "pushed" on `git push` exit 0 alone — exit 0 ≠ landed (protected branch / non-ff / swallowed hook / network blip). **ACTIVE GATE**: assert "pushed" ONLY after `bash scripts/verify-push-landed.sh <branch> --dir <worktree>` exits 0 (remote SHA == local HEAD). Exit 1/2 = do NOT claim pushed.
+- `git checkout --ours/--theirs` on code files (`.ts, .tsx, .js, .sql, .py`) during rebase — rebase semantics are reversed from merge; auto-resolution in this direction fires hook cascades and corrupts state
 - Mark work complete without `git status` + `git log --oneline -3` verification
 
 **ALWAYS**:

@@ -1,0 +1,144 @@
+{
+  "skill": "collab",
+  "version": "1.0",
+  "classification": "encoded-preference",
+  "evals": [
+    {
+      "id": "eval-001-idea-classification",
+      "prompt": "/collab \"Crazy thought — what if we let buyers submit their own ideas via QR code at events?\"",
+      "should_trigger": true,
+      "expectations": [
+        "Skill classifies as 'idea' (high confidence, ≥0.80)",
+        "Generates collab_id with format CL-{THEME}-{NNNN}",
+        "Files via GitHub Issue with label:idea",
+        "Inserts row into collab_log with classified_type='idea'",
+        "Dispatches Telegram message to other founder with 🟢 idea icon"
+      ]
+    },
+    {
+      "id": "eval-002-news-classification-with-partner",
+      "prompt": "/collab \"Riley just signed off on the JV layer — he's pushing all his deals through us\"",
+      "should_trigger": true,
+      "expectations": [
+        "Skill classifies as 'news' (high confidence)",
+        "Detects 'Riley' as partner name (95%+ similarity match against partners)",
+        "Theme detected as 'PARTNER' → ID format CL-PARTNER-NNNN",
+        "Appends to strategy/decisions-log.md (news routing)",
+        "Inserts collab_relationships row with relation_kind='partner', relation_target=<partner_uuid>",
+        "Telegram dispatch shows '📎 Riley' inline"
+      ]
+    },
+    {
+      "id": "eval-003-handoff-mode-detection",
+      "prompt": "/collab \"Sam, can you call Mike about the deal terms before Friday\"",
+      "should_trigger": true,
+      "expectations": [
+        "Skill detects mode='handoff' (phrasing 'Sam, can you' triggers handoff inference)",
+        "Bypasses outbound classification — files as a handoff task",
+        "Inserts collab_log with mode='handoff', recipient_github='teammate-handle'",
+        "Adds to recipient's task surface (admin portal queue OR daily-plan task list)",
+        "Telegram dispatch uses ⚡ handoff icon"
+      ]
+    },
+    {
+      "id": "eval-004-low-confidence-asks",
+      "prompt": "/collab \"hmm, the dashboard\"",
+      "should_trigger": true,
+      "expectations": [
+        "Classification confidence is below 0.80 (input is too ambiguous)",
+        "Skill DOES NOT silently file — instead asks user to clarify",
+        "Output presents top 2 guesses with confidence percentages",
+        "Output offers all 8 type options",
+        "Output mentions override syntax: /collab as <type> \"...\""
+      ]
+    },
+    {
+      "id": "eval-005-explicit-override",
+      "prompt": "/collab as OVS \"We should not be building a future feature before /collab itself ships\"",
+      "should_trigger": true,
+      "expectations": [
+        "Skill respects explicit type override 'OVS'",
+        "was_overridden=true in collab_log row",
+        "Skips classification confidence check entirely",
+        "Routes per OVS type (decisions-log.md append + GitHub Issue label:strategic)"
+      ]
+    },
+    {
+      "id": "eval-006-pull-in-mode-context-aware",
+      "prompt": "/collab pull CL-PARTNER-0023",
+      "should_trigger": true,
+      "expectations": [
+        "Skill enters PULL-IN mode (not SUBMIT)",
+        "Loads collab record from collab_log",
+        "Reads RECIPIENT's local context (current ROADMAP.md, CLAUDE.md, MEMORY.md, recent commits, open PRs)",
+        "Cross-references against local context — surfaces matching ROADMAP items, partner records, open PRs",
+        "Proposes 4-6 ranked integration options including 'Custom' fallback",
+        "Does NOT execute integration without recipient confirmation",
+        "On chosen option: updates collab_log status to 'integrated', notifies sender via Telegram"
+      ]
+    },
+    {
+      "id": "eval-007-inbox-listing",
+      "prompt": "/collab inbox",
+      "should_trigger": true,
+      "expectations": [
+        "Lists all open collab_log rows where recipient_github = current founder",
+        "Groups by age: 🚨 >72h, ⚠️ 24-72h, 🆕 <24h",
+        "Shows collab_id, type, brief summary, sender name, age",
+        "Suggests /collab pull <id> as next action"
+      ]
+    },
+    {
+      "id": "eval-008-not-collab-input",
+      "prompt": "What's the average ARV for properties in 85003 ZIP?",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-009-not-collab-debugging",
+      "prompt": "I'm getting a 500 error from process-submission edge function, can you investigate?",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-010-identity-resolution-failure",
+      "prompt": "/collab \"some thought\"",
+      "should_trigger": true,
+      "expectations": [
+        "If gh CLI not authenticated: HALT with clear error 'Cannot resolve current user via gh api. Authenticate gh first.'",
+        "If team.json missing: HALT with error '/collab requires founder identity registry'",
+        "If founder not in team.json: HALT explaining how to add entry",
+        "Does NOT silently fail or skip identity check — identity is foundational"
+      ]
+    },
+    {
+      "id": "eval-011-issue-classification",
+      "prompt": "/collab \"the buyer dashboard is showing 0 deals on my Mac since this morning\"",
+      "should_trigger": true,
+      "expectations": [
+        "Classifies as 'issue' (high confidence)",
+        "Theme detected as 'OPS' (keyword 'showing 0 deals' / 'broken' pattern)",
+        "Routes via GitHub Issue with label:bug",
+        "Auto-tags affected files via path heuristics (src/components/buyer/, src/hooks/usePropertyMatches.ts)"
+      ]
+    },
+    {
+      "id": "eval-012-rock-classification",
+      "prompt": "/collab \"Q3 rock — get 5 institutional buyers signed and ingesting deals daily\"",
+      "should_trigger": true,
+      "expectations": [
+        "Classifies as 'rock' (high confidence)",
+        "Theme detected as 'ROCK'",
+        "Routes via bb_roadmap_activity insert (rock routing per spec §3)",
+        "Files GitHub Issue with label:rock as secondary destination",
+        "Telegram dispatch uses 🟡 rock icon"
+      ]
+    }
+  ],
+  "validation_notes": [
+    "Eval pass criteria target: ≥80% expectations met across all should-trigger evals",
+    "Negative cases (should_trigger=false) verify the description doesn't over-trigger on adjacent intents (debugging, data queries, etc.)",
+    "Identity resolution test (eval-010) is critical — silent failure is the worst outcome since collab without attribution is meaningless",
+    "Pull-in mode test (eval-006) verifies the recipient-context-aware integration is honored — this is the key v2 design piece"
+  ]
+}

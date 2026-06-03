@@ -1,7 +1,7 @@
 {
   "skill": "define-destination",
-  "version": "1.1",
-  "description": "Trigger-accuracy and behavioural evals. 6 trigger evals check whether the skill should fire. 11 behavioural evals exercise the 11 SKILL.md acceptance tests (Tests 1-11); the vague-input case (Test 4) is covered at the trigger layer by trigger-006, which fires the skill and expects an INSUFFICIENT_INPUT verdict. behaviour-010 / 010b exercise the v1.1 Step 7.5 emitter — the artefact-checkable branch and the honest-decline branch respectively.",
+  "version": "1.0",
+  "description": "Trigger-accuracy and behavioural evals. 6 trigger evals check whether the skill should fire. 9 behavioural evals exercise the 10 SKILL.md acceptance tests (Tests 1-10); the vague-input case (Test 4) is covered at the trigger layer by trigger-006, which fires the skill and expects an INSUFFICIENT_INPUT verdict.",
   "evals": [
     {
       "id": "trigger-001-should-fire-destination-kickoff",
@@ -152,28 +152,6 @@
         "This is the Component 1 end-to-end integration check — define-destination is NOT re-invoked here; /reduce-to-first-principles is",
         "/reduce-to-first-principles receives hypothesis_provenance: generative_primitive with a source_hypothesis built from the DESTINATION.md frontmatter (generated_at + absolute-path project_root)",
         "Branch D fires; the bounds check passes (same project, in-window); the destination is ACCEPTED — anti_anchoring.verdict in {AGREED, DISAGREED, INCONCLUSIVE}, never validate_upstream_*, never blocked"
-      ]
-    },
-    {
-      "id": "behaviour-010-goal-condition-emitter",
-      "prompt": "Define the destination for the buyer-tagging sync, then give me the /goal condition to drive the next session.",
-      "should_trigger": true,
-      "expectations": [
-        "Step 7.5 derives the /goal condition from the nearest milestone in Element 5's backward chain — NOT from Element 2 (often a real-world metric no session can demonstrate)",
-        "If the nearest milestone is artefact-checkable: a ready-to-paste /goal condition phrased as a Bash check the session must run and surface; never a self-certifiable 'I have done X' claim",
-        "If no milestone is artefact-checkable: an honest decline naming the real-world milestone; no fabricated check",
-        "goal_completion_condition output block populated (artefact_checkable, selected_milestone, condition or decline_reason, derived_from); the block is omitted on any halt"
-      ]
-    },
-    {
-      "id": "behaviour-010b-goal-condition-honest-decline",
-      "prompt": "Define the destination for improving our brand reputation — we'll know we've arrived when NPS is above 60 and we're quoted in three industry publications — then give me the /goal condition.",
-      "should_trigger": true,
-      "expectations": [
-        "Element 5's nearest milestone resolves to a real-world / longitudinal outcome — Step 7.5.2 classifies it NOT artefact-checkable",
-        "Step 7.5 emits an HONEST DECLINE — it does NOT fabricate a shell check for an unmeasurable-in-session milestone",
-        "The decline names the milestone's class (real-world vs runtime-dependent) and lists 7.5.2b-computed artefact-checkable milestones, or 'none'",
-        "goal_completion_condition.artefact_checkable == false; .condition == null; .decline_reason populated"
       ]
     }
   ]

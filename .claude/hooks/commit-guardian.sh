@@ -45,12 +45,6 @@ fi
 DEBUG_ISSUES=""
 while IFS= read -r file; do
   if [[ "$file" =~ \.(ts|tsx|js|jsx)$ ]] && [[ -f "$file" ]]; then
-    # Skip files under scripts/ directories — these are CLI tools where
-    # console.log IS the user interface, not stray debug. Covers top-level
-    # scripts/ and nested patterns like clients/<slug>/scripts/, tools/scripts/.
-    if [[ "$file" == scripts/* ]] || [[ "$file" == */scripts/* ]]; then
-      continue
-    fi
     # Only check ADDED lines (+ prefix) in staged diff
     FOUND=$(git diff --cached -- "$file" 2>/dev/null | grep -nE '^\+.*\b(console\.log|debugger|TODO.REMOVE)\b' | head -3 || true)
     if [[ -n "$FOUND" ]]; then

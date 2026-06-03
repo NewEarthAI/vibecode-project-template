@@ -120,13 +120,13 @@ source ~/.bashrc
 
 ---
 
-## Current Shortcuts (BuyBox AI)
+## Current Shortcuts (a SaaS app)
 
 | Alias | Project | Path |
 |-------|---------|------|
-| `bb` | BuyBox AI | `~/Documents/GitHub/BuyBox-AI` |
-| `nf` | Nirvana Freight | `~/Documents/GitHub/nirvana-freight-fleet-insights-automation` |
-| `ne` | NewEarth AI Agency | `~/Documents/GitHub/NewEarth AI Agency - Main` |
+| `bb` | a SaaS app | `~/Documents/GitHub/a SaaS app` |
+| `nf` | a logistics app | `~/Documents/GitHub/a-logistics-app-freight-fleet-insights-automation` |
+| `ne` | the agency | `~/Documents/GitHub/the agency - Main` |
 | `cpt` | Claude Code Project Template | `~/Documents/GitHub/claude-code-project-template` |
 
 ---
@@ -180,6 +180,6 @@ python .claude/skills/skill-creator/scripts/run_eval.py \
 
 ## Related
 
-- [tx-claude](https://github.com/NewEarthAI/BuyBox-AI) — Tmux session helper that launches Claude
+- [tx-claude](https://github.com/NewEarthAI/a SaaS app) — Tmux session helper that launches Claude
 - `.zshrc` / `.bashrc` — Shell configuration files
 - Shell aliases — Bash/zsh built-in mechanism

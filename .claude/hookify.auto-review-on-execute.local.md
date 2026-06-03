@@ -5,26 +5,17 @@ event: Stop
 action: addContext
 ---
 
-## Smart Dispatch Review — Post-Implementation
+## PIPELINE SAFETY NET — Check Before Stopping
 
-If you made code changes this session (plan execution, feature work, or bug fix), run a targeted review before completing.
+Before you stop, verify the autonomous pipeline completed:
 
-### Step 1: Detect Changes
-Run `git diff --stat` to identify changed file types.
+1. Was council review run on the plan? If not → run `/council --extended`
+2. Were council amendments applied? If not → run `/amend-plan`
+3. Was the plan executed? If not → run `/execute`
+4. Was code review run? If not → dispatch review agents (code-reviewer + silent-failure-hunter minimum)
+5. Were changes committed and pushed? If not → commit and push (await user approval for push)
+6. Was e2e test run after push? If not → run `/e2e-test`
 
-### Step 2: Dispatch Reviewers (minimum 2, maximum 6)
-
-**ALWAYS run:**
-- `newearthai-code-reviewer` (master code review)
-- `silent-failure-hunter` (silent failure detection)
-
-**ADD based on file types:**
-- `.sql` / `migrations/` → `postgresql-code-review`
-- `auth/` / `security/` / `credential` / `.env` → `newearth-security`
-- `.tsx` / `.css` / `.html` / `components/` → `design-review`
-- Creating a PR → `pr-review-toolkit:review-pr` (full 6-agent sweep)
-
-### Step 3: Report
-Synthesize findings into a single report grouped by severity (CRITICAL → SIGNIFICANT → MINOR).
-
-**Skip if**: No code changes this session, or session was read-only research/planning.
+**If this was a read-only session (no code changes, no plan)**: Skip all checks.
+**If the pipeline is already complete**: Stop normally.
+**If any step was skipped**: Complete it now before stopping.

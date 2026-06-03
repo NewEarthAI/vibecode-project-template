@@ -18,16 +18,12 @@ ARTIFACT_PATHS=(
   ".claude/memory/"
   ".claude/sessions/"
   ".claude/plans/"
-  ".claude/rules/"
-  ".claude/hookify."
   "continuations/"
   "specs/"
   "council/"
   "research-outputs/"
   "e2e-screenshots/"
   "docs/"
-  "roadmaps/"
-  "agency/orchestration/"
 )
 
 # ── Stage only artifact paths that have changes ──

@@ -53,9 +53,9 @@ Proceed? (y/n)
 ## Step 2: Fetch files from GitHub
 
 Use `mcp__github__get_file_contents` to fetch each file from the template repo.
-Default template repo: `https://github.com/cassandrasnyman/claude-code-project-template`
+Default template repo: `https://github.com/NewEarthAI/vibecode-project-template`
 
-Parse owner/repo from URL: owner=`cassandrasnyman`, repo=`claude-code-project-template`
+Parse owner/repo from URL: owner=`NewEarthAI`, repo=`claude-code-project-template`
 
 Fetch these files in parallel (all from branch `main`):
 1. `.claude/skills/daily-plan-generator/SKILL.md`
@@ -188,7 +188,7 @@ Never overwrite the entire file.
 Write `.claude/template-source.md`:
 
 ```yaml
-repo: https://github.com/cassandrasnyman/claude-code-project-template
+repo: https://github.com/NewEarthAI/vibecode-project-template
 local_path: not cloned
 version: 2026-02-19
 last_sync: {today's date}
@@ -238,7 +238,7 @@ To try it now: run /daily-plan
 ## Troubleshooting
 
 **GitHub fetch fails**: The template repo may require authentication.
-Try: `git clone https://github.com/cassandrasnyman/claude-code-project-template /tmp/template-clone`
+Try: `git clone https://github.com/NewEarthAI/vibecode-project-template /tmp/template-clone`
 Then ask user to re-run with the local path.
 
 **settings.local.json is complex / has existing hooks**: Show the exact JSON to add and ask

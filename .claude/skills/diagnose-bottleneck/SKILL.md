@@ -439,4 +439,4 @@ If any gate fails self-check, skill returns `ADVISORY_PENDING` instead of `PASS`
 
 ---
 
-*Skill v1.0 authored 2026-05-12 in Session 4 of the Operational Intelligence Synthesis Programme. Operationalises TOC doctrine. Cites shared anti-anchoring guard library. Triple verification: Gate 1 deletion test PASS (named consumers: future ROI / capacity / pipeline analyses across all NewEarth entities); Gate 2 code-council DEFERRED to fresh-context ceremony; Gate 3 real-decision test DEFERRED (anti-sycophancy second-party constraint).*
+*Skill v1.0 authored 2026-05-12 in Session 4 of the Operational Intelligence Synthesis Programme. Operationalises TOC doctrine. Cites shared anti-anchoring guard library. Triple verification: Gate 1 deletion test PASS (named consumers: future ROI / capacity / pipeline analyses across all the agency entities); Gate 2 code-council DEFERRED to fresh-context ceremony; Gate 3 real-decision test DEFERRED (anti-sycophancy second-party constraint).*

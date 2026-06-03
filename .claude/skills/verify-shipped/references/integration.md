@@ -53,7 +53,7 @@ If clean:
 
 3. **Integrate fleet findings into NSM-impact ranking as candidate work items**. Each fleet finding becomes a work item with:
    - Verb-first label derived from the finding type:
-     - `[DIRTY] /Users/justin/code/buybox-foo` → "Commit or stash 3 uncommitted changes in buybox-foo"
+     - `[DIRTY] /Users/justin/code/the app-foo` → "Commit or stash 3 uncommitted changes in the app-foo"
      - `[AHEAD] feat/bar 3` → "Push 3 unpushed commits on feat/bar"
      - `[STALE_OPEN_PR] PR #471` → "Decide on stale PR #471 (12 days no activity)"
      - `[MERGED_NOT_CLEANED] PR #481` → "Clean up merged-not-deleted worktree from PR #481"
@@ -154,7 +154,7 @@ Format:
 
 ```json
 {
-  "1:DIRTY:/Users/justin/code/buybox-foo": {
+  "1:DIRTY:/Users/justin/code/the app-foo": {
     "suppressed_until": "2026-05-14T00:00:00Z",
     "reason": "Wave 3a in flight; will commit when council session completes",
     "added_by_session": "2026-05-07-session-uuid"
@@ -168,7 +168,7 @@ Format:
 ```
 
 **Key format**: `<layer>:<status>:<identifier>`
-- Layer 1: `1:<status>:<path>` — e.g., `1:DIRTY:/Users/justin/code/buybox-comp-frontend`
+- Layer 1: `1:<status>:<path>` — e.g., `1:DIRTY:/Users/justin/code/the app-comp-frontend`
 - Layer 2: `2:<status>:<branch>` — e.g., `2:AHEAD:feat/foo`
 - Layer 3: `3:<status>:<pr-number>` — e.g., `3:STALE_OPEN_PR:471`
 - Layer 5: `5:DRIFT:<function-name>` — e.g., `5:DRIFT:sync-to-airtable`

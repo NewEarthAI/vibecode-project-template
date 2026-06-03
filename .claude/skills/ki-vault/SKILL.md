@@ -39,7 +39,7 @@ KI Context:
 2. **Determine the right folder** based on content type:
    - `research/` — Technical research, tool evaluations, industry analysis
    - `ideas/` — New ideas, opportunities, speculative thinking
-   - `ventures/{slug}/` — Content specific to a venture (buybox-ai, golden-pocket, etc.)
+   - `ventures/{slug}/` — Content specific to a venture (the app-ai, golden-pocket, etc.)
    - `strategy/` — Strategic insights, market analysis, competitive intelligence
 3. **Create the vault note** with proper frontmatter:
 

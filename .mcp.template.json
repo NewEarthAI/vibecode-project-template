@@ -1,50 +1,57 @@
 {
   "mcpServers": {
-    "redis-nirvana": {
+    "supabase": {
+      "command": "${NPX_PATH}",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=${SUPABASE_PROJECT_REF}",
+        "--features=account,database,debugging,development,docs,functions,branching,storage"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+    "n8n": {
+      "command": "${NPX_PATH}",
+      "args": [
+        "-y",
+        "n8n-mcp@latest"
+      ],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "${N8N_API_URL}",
+        "N8N_API_KEY": "${N8N_API_KEY}"
+      }
+    },
+    "github": {
+      "command": "${HOME}/bin/github-mcp-server",
+      "args": [
+        "stdio"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT}"
+      }
+    },
+    "redis": {
       "command": "${UVX_PATH}",
       "args": [
         "--from",
         "redis-mcp-server@latest",
         "redis-mcp-server",
         "--host",
-        "redis-18038.c341.af-south-1-1.ec2.redns.redis-cloud.com",
+        "${REDIS_HOST}",
         "--port",
-        "18038",
+        "${REDIS_PORT}",
         "--username",
         "default",
         "--password",
         "${REDIS_PASSWORD}"
       ]
     },
-    "n8n-mcp-honeybird": {
-      "command": "${NPX_PATH}",
-      "args": [
-        "-y",
-        "n8n-mcp@latest"
-      ],
-      "env": {
-        "MCP_MODE": "stdio",
-        "LOG_LEVEL": "error",
-        "DISABLE_CONSOLE_OUTPUT": "true",
-        "N8N_API_URL": "https://honeybird.app.n8n.cloud/",
-        "N8N_API_KEY": "${N8N_API_KEY_HONEYBIRD}"
-      }
-    },
-    "n8n-mcp-newearthai": {
-      "command": "${NPX_PATH}",
-      "args": [
-        "-y",
-        "n8n-mcp@latest"
-      ],
-      "env": {
-        "MCP_MODE": "stdio",
-        "LOG_LEVEL": "error",
-        "DISABLE_CONSOLE_OUTPUT": "true",
-        "N8N_API_URL": "https://n8n.newearthai.agency/",
-        "N8N_API_KEY": "${N8N_API_KEY_NEWEARTHAI}"
-      }
-    },
-    "airtable-mcp-newearthai": {
+    "airtable": {
       "command": "${NPX_PATH}",
       "args": [
         "-y",
@@ -52,38 +59,6 @@
       ],
       "env": {
         "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}"
-      }
-    },
-    "n8n-workflows_Docs": {
-      "command": "${NPX_PATH}",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://gitmcp.io/Zie619/n8n-workflows"
-      ]
-    },
-    "supabase-nirvana": {
-      "command": "${NPX_PATH}",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--project-ref=rikkwehjqcgtraxtkcpo",
-        "--features=account,database,debugging,development,docs,functions,branching,storage"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN_NIRVANA}"
-      }
-    },
-    "supabase-buyboxai": {
-      "command": "${NPX_PATH}",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--project-ref=rkjbdjxihppklvlbfywp",
-        "--features=account,database,debugging,development,docs,functions,branching,storage"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN_BUYBOXAI}"
       }
     },
     "Context7": {
@@ -97,30 +72,17 @@
       "command": "${NODE_PATH}",
       "args": ["${NPM_GLOBAL_ROOT}/chrome-devtools-mcp/build/src/bin/chrome-devtools-mcp.js"]
     },
-    "github": {
-      "command": "${HOME}/bin/github-mcp-server",
-      "args": [
-        "stdio"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT}"
-      }
-    },
     "playwright": {
       "command": "${NODE_PATH}",
       "args": ["${NPM_GLOBAL_ROOT}/@playwright/mcp/cli.js"]
     },
-    "supabase-newearthai": {
+    "n8n-workflows_Docs": {
       "command": "${NPX_PATH}",
       "args": [
         "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--project-ref=ridqdojzjotlvexfuwvx",
-        "--features=account,database,debugging,development,docs,functions,branching,storage"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN_NEWEARTHAI}"
-      }
+        "mcp-remote",
+        "https://gitmcp.io/Zie619/n8n-workflows"
+      ]
     }
   }
 }

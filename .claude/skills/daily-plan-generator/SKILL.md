@@ -247,7 +247,7 @@ gh search prs --author=@me --state=open --review=changes-requested \
   --json repository,number,title --limit 10 2>/dev/null
 ```
 
-**Why `gh search prs` not `gh pr list`**: `gh pr list` is repo-scoped. `gh search prs` is account-wide — surfaces work across BuyBox-AI + every side repo the founder has access to. Critical for the docs/COLLABORATING.md side-repo integration patterns.
+**Why `gh search prs` not `gh pr list`**: `gh pr list` is repo-scoped. `gh search prs` is account-wide — surfaces work across a SaaS app + every side repo the founder has access to. Critical for the docs/COLLABORATING.md side-repo integration patterns.
 
 **Group output by repo and surface to plan**:
 ```

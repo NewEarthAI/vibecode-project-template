@@ -1,17 +1,17 @@
 # Framing-Audit Skill Suite — Handoff-Back Document
 
 **From**: First Principles Systems Thinker workshop (the methodology workbench)
-**To**: every NewEarth entity inheriting the suite — Agency-Main, BuyBox AI, Nirvana Freight
+**To**: every the agency entity inheriting the suite — Agency-Main, a SaaS app, a logistics app
 **Date**: 2026-05-18 — Operational Intelligence Synthesis Programme, Session 10 (final)
 **Status**: the suite is built, verified, and propagating. This document ships with it.
 
-This document closes the loop opened by Cassandra's 2026-05-14 Hermes failure report. The workshop was handed a mandate — *build a first-principles + systems-thinking skill suite that would have caught that failure* — and a 5-gap revision list. This is the workshop telling the agency what it did, so the suite is **understood**, not just inherited.
+This document closes the loop opened by a teammate's 2026-05-14 Hermes failure report. The workshop was handed a mandate — *build a first-principles + systems-thinking skill suite that would have caught that failure* — and a 5-gap revision list. This is the workshop telling the agency what it did, so the suite is **understood**, not just inherited.
 
 ---
 
 ## 1. The failure this suite exists for (abbreviated)
 
-On 2026-05-14 the agency ran a 3-phase competitor evaluation of Hermes Agent under the Pi-outperforms doctrine. Phase 1 research brief → Phase 2 Capability Scout audit → Phase 3 eight-agent extended council. All eight agents converged unanimously: BUILD NATIVE. Then Cassandra asked one question — *"are we comparing apples to pears?"* — and the verdict's foundation cracked.
+On 2026-05-14 the agency ran a 3-phase competitor evaluation of Hermes Agent under the Pi-outperforms doctrine. Phase 1 research brief → Phase 2 Capability Scout audit → Phase 3 eight-agent extended council. All eight agents converged unanimously: BUILD NATIVE. Then a teammate asked one question — *"are we comparing apples to pears?"* — and the verdict's foundation cracked.
 
 The Phase 2 "reproducibility check" gate (first-principles intent: *test whether the competitor's claims hold up when run in our environment*) had silently become a build-cost estimate: a theoretical native-build cost compared against a theoretical Hermes-integration cost. **Estimate vs estimate — the weakest possible comparison, with zero hands-on data.** Eight agents converged *inside a flawed frame*. The council's own Reframer did not catch it, because the Reframer audited the proposal in front of it — it never walked back through the upstream phases that produced the proposal.
 
@@ -48,28 +48,28 @@ The suite earned its place only by catching the 2026-05-14 failure on a re-run. 
 | Gap | Status | Detail |
 |-----|--------|--------|
 | 1 — Success-Criteria-Discipline rule has no Success Criteria block on itself | **CLOSED** | `/audit-artefact-grounding` run on the rule draft: axis 6 fired (`fail`); verdict `refactor`. The bounded fix (add a self-applied `## Success Criteria` block) is named in §5 below — **Agency-Main applies it before wiring the rule**. |
-| 2 — the 6 meta-discoveries inducted from a single thread (Hermes) | **OPEN — handed back to Cassandra** | The re-run validated the suite against ONE thread. The workshop will NOT self-nominate other threads — that reproduces the single-source-derivation risk Gap 2 names. **Owner: Cassandra / Agency-Main. Action: nominate 1-2 other recent multi-phase threads; re-run the suite's acceptance walk against each.** |
+| 2 — the 6 meta-discoveries inducted from a single thread (Hermes) | **OPEN — handed back to a teammate** | The re-run validated the suite against ONE thread. The workshop will NOT self-nominate other threads — that reproduces the single-source-derivation risk Gap 2 names. **Owner: a teammate / Agency-Main. Action: nominate 1-2 other recent multi-phase threads; re-run the suite's acceptance walk against each.** |
 | 3 — Reframer upstream-walk vs default-to-PROCEED contradiction | **RESOLVED** | The shipped Reframer carries the `[GAP-3 FIX]` — audit depth calibrated by decision class. Adopt the shipped version. |
 | 4 — Hands-On Calibration Gate placement in Pi-outperforms | **RESOLVED — Agency-Main adopts** | See §5. |
 | 5 — operator-as-frame-validator burnout | **CLOSED as a design principle** | The suite IS the automation answer — see §5. |
 
-**Gap 5 — the suite-as-automation answer.** Before this suite, the operator (Cassandra) was the *only* frame-validator in the system; she had to escalate manually ("apples and pears") and escalate repeatedly before a frame got audited. That made the operator the Theory-of-Constraints bottleneck. The suite removes that load: framing audits are now callable primitives that fire automatically (the Reframer's Multi-Phase Position Audit runs first in every council; `/check-commensurability` fires the Calibration Gate without being asked). The operator escalates only the exceptional cases the suite does not cover — frame-validation stops being a manual reflex she must remember to apply.
+**Gap 5 — the suite-as-automation answer.** Before this suite, the operator (a teammate) was the *only* frame-validator in the system; she had to escalate manually ("apples and pears") and escalate repeatedly before a frame got audited. That made the operator the Theory-of-Constraints bottleneck. The suite removes that load: framing audits are now callable primitives that fire automatically (the Reframer's Multi-Phase Position Audit runs first in every council; `/check-commensurability` fires the Calibration Gate without being asked). The operator escalates only the exceptional cases the suite does not cover — frame-validation stops being a manual reflex she must remember to apply.
 
 ## 5. Per-repo wiring
 
 Each repo inherits the suite via `/update-latest` once, then runs the acceptance test in its own domain (the inheritance test — the suite must apply outside the thread it was derived from).
 
-### Agency-Main (Cassandra)
+### Agency-Main (a teammate)
 1. **Adopt the upgraded Reframer** — the citation-stamped version (`[GAP-3 FIX]` + primitives 5-8 now citing the shipped skills). It replaces the 2026-05-14 inline-primitive version.
 2. **Adopt the Hands-On Calibration Gate placement** (Gap 4) — place the gate in the Pi-outperforms doctrine **between Phase 2 (Capability Scout audit) and Phase 3 (the council)** — after the doctrine's Step 2 "quantify the gap" and before Step 3 "decide via the tree". `/check-commensurability` emits the `calibration_gate` signal; wire the consuming hook that blocks the Phase 3 verdict-lock on `decision == FIRES`. (Until that hook is wired the gate is honestly advisory — `enforcement_active: false`.)
 3. **Refactor the Success-Criteria-Discipline rule before wiring it** (Gap 1) — add a self-applied `## Success Criteria` block (Done / Good / Bad / Verification protocol) to the rule itself; it currently mandates that block on every artefact but carries none. Then wire it as auto-loaded doctrine.
 4. **Nominate 1-2 other threads for Gap 2** — re-run the suite's acceptance walk against them to retire the single-source risk.
 5. **Inheritance test**: re-run the Hermes thread end-to-end with the suite installed; confirm the Phase 2 Calibration Gate fires before Phase 3.
 
-### BuyBox AI
-The suite is generic — no real-estate assumptions. Run the inheritance test on a real BuyBox decision: take a recent adopt-vs-build or vendor-comparison call (e.g. a PropTech data-provider choice) and run `/check-commensurability` on it — confirm the ladder classification and the gate behaviour are correct in a real-estate context. Run `/reduce-to-first-principles` on a recent spec's framing. The framing-audit reflex applies to any multi-phase decision, not just competitor evaluations.
+### a SaaS app
+The suite is generic — no real-estate assumptions. Run the inheritance test on a real a SaaS app decision: take a recent adopt-vs-build or vendor-comparison call (e.g. a PropTech data-provider choice) and run `/check-commensurability` on it — confirm the ladder classification and the gate behaviour are correct in a real-estate context. Run `/reduce-to-first-principles` on a recent spec's framing. The framing-audit reflex applies to any multi-phase decision, not just competitor evaluations.
 
-### Nirvana Freight
+### a logistics app
 Same inheritance test, freight domain: take a recent operational decision (a routing-rule change, a carrier-vs-in-house comparison) and run `/check-commensurability` + `/reduce-to-first-principles` on it. Confirm the suite's vocabulary is domain-neutral and the primitives apply cleanly to freight decisions.
 
 ## 6. Why this matters for NewClaw / NewMem
@@ -84,4 +84,4 @@ NewClaw and NewMem are downstream of every skill and protocol. The agency held n
 
 **ROADMAP item(s) this REJECTS**: inheriting the suite without understanding it (this document is the understanding); the workshop self-nominating Gap 2 threads (second-party nomination only).
 
-**If this advanced nothing**: the receiving repos would inherit five skills with no account of why they exist or how to wire them; Agency-Main would wire the Success-Criteria-Discipline rule with its self-application gap intact; the Hands-On Calibration Gate would have no placement; and the loop with Cassandra's failure report would never close.
+**If this advanced nothing**: the receiving repos would inherit five skills with no account of why they exist or how to wire them; Agency-Main would wire the Success-Criteria-Discipline rule with its self-application gap intact; the Hands-On Calibration Gate would have no placement; and the loop with a teammate's failure report would never close.

@@ -1,31 +1,37 @@
 ---
-name: github-local-first
+name: github-file-contents
 enabled: true
 event: PreToolUse
-tool_matcher: mcp__github__get_file_contents|mcp__github__search_code|mcp__github__list_commits
+tool_matcher: mcp__github__get_file_contents
 action: warn
 ---
 
-**[github-local-first] CHECK: Is this repo cloned locally?**
+**[github-file-contents] Consider File Size First!**
 
-GitHub MCP is slower, costs more tokens, and fails on auth issues. If the repo exists locally, use local tools instead.
+Before fetching file contents, consider:
 
-**Locally cloned repos** (use Read/Glob/Grep/Bash `git log` instead):
+1. **Do you know the file size?** Large files waste tokens.
+2. **Could the Tree API work instead?** For discovery, use:
+   ```javascript
+   github_get_tree({ owner, repo, tree_sha: "HEAD" })  // ~90% smaller
+   ```
 
-Replace this block per machine with your own list. Each entry maps a repo nickname (as the operator types it in chat) to the local clone path:
+**Efficient GitHub workflow:**
+```javascript
+// Step 1: Get file tree first (small response)
+const tree = await github_get_tree({ owner, repo, tree_sha: "HEAD" });
 
-- `{{repo-1}}` → `{{user_home}}/{{path-to-clone-1}}`
-- `{{repo-2}}` → `{{user_home}}/{{path-to-clone-2}}`
-- `claude-code-project-template` → `{{user_home}}/{{path-to-template-clone}}`
+// Step 2: Identify specific files needed
+const targetFiles = tree.filter(f => f.path.endsWith('.config.js'));
 
-**Local alternatives by GitHub MCP tool:**
-| Instead of | Use |
-|---|---|
-| `get_file_contents` | `Read` tool with local path |
-| `search_code` | `Grep` tool on local clone |
-| `list_commits` | `git log` via Bash on local clone |
+// Step 3: Fetch only what you need
+const content = await github_get_file_contents({ path: targetFiles[0].path });
+```
 
-**Only use GitHub MCP when:**
-- The repo is NOT cloned locally
-- You need cross-repo search across the org
-- You need PR/issue data (no local equivalent)
+**For comparing changes:**
+```javascript
+// Use Compare API instead of fetching full files
+github_compare({ owner, repo, base: "main", head: "feature" })  // 70-90% savings
+```
+
+**Token savings: 70-90% when using tree API for discovery!**

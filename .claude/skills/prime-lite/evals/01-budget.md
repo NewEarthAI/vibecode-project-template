@@ -10,7 +10,7 @@ Run from a healthy git repo with `specs/`, `council/sessions/`, and a non-trivia
 ## Run
 
 ```bash
-cd /Users/justin/code/buybox-autovibe
+cd /Users/justin/code/the app-autovibe
 START=$(date +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')
 WORDS=$(bash .claude/skills/prime-lite/scripts/brief.sh | wc -w | tr -d ' ')
 END=$(date +%s%3N 2>/dev/null || python3 -c 'import time; print(int(time.time()*1000))')

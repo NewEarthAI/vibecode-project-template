@@ -1,6 +1,6 @@
 # Supabase Security Module
 
-> Deep Supabase/PostgreSQL security checks. Referenced by newearthai-security-review Tier 4.
+> Deep Supabase/PostgreSQL security checks. Referenced by your-org-security-review Tier 4.
 
 ## RLS Verification Queries
 

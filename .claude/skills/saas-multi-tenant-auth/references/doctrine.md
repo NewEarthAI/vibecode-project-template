@@ -58,7 +58,7 @@ CREATE POLICY "members_delete" ON {{table}}
 
 **Rule**: No `USING (true)` policies on tables with per-tenant data.
 
-**Failure precedent**: BuyBox `dd_deal_reviews` shipped with `"Anyone can read reviews" USING (true)` — every authenticated user could read every other tenant's deal reviews. This was a multi-month leak that nobody noticed because the view layer above it appeared to filter correctly. Closed in `20260420150000_cm32_t2_4_deal_reviews_rls.sql`.
+**Failure precedent**: a SaaS app `dd_deal_reviews` shipped with `"Anyone can read reviews" USING (true)` — every authenticated user could read every other tenant's deal reviews. This was a multi-month leak that nobody noticed because the view layer above it appeared to filter correctly. Closed in `20260420150000_cm32_t2_4_deal_reviews_rls.sql`.
 
 **Enforcement**:
 ```sql

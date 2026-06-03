@@ -37,7 +37,7 @@ paths:
 ## Companion Skills — Invoke When Conditions Met
 
 - **Reviewing/auditing a running UI** → invoke `design-review` for priority-weighted assessment
-- **Need brand color tokens** → invoke `brand-visual-identity` for NewEarth AI palette or client extraction
+- **Need brand color tokens** → invoke `brand-visual-identity` for the agency palette or client extraction
 - **Building a landing page** → invoke `landing-page-mvp` for GSAP presets and conversion formulas
 - **Building a dashboard** → invoke `build-dashboard` for Chart.js patterns and data tables
 

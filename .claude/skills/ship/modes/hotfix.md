@@ -19,8 +19,6 @@ lock.sh acquire <commit_sha>              → exit 5 if another ship holds
   git checkout -b hotfix/<slug>-<ts>
 git add + git commit                      → commit-guardian inherits
 git push (plain)
-verify-push-landed.sh <branch>            → assert "pushed" ONLY on remote-SHA
-                                            match (exit 0); exit 1/2 = NOT landed
 gh pr create --label hotfix
 /verify-pipeline --tier 3 --force         → ALWAYS run; never skip from state file
 ci-watch.sh <pr> --timeout 15             → exit 0 green, 1 red, 9 unknown

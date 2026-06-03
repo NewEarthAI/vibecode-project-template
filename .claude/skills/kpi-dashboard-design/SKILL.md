@@ -2,7 +2,7 @@
 name: kpi-dashboard-design
 description: Design effective KPI dashboards with metrics selection, visualization best practices, and real-time monitoring patterns. Use when building business dashboards, selecting metrics, or designing data visualization layouts.
 user-invocable: false
-note: L3 library — auto-loaded by /design-review and /newearth-ui-design when a KPI surface is detected. Not a human entry point.
+note: L3 library — auto-loaded by /design-review and /ui-design-system when a KPI surface is detected. Not a human entry point.
 ---
 
 # KPI Dashboard Design

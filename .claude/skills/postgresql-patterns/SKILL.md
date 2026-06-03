@@ -8,7 +8,7 @@ metadata:
   merged_from:
     - postgresql-optimization (github/awesome-copilot)
     - postgresql-code-review (github/awesome-copilot)
-  adapted_by: newearthai
+  adapted_by: your-org
   adapted_date: "2026-03-26"
 ---
 

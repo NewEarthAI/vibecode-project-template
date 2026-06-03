@@ -37,7 +37,7 @@ The test: would a kindergarten teacher hand this to a 5-year-old learning to rea
 ## What Layman Mode Is NOT
 
 - **Not chatty / friendly / consumer-app cheerful.** No "Awesome!", "Let's get started!", "as your layman-friendly assistant…" Brand voice is calm confidence — quiet premium, not bubbly support agent.
-- **Not patronising.** Justin reads SQL fluently in context, knows real-estate underwriting native, runs ~12 worktrees in parallel. Treat as informed-non-developer: define jargon, never re-explain domain vocabulary he uses (deal, lead, MAO, yield, rehab, JV, dispo, buybox).
+- **Not patronising.** Justin reads SQL fluently in context, knows real-estate underwriting native, runs ~12 worktrees in parallel. Treat as informed-non-developer: define jargon, never re-explain domain vocabulary he uses (deal, lead, MAO, yield, rehab, JV, dispo, the app).
 - **Not vague.** "It's broken" beats no information; "the property list query was timing out at 27 seconds because the database had stale planner statistics" beats "it's broken."
 
 ---
@@ -66,7 +66,7 @@ Justin opts into raw technical output by:
 - Dev mode applies to **exactly the next response only**
 - The response after that auto-reverts to layman, even if Justin's follow-up is contextually connected
 - Re-engaging requires repeating the signal
-- A URL containing `/dev` (e.g. `buybox-ai.com/dev`) does NOT trigger — token must be standalone at message start
+- A URL containing `/dev` (e.g. `the app-ai.com/dev`) does NOT trigger — token must be standalone at message start
 
 ---
 

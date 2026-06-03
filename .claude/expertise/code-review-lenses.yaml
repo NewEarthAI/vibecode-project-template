@@ -30,3 +30,55 @@ patterns:
       the "fix" deployed. A downstream doc flagged the divergence but never
       root-caused it; repaired by reading the field from the correct view
       object — the same source an adjacent already-working field used.
+
+  - name: dependency_removal_unmasks_broken_replacements
+    confidence: HIGH
+    detection: |
+      Any change that REMOVES / disables a vendor, API, service, or dependency
+      that the system relied on, on the assumption that replacement(s) Y/Z will
+      take over. The trap: the replacements may be wired as ADDITIVE merges /
+      shadow paths that only run on top of the removed dependency's output — or
+      their deployed API contract may have silently broken (4xx/5xx errors in
+      logs) while the dependency masked it. Reading the code is NOT sufficient:
+      a fallback path can EXIST in source and never have fired in production.
+      Grep signals: a "fallback"/"merge"/"secondary" path guarded by
+      `if (replacement.enabled && existingResult)` — it needs a base result to
+      run, so removing the base leaves it producing nothing.
+    resolution: |
+      Before declaring the removal safe: (a) run a REAL transaction through the
+      pipeline with the dependency ALREADY OFF and confirm the replacements
+      actually populate the output (live-smoke, not code-read); (b) check the
+      historical record — has the replacement EVER been the recorded source in
+      production? A path that never fired in prod history is unproven, not a
+      fallback; (c) live-probe the replacement's actual API contract — APIs
+      drift; the deployed call may be erroring silently while the dependency
+      masks it (the error-rate logs are the tell). Code reviewers: for any diff
+      that disables/removes a vendor or dependency, demand live-smoke evidence
+      that the named replacement produces output with the dependency off.
+    scope_misattribution_corollary: |
+      The symmetric trap: a 4xx/5xx from ONE endpoint does NOT mean the VENDOR
+      is unusable — "vendor X is broken" is almost never true; "endpoint A of
+      vendor X is broken, endpoint B works" is what's true. Before retiring a
+      vendor on an error finding, live-probe its OTHER endpoints / query forms.
+      The variable is usually the CALL SHAPE, not the vendor. (Same incident as
+      the precedent below: the vendor flagged "DEAD" — 403 on the URL-construction
+      endpoint, 14 days of errors — worked perfectly on a DIFFERENT endpoint
+      keyed by a resolved region id: 100 raw comps, zero drift. The migration
+      that fixed the outage relied entirely on switching endpoints, not vendors.
+      Discarding the vendor on the first endpoint's failure would have killed
+      the only viable fix.) These two traps are a matched pair: don't TRUST a
+      broken replacement (resolution above); don't DISCARD a working vendor on
+      one endpoint's failure (here).
+    precedent: |
+      A vendor ({{dependency_X}}) was retired in favour of {{replacement_Y}} +
+      {{replacement_Z}}. The replacements were BELIEVED primary; in fact they
+      were additive shadow-merges that needed X's base cascade to do anything,
+      and Y's deployed endpoint had been returning 403 for ~14 days (visible in
+      the event log the whole time). X being ON masked all of it. Turning X off
+      to stop a cost leak exposed that the replacements produced ZERO output on
+      fresh records — detected only by live-probing, never by reading the code
+      (which LOOKED like it had a fallback). One replacement ({{replacement_Z}})
+      had NEVER once been the recorded source in production history despite years
+      of being "the fallback". Composes with loading-state-invariants.md
+      Invariant 7 (live-smoke deployed state) + the concrete-evidence-beats-
+      theory principle (live-probe past 2 hypotheses).

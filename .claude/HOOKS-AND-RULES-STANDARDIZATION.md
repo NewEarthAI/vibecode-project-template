@@ -12,8 +12,8 @@ Claude Code has three distinct layers for controlling agent behavior. Each serve
 Layer 1: HOOKIFY RULES     (.claude/hookify.*.local.md)
          → Behavioral guidance injected into Claude's context
          → Can: warn, block (tool_matcher), inject context (addContext)
-         → Managed by: hookify plugin
-         → Fires on: SessionStart, PreToolUse, PostToolUse, Stop, UserPromptSubmit
+         → Managed by: hookify-context-injector.sh (shell hook in Layer 2)
+         → Fires on: PreToolUse, PostToolUse, Stop (via registered matchers)
 
 Layer 2: SHELL HOOKS        (.claude/hooks/*.sh)
          → External scripts executed by Claude Code runtime
@@ -38,24 +38,23 @@ Tool Call Initiated
    → If allowed: skip user prompt, proceed to hooks
    → If not listed: prompt user for approval
 
-2. HOOKIFY RULES (hookify.*.local.md with matching tool_matcher)
-   → action: block → inject block message, tool NOT executed
-   → action: warn  → inject warning, tool still executes
-   → action: addContext → inject context, tool still executes
-
-3. SHELL HOOKS (settings.local.json → hooks.PreToolUse)
+2. SHELL HOOKS (settings.local.json → hooks.PreToolUse)
+   → hookify-context-injector.sh reads matching .local.md rules
+     and outputs addContext/warn content to stdout (Claude sees it)
+   → Guardian scripts (sql-guardian, bash-guardian) hard-block: exit 2
    → exit 0 → permit (tool executes)
    → exit 2 → hard block (tool NOT executed, Claude sees error)
 
-4. TOOL EXECUTES
+3. TOOL EXECUTES
 
-5. POST-HOOKS (hookify PostToolUse + shell hooks.PostToolUse)
+4. POST-HOOKS (shell hooks.PostToolUse + Stop hooks)
 ```
 
-**Key insight**: Hookify `block` and shell hook `exit 2` are DIFFERENT mechanisms:
-- Hookify block: injects a message telling Claude not to proceed (behavioral)
-- Shell hook exit 2: runtime hard-blocks the tool call (mechanical)
-- Defense-in-depth: use BOTH for critical safety (e.g., destructive SQL)
+**Key insight**: Hookify rules are executed BY shell hooks, not separately:
+- `hookify-context-injector.sh` reads `.local.md` rules and outputs matching content
+- Guardian scripts (`sql-guardian.sh`, `bash-guardian.sh`) hard-block via exit 2
+- Both are registered in `settings.local.json` under the same matchers
+- Defense-in-depth: use BOTH addContext warnings AND guardian hard-blocks for critical safety
 
 ---
 
@@ -145,6 +144,7 @@ Run `/update-latest` to pull all template-managed hookify rules and shell hooks.
 ### Step 3: Register Shell Hooks (CRITICAL — Often Missed)
 
 Shell hooks MUST be registered in `.claude/settings.local.json` to fire. This is the most common gap.
+The `hookify-context-injector.sh` is the bridge that makes hookify `.local.md` rules work at runtime.
 
 **Create or update** `.claude/settings.local.json`:
 
@@ -153,24 +153,55 @@ Shell hooks MUST be registered in `.claude/settings.local.json` to fire. This is
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/bash-guardian.sh", "timeout": 10 },
+          { "type": "command", "command": ".claude/hooks/commit-guardian.sh", "timeout": 10 },
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh PreToolUse", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh PreToolUse", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh PreToolUse", "timeout": 5 }
+        ]
+      },
+      {
         "matcher": "mcp__supabase-*__execute_sql",
         "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/sql-guardian.sh",
-            "timeout": 10
-          }
+          { "type": "command", "command": ".claude/hooks/sql-guardian.sh", "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "mcp__n8n-mcp-*",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh PreToolUse", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "mcp__supabase-*",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh PreToolUse", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "mcp__github__*",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh PreToolUse", "timeout": 5 }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/session-summarizer.sh",
-            "timeout": 15
-          }
+          { "type": "command", "command": ".claude/hooks/session-summarizer.sh", "timeout": 15 },
+          { "type": "command", "command": ".claude/hooks/hookify-context-injector.sh Stop", "timeout": 5 }
         ]
       }
     ]
@@ -258,8 +289,8 @@ Run this verification checklist:
 When you create a hookify rule that would benefit ALL projects:
 
 1. **Generalize**: Replace project-specific tool matchers with wildcards
-   - `mcp__supabase-nirvana__execute_sql` → `mcp__supabase-*__execute_sql`
-   - `mcp__n8n-mcp-newearthai__*` → `mcp__n8n-mcp-*__*`
+   - `mcp__supabase-yourproject__execute_sql` → `mcp__supabase-*__execute_sql`
+   - `mcp__n8n-yourinstance__*` → `mcp__n8n-mcp-*__*`
 
 2. **Test**: Verify the wildcard matcher works correctly
 
@@ -274,7 +305,7 @@ When you create a hookify rule that would benefit ALL projects:
 | Pitfall | Symptom | Fix |
 |---------|---------|-----|
 | Shell hooks not registered | sql-guardian.sh exists but destructive SQL passes through | Add `hooks` section to `settings.local.json` |
-| Hookify plugin not enabled | No `hookify.*.local.md` files are processed | Enable in `~/.claude/settings.json` → `enabledPlugins` |
+| Context injector not registered | hookify .local.md rules exist but never fire | Register `hookify-context-injector.sh` for each matcher in `settings.local.json` |
 | Wrong matcher syntax | Rule fires on wrong tools or doesn't fire at all | Check: hookify uses regex-style matching, settings.json uses glob-style |
 | Timeout too short | Shell hook killed before completing | Default: 10-15s. Complex hooks may need 30s |
 | `.local.md` not gitignored | Hookify rules committed to repo (they should stay local) | Add `*.local.md` to `.gitignore` (hookify files are local config) |
@@ -287,14 +318,17 @@ When you create a hookify rule that would benefit ALL projects:
 
 ```
 .claude/
-├── settings.local.json          ← Permissions + shell hook registration (gitignored)
-├── hookify.*.local.md           ← Hookify rules (gitignored, managed by plugin)
+├── settings.local.json              ← Permissions + shell hook registration (gitignored)
+├── hookify.*.local.md               ← Hookify rules (gitignored, event-specific context)
 ├── hooks/
-│   ├── sql-guardian.sh          ← Hard-block destructive SQL (PreToolUse)
-│   └── session-summarizer.sh   ← Session summary + health check (Stop)
-├── template-source.md           ← Template sync config
-├── planning-protocol.md         ← Planning rules (referenced by hookify)
-└── sessions/                    ← Session logs (created by hooks)
+│   ├── hookify-context-injector.sh  ← Reads .local.md rules, outputs matching context
+│   ├── bash-guardian.sh             ← Hard-block destructive Bash (PreToolUse)
+│   ├── commit-guardian.sh           ← Commit safety checks (PreToolUse)
+│   ├── sql-guardian.sh              ← Hard-block destructive SQL (PreToolUse)
+│   └── session-summarizer.sh       ← Session summary + health check (Stop)
+├── template-source.md               ← Template sync config
+├── planning-protocol.md             ← Planning rules (referenced by hookify)
+└── sessions/                        ← Session logs (created by hooks)
 
 ~/.claude/
 ├── settings.json                ← Global settings (enabledPlugins, model)

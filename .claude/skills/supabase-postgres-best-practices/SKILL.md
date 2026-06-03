@@ -7,7 +7,7 @@ classification: capability-uplift
 version: "2.0.0"
 metadata:
   original_author: supabase
-  adapted_by: newearthai
+  adapted_by: your-org
   adapted_date: "2026-03-26"
 ---
 

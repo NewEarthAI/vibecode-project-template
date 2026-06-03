@@ -177,13 +177,27 @@ nv_armed() {
   [ -f "$NV_ARM_FLAG" ]
 }
 
-# ── nv_find_latest_continuation: newest AUTOVIBE-*-MASTER.md by mtime ───────
+# ── nv_find_latest_continuation: newest *canonically-named* AUTOVIBE master ──
+# Newest-first, but SKIP any basename the verifier would reject for filename
+# shape (verify-continuation.sh exit 3). A single hand-misnamed continuation
+# (e.g. "AUTOVIBE-2026-05-19-arv-MASTER.md" — no -HHMM- time field) must NEVER
+# be able to permanently starve a well-named one sitting right beside it. That
+# exact jam cost a SaaS app 44 dead autofires on 2026-05-19. The case-glob mirrors
+# CANONICAL_RE's date/time shape and is locale-independent (pure shell glob, no
+# regex tool — cannot recur the §-locale class). The verifier remains the
+# authoritative gate on whichever file IS selected; this only stops a
+# structurally-misnamed file from being selected in the first place.
 nv_find_latest_continuation() {
   [ -d "$NV_CONT_DIR" ] || return 1
   local f
-  f=$(ls -t "$NV_CONT_DIR"/AUTOVIBE-*-MASTER.md 2>/dev/null | head -1)
-  { [ -n "$f" ] && [ -f "$f" ]; } || return 1
-  echo "$f"
+  while IFS= read -r f; do
+    { [ -n "$f" ] && [ -f "$f" ]; } || continue
+    case "$(basename "$f")" in
+      AUTOVIBE-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]-*-MASTER.md)
+        echo "$f"; return 0 ;;
+    esac
+  done < <(ls -t "$NV_CONT_DIR"/AUTOVIBE-*-MASTER.md 2>/dev/null)
+  return 1
 }
 
 # ── nv_detect_ship_completion: the Stop-hook completion signal ──────────────
@@ -232,68 +246,6 @@ nv_resolve_intent() {
   [ -f "$NV_AV_STATE" ] && intent=$(jq -r '.intent // ""' "$NV_AV_STATE" 2>/dev/null)
   [ -z "$intent" ] && intent=$(git -C "$NV_PROJECT_ROOT" log -1 --format=%s 2>/dev/null || echo "")
   echo "$intent"
-}
-
-# ── nv_read_goal_id: extract goal_id from a continuation file frontmatter ───
-# Looks for the canonical HTML-comment marker: `<!-- goal_id: <slug> -->`
-# Echoes the slug if present, empty string otherwise. NEVER fails — the
-# autonomous spawn must not depend on goal-ledger presence (advisory only).
-#
-# Slug grammar mirrors goals.sh _validate_id EXACTLY: [a-z0-9-]+ (lowercase
-# + digits + hyphen; NO underscore). Whitespace around the marker is
-# whitespace-exact: a single space after the colon and before the closing
-# `-->`. The marker is authored by code (master-continuation §5C), so a
-# strict regex is acceptable — the emitter and this extractor co-evolve.
-nv_read_goal_id() {
-  local file="${1:-}"
-  [ -f "$file" ] || { echo ""; return 0; }
-  local id
-  # Per Edge Case Finder Scenario 7 (council 2026-05-19): scope the search to
-  # the HTML-comment frontmatter region — the leading block above the first
-  # `# ` Markdown heading — so a documentation example like
-  # `<!-- goal_id: example -->` written inside body prose is NOT mis-read as a
-  # real ledger link. The marker is authored by code (master-continuation §5C)
-  # and always sits in the frontmatter, never below the first heading.
-  id=$(awk '/^# /{exit} /<!-- goal_id: [a-z0-9-]+ -->/{
-            match($0,/<!-- goal_id: [a-z0-9-]+ -->/);
-            print substr($0,RSTART,RLENGTH); exit
-          }' "$file" 2>/dev/null \
-       | sed 's/^<!-- goal_id: //; s/ -->$//')
-  echo "${id:-}"
-}
-
-# ── nv_goal_status: classify the goal_id against the local ledger ───────────
-# Outputs one of: active | achieved | abandoned | paused | missing | corrupt
-#                  | no-helper | no-id
-# Never fails. Pure read; takes no lock; cannot affect the ledger.
-nv_goal_status() {
-  local id="${1:-}"
-  [ -z "$id" ] && { echo "no-id"; return 0; }
-  local helper="$NV_PROJECT_ROOT/.claude/skills/_shared/goals.sh"
-  [ -f "$helper" ] || { echo "no-helper"; return 0; }
-  local goals_dir="$NV_PROJECT_ROOT/.claude/goals"
-  local file="$goals_dir/goal-${id}.md"
-  [ -f "$file" ] || { echo "missing"; return 0; }
-  # Reader runs goals.sh in a subshell — never inherits our trap, never holds
-  # the ledger lock (read is lock-free per spec §4).
-  # $(...) is command substitution (NOT a pipe), so $? correctly reflects the
-  # helper's exit code — no mktemp dance needed. head -1 caps multi-line
-  # output defensively. Local variable named goal_st (not status) to avoid
-  # zsh's read-only `status` builtin should this lib ever be sourced into zsh
-  # (per shell-portability.md §5 — namespace your locals).
-  local goal_st goal_st_rc
-  goal_st=$(bash "$helper" read "$id" status 2>/dev/null | head -1)
-  goal_st_rc=${PIPESTATUS[0]}
-  # Corrupt: cmd_read returns non-zero OR emits empty/CORRUPT.
-  if [ "$goal_st_rc" -ne 0 ] || [ -z "$goal_st" ] || [ "$goal_st" = "CORRUPT" ]; then
-    echo "corrupt"
-    return 0
-  fi
-  # Normalise to the FROZEN status set; anything else is treated as corrupt.
-  case "$goal_st" in
-    active|achieved|abandoned|paused) echo "$goal_st" ;;
-    *) echo "corrupt" ;;
-  esac
 }
 
 # ── nv_autofire: the gated dispatch — the single entry both hooks use ───────
@@ -400,46 +352,6 @@ nv_autofire() {
     return 0
   fi
 
-  # Gate 8 — goal-ledger read step (Session 4, Goal-Ledger Build Programme).
-  # ADVISORY ONLY. This gate is the autonomous substrate's eyes-on-the-ledger.
-  # It NEVER blocks — per Decision Criteria §4 row 1: "absence of ledger ≠
-  # failure; log + proceed". The goal record is created at master-continuation
-  # §5C time via bare `goals.sh new` (the unguarded legacy path; §5C has not
-  # yet been migrated to spawn-check — Session 5+ work). Re-running new OR
-  # spawn-check here would risk double-creating against an already-existing
-  # id. The hook's job is to: (a) make the autonomous spawn ledger-aware in
-  # phase47-log.jsonl, and (b) surface stale / missing / corrupt linkage to
-  # the operator via heartbeat-style stderr.
-  # NOTE: exit codes 10 (WARN) / 11 (BLOCK) from goals.sh do NOT fire here —
-  # those come from spawn-check at goal-creation time, not from this read.
-  local goal_id goal_status goal_extra
-  goal_id=$(nv_read_goal_id "$canonical_path")
-  goal_status=$(nv_goal_status "$goal_id")
-  # Pre-build the extra-json with its own rc check, mirroring the dispatch
-  # body construction below. If jq fails the substitution returns "", and
-  # nv_append_log's "${4:-{\}}" default kicks in only on UNSET (not empty) —
-  # so an empty 4th arg would trip --argjson on '' and lose the audit row.
-  # Fallback to a sentinel so the row still lands, distinguishable from a
-  # real outcome (code-council Session 4, Silent Failure Hunter CRITICAL).
-  goal_extra=$(jq -nc --arg gid "${goal_id:-}" --arg s "$goal_status" --arg p "$canonical_path" \
-       '{linkage_status:$s, goal_id:$gid, canonical_path:$p}' 2>/dev/null)
-  [ -z "$goal_extra" ] && goal_extra='{"linkage_status":"log-build-failed","goal_id":"","canonical_path":""}'
-  nv_append_log goal-ledger-read "$trigger" "$depth" "$goal_extra"
-  case "$goal_status" in
-    active)
-      echo "ℹ️ NewVibe: dispatching against active ledger goal $goal_id" >&2 ;;
-    achieved|abandoned|paused)
-      echo "ℹ️ NewVibe: ledger goal $goal_id is $goal_status — proceeding (next chain's §5C handshake reconciles)" >&2 ;;
-    missing)
-      echo "⚠️ NewVibe: continuation references goal_id $goal_id but no ledger record on disk — proceeding without linkage" >&2 ;;
-    corrupt)
-      echo "⚠️ NewVibe: ledger goal $goal_id is unreadable / corrupt — proceeding without linkage" >&2 ;;
-    no-helper)
-      echo "ℹ️ NewVibe: goals.sh helper not installed in this repo — autonomous spawn without ledger linkage" >&2 ;;
-    no-id)
-      echo "ℹ️ NewVibe: no goal_id in continuation frontmatter — autonomous spawn without ledger linkage" >&2 ;;
-  esac
-
   # ── Dispatch ──────────────────────────────────────────────────────────────
   if ! nv_armed; then
     # Unarmed (default) or NEWVIBE_DRYRUN — every gate passed, but no real curl.
@@ -464,22 +376,6 @@ nv_autofire() {
 # is consumed on a successful dispatch so the next autofire is a fresh decision.
 nv_dispatch_live() {
   local canonical_path="$1" target_branch="$2" expected_sha="$3" depth="$4" trigger="$5"
-
-  # Gate L1 — unfilled placeholder pre-check (Edge Case Finder Scenario 1,
-  # council 2026-05-19). The template ships {{N8N_HOST}}/{{N8N_WEBHOOK_PATH}}/
-  # {{N8N_WORKFLOW_ID}} as placeholders. An armed receiver that fires this path
-  # without replacing them would curl a literal `{{N8N_HOST}}{{N8N_WEBHOOK_PATH}}`
-  # — fail-loud per-attempt (15s curl timeout) but the failure accumulates as
-  # `webhook-dispatch-failed-rc-*` rows the operator must grep to find. Loud
-  # AND actionable beats loud BUT silent-in-aggregate: refuse here with a
-  # human-readable heartbeat naming the integration guide §7.0.
-  if printf '%s%s%s' "$NV_N8N_HOST" "$NV_WEBHOOK_PATH" "$NV_WORKFLOW_ID" \
-       | grep -qF '{{'; then
-    nv_append_log autofire-skipped "$trigger" "$depth" \
-      '{"skip_reason":"unfilled-placeholders","resolution":"replace NV_N8N_HOST + NV_WEBHOOK_PATH + NV_WORKFLOW_ID in newvibe-dispatch-lib.sh per newvibe-integration-guide.md §7.0"}'
-    nv_heartbeat "🛑 NewVibe autofire REFUSED — the dispatch constants still carry {{...}} placeholders. Replace NV_N8N_HOST + NV_WEBHOOK_PATH + NV_WORKFLOW_ID in newvibe-dispatch-lib.sh (lines 49-51) per newvibe-integration-guide.md §7.0 before arming."
-    return 0
-  fi
 
   local hyper_micro
   hyper_micro=$(cat <<EOF
@@ -563,6 +459,11 @@ EOF
 
 # ── Self-test (hermetic) ────────────────────────────────────────────────────
 nv_self_test() {
+  # The autofire hooks run this library in non-interactive shells that default
+  # to the C locale. Pin LC_ALL=C so the self-test reproduces that environment —
+  # an ambient UTF-8 locale otherwise masks C-locale-only regex/glob bugs (the
+  # class that left the verifier silently dead for days).
+  export LC_ALL=C
   local tmp pass=0 fail=0
   tmp=$(mktemp -d)
   mkdir -p "$tmp/.claude/skills/autovibe" "$tmp/continuations"
@@ -693,110 +594,22 @@ nv_self_test() {
   else echo "  PASS  T12 NEWVIBE_DRYRUN=1 overrides the arm flag"; pass=$((pass+1)); fi
   rm -f "$NV_ARM_FLAG"
 
-  # T13 — Gate 8: nv_read_goal_id extracts the goal_id marker
-  local cont_with_id="$NV_CONT_DIR/AUTOVIBE-2026-05-19-with-goal-MASTER.md"
-  {
-    printf '<!-- goal_id: goal-test-abc123 -->\n# T13\n\n## 1. Current Branch\nmain\n\npad %s\n' \
-      "$(head -c 600 </dev/zero|tr "\0" x)"
-  } > "$cont_with_id"
-  local extracted
-  extracted=$(nv_read_goal_id "$cont_with_id")
-  _result "T13 nv_read_goal_id extracts valid id" "goal-test-abc123" "$extracted"
-  # T13b — no marker -> empty
-  extracted=$(nv_read_goal_id "$NV_CONT_DIR/AUTOVIBE-2026-05-17-1300-t11-MASTER.md")
-  if [ -z "$extracted" ]; then echo "  PASS  T13b no goal_id marker -> empty"; pass=$((pass+1))
-  else echo "  FAIL  T13b expected empty, got '$extracted'"; fail=$((fail+1)); fi
-  # T13c — file absent -> empty (must never throw)
-  extracted=$(nv_read_goal_id "$tmp/does-not-exist.md")
-  if [ -z "$extracted" ]; then echo "  PASS  T13c absent file -> empty"; pass=$((pass+1))
-  else echo "  FAIL  T13c expected empty, got '$extracted'"; fail=$((fail+1)); fi
-
-  # T14 — Gate 8: nv_goal_status classifies the four legitimate states
-  # T14a — no id -> no-id
-  _result "T14a empty id -> no-id" "no-id" "$(nv_goal_status "")"
-  # T14b — helper absent -> no-helper (sandbox has no .claude/skills/_shared/goals.sh)
-  _result "T14b helper absent -> no-helper" "no-helper" "$(nv_goal_status "goal-test-xyz")"
-  # T14c — helper present + record absent -> missing
-  mkdir -p "$tmp/.claude/skills/_shared" "$tmp/.claude/goals"
-  # Stub helper that mimics the read/status contract: prints status on stdout.
-  cat > "$tmp/.claude/skills/_shared/goals.sh" <<'STUB'
-#!/bin/bash
-# Stub goals.sh for hermetic self-test. Implements just `read <id> status`.
-if [ "$1" = "read" ] && [ "$3" = "status" ]; then
-  f="$(dirname "$0")/../../goals/goal-$2.md"
-  [ -f "$f" ] || exit 1
-  grep -m1 -oE '^status:[[:space:]]+[a-z]+' "$f" | awk '{print $2}'
-  exit 0
-fi
-exit 2
-STUB
-  chmod +x "$tmp/.claude/skills/_shared/goals.sh"
-  _result "T14c helper present, no record -> missing" "missing" "$(nv_goal_status "goal-test-missing")"
-  # T14d — record with status: active -> active.
-  # NOTE: goals.sh _goal_file() ALWAYS prepends "goal-" to the id when computing
-  # the on-disk file. So an id of "test-active" maps to goal-test-active.md.
-  # nv_goal_status mirrors this convention; we pass the bare id here.
-  cat > "$tmp/.claude/goals/goal-test-active.md" <<'REC'
----
-goal_id: test-active
-status: active
----
-REC
-  _result "T14d active record -> active" "active" "$(nv_goal_status "test-active")"
-  # T14e — record with status: achieved -> achieved
-  cat > "$tmp/.claude/goals/goal-test-done.md" <<'REC'
----
-goal_id: test-done
-status: achieved
----
-REC
-  _result "T14e achieved record -> achieved" "achieved" "$(nv_goal_status "test-done")"
-  # T14f — record present but helper returns nothing -> corrupt
-  cat > "$tmp/.claude/goals/goal-test-corrupt.md" <<'REC'
-not a valid record
-REC
-  _result "T14f unreadable record -> corrupt" "corrupt" "$(nv_goal_status "test-corrupt")"
-  # T14g — abandoned record -> abandoned (FROZEN schema state set per spec §4)
-  cat > "$tmp/.claude/goals/goal-test-aban.md" <<'REC'
----
-goal_id: test-aban
-status: abandoned
----
-REC
-  _result "T14g abandoned record -> abandoned" "abandoned" "$(nv_goal_status "test-aban")"
-  # T14h — paused record -> paused (FROZEN schema state set per spec §4)
-  cat > "$tmp/.claude/goals/goal-test-paused.md" <<'REC'
----
-goal_id: test-paused
-status: paused
----
-REC
-  _result "T14h paused record -> paused" "paused" "$(nv_goal_status "test-paused")"
-
-  # T15 — Gate 8 inside nv_autofire: phase47-log gains a goal-ledger-read entry
-  # alongside the existing would-dispatch entry. Re-arm the verifier stub from T11.
-  local cont15="$NV_CONT_DIR/AUTOVIBE-2026-05-19-1300-t15-MASTER.md"
-  {
-    printf '<!-- goal_id: test-active -->\n# T15\n\n## 1. Current Branch\nmain\n\npad %s\n' \
-      "$(head -c 600 </dev/zero|tr "\0" x)"
-  } > "$cont15"
-  rm -f "$NV_LOG_FILE"
-  out=$(NV_VERIFIER="$vstub" nv_autofire "$cont15" stop 2>&1)
-  if [ -f "$NV_LOG_FILE" ] \
-     && grep -q '"status":"goal-ledger-read"' "$NV_LOG_FILE" \
-     && grep -q '"linkage_status":"active"' "$NV_LOG_FILE"; then
-    echo "  PASS  T15 nv_autofire logs goal-ledger-read with active linkage"; pass=$((pass+1))
+  # T13 — a NEWER hand-misnamed continuation must NOT starve an OLDER canonical
+  # one (the a SaaS app 2026-05-19 jam: 44 verifier-exit-3 skips because the newest
+  # file lacked the -HHMM- field). nv_find_latest_continuation must skip the
+  # malformed newest and return the canonical older file.
+  rm -f "$NV_CONT_DIR"/AUTOVIBE-*-MASTER.md
+  printf 'x' > "$NV_CONT_DIR/AUTOVIBE-2026-05-17-1200-good-MASTER.md"
+  printf 'x' > "$NV_CONT_DIR/AUTOVIBE-2026-05-19-no-time-field-MASTER.md"
+  touch -t 202605171200 "$NV_CONT_DIR/AUTOVIBE-2026-05-17-1200-good-MASTER.md"      # older, canonical
+  touch -t 202605191200 "$NV_CONT_DIR/AUTOVIBE-2026-05-19-no-time-field-MASTER.md" # newer, malformed (no HHMM)
+  t13=$(nv_find_latest_continuation 2>/dev/null)
+  if [ "$(basename "${t13:-NONE}")" = "AUTOVIBE-2026-05-17-1200-good-MASTER.md" ]; then
+    echo "  PASS  T13 malformed newest skipped -> canonical older selected"; pass=$((pass+1))
   else
-    echo "  FAIL  T15 expected goal-ledger-read+active in phase47-log; got: $(cat "$NV_LOG_FILE" 2>/dev/null | head -5)"
-    fail=$((fail+1))
+    echo "  FAIL  T13 expected canonical older file, got: $(basename "${t13:-NONE}")"; fail=$((fail+1))
   fi
-  # T15b — Gate 8 NEVER blocks dispatch: would-dispatch must still appear
-  if printf '%s' "$out" | grep -q "would dispatch"; then
-    echo "  PASS  T15b Gate 8 does not block dispatch (would-dispatch still fires)"; pass=$((pass+1))
-  else
-    echo "  FAIL  T15b expected would-dispatch despite Gate 8"; fail=$((fail+1))
-  fi
-  rm -f "$NV_LOG_FILE"
+  rm -f "$NV_CONT_DIR"/AUTOVIBE-*-MASTER.md
 
   rm -rf "$tmp"
   unset NEWVIBE_ROOT_OVERRIDE NEWVIBE_PROJECT_SLUG
