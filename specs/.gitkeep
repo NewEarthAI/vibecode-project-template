@@ -1,0 +1,9 @@
+# specs/
+
+Implementation plans live here.
+Use the /plan command to generate spec files.
+
+Example files:
+- add_oauth_support.md
+- rate_limiting.md
+- new_feature_xyz.md

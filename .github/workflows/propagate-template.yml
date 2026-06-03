@@ -1,0 +1,216 @@
+name: Propagate Template Updates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.claude/**'
+      - 'plugins/hookify/**'
+
+jobs:
+  propagate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout template repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit for diff
+
+      - name: Detect changed template files
+        id: changes
+        run: |
+          # Get files changed in this push
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "changed<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "Changed files:"
+          echo "$CHANGED"
+
+      - name: Read propagation config
+        id: config
+        run: |
+          # Extract target repos
+          REPOS=$(jq -r '.target_repos[]' .github/propagation.json)
+          echo "repos<<EOF" >> $GITHUB_OUTPUT
+          echo "$REPOS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Extract auto-safe paths
+          SAFE=$(jq -r '.file_tiers.auto_safe.paths[]' .github/propagation.json)
+          echo "safe_paths<<EOF" >> $GITHUB_OUTPUT
+          echo "$SAFE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Extract needs-review paths
+          REVIEW=$(jq -r '.file_tiers.needs_review.paths[]' .github/propagation.json)
+          echo "review_paths<<EOF" >> $GITHUB_OUTPUT
+          echo "$REVIEW" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create PRs in target repos
+        env:
+          GH_TOKEN: ${{ secrets.TEMPLATE_PROPAGATION_PAT }}
+        run: |
+          set -e
+          DATE=$(date +%Y-%m-%d)
+          BRANCH="template-update/${DATE}"
+
+          # Classify changed files
+          SAFE_FILES=""
+          REVIEW_FILES=""
+          SKIPPED_FILES=""
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+
+            if echo "${{ steps.config.outputs.safe_paths }}" | grep -qF "$file"; then
+              SAFE_FILES="$SAFE_FILES $file"
+            elif echo "${{ steps.config.outputs.review_paths }}" | grep -qF "$file"; then
+              REVIEW_FILES="$REVIEW_FILES $file"
+            else
+              SKIPPED_FILES="$SKIPPED_FILES $file"
+            fi
+          done <<< "${{ steps.changes.outputs.changed }}"
+
+          # If no template-managed files changed, exit
+          if [ -z "$SAFE_FILES" ] && [ -z "$REVIEW_FILES" ]; then
+            echo "No template-managed files changed. Skipping propagation."
+            exit 0
+          fi
+
+          echo "Safe files: $SAFE_FILES"
+          echo "Review files: $REVIEW_FILES"
+          echo "Skipped: $SKIPPED_FILES"
+
+          # Build PR body
+          PR_BODY="## Template Update — ${DATE}\n\n"
+          PR_BODY+="Auto-generated PR from [claude-code-project-template](https://github.com/NewEarthAI/claude-code-project-template).\n\n"
+
+          if [ -n "$SAFE_FILES" ]; then
+            PR_BODY+="### Auto-safe files (generic, no project-specific content)\n"
+            for f in $SAFE_FILES; do
+              PR_BODY+="- \`${f}\`\n"
+            done
+            PR_BODY+="\n"
+          fi
+
+          if [ -n "$REVIEW_FILES" ]; then
+            PR_BODY+="### ⚠️ REVIEW NEEDED — these files may have project-specific customizations\n"
+            for f in $REVIEW_FILES; do
+              PR_BODY+="- \`${f}\` — check for local additions before merging\n"
+            done
+            PR_BODY+="\n> **Tip:** If this repo has local additions to these files, do NOT merge blindly.\n"
+            PR_BODY+="> Instead, manually cherry-pick the specific changes you want from this PR.\n"
+            PR_BODY+="> Or run \`/update-latest\` in Claude Code for interactive merge.\n"
+          fi
+
+          PR_BODY+="\n### Post-Install Checklist\n"
+          PR_BODY+="If new shell hooks were added (check the diff for \`.claude/hooks/*.sh\`):\n"
+          PR_BODY+="- [ ] \`chmod +x .claude/hooks/*.sh\`\n"
+          PR_BODY+="- [ ] Check \`settings.local.json\` for new hook registrations\n"
+          PR_BODY+="- [ ] Run \`/verify-hooks\` to validate enforcement\n"
+          PR_BODY+="\n---\n*Triggered by commit: ${{ github.sha }}*"
+
+          # Create PR in each target repo
+          while IFS= read -r repo; do
+            [ -z "$repo" ] && continue
+            echo "=== Processing $repo ==="
+
+            # Check if repo exists and is accessible
+            if ! gh api "repos/${repo}" --silent 2>/dev/null; then
+              echo "WARNING: Cannot access $repo — skipping"
+              continue
+            fi
+
+            # Get default branch
+            DEFAULT_BRANCH=$(gh api "repos/${repo}" --jq '.default_branch')
+
+            # Check if branch already exists (idempotent — don't create duplicate PRs)
+            if gh api "repos/${repo}/git/refs/heads/${BRANCH}" --silent 2>/dev/null; then
+              echo "Branch $BRANCH already exists in $repo — skipping (PR may already exist)"
+              continue
+            fi
+
+            # Get the latest commit SHA on default branch
+            BASE_SHA=$(gh api "repos/${repo}/git/refs/heads/${DEFAULT_BRANCH}" --jq '.object.sha')
+
+            # Create the branch
+            gh api "repos/${repo}/git/refs" \
+              -f "ref=refs/heads/${BRANCH}" \
+              -f "sha=${BASE_SHA}" --silent
+
+            echo "Created branch $BRANCH from $DEFAULT_BRANCH ($BASE_SHA)"
+
+            # Copy each changed template file
+            ALL_FILES="$SAFE_FILES $REVIEW_FILES"
+            for file in $ALL_FILES; do
+              [ -z "$file" ] && continue
+              [ ! -f "$file" ] && continue
+
+              # Base64 encode the file content
+              CONTENT=$(base64 -w 0 "$file")
+
+              # Check if file exists in target repo
+              EXISTING_SHA=""
+              EXISTING_SHA=$(gh api "repos/${repo}/contents/${file}?ref=${BRANCH}" --jq '.sha' 2>/dev/null || true)
+
+              if [ -n "$EXISTING_SHA" ]; then
+                # Update existing file
+                gh api "repos/${repo}/contents/${file}" \
+                  -X PUT \
+                  -f "message=template: update ${file}" \
+                  -f "content=${CONTENT}" \
+                  -f "sha=${EXISTING_SHA}" \
+                  -f "branch=${BRANCH}" --silent
+                echo "  Updated: $file"
+              else
+                # Create new file
+                gh api "repos/${repo}/contents/${file}" \
+                  -X PUT \
+                  -f "message=template: add ${file}" \
+                  -f "content=${CONTENT}" \
+                  -f "branch=${BRANCH}" --silent
+                echo "  Created: $file"
+              fi
+            done
+
+            # Determine PR labels
+            LABELS=""
+            if [ -n "$REVIEW_FILES" ]; then
+              # Try to create label if it doesn't exist (ignore errors)
+              gh api "repos/${repo}/labels" \
+                -X POST \
+                -f "name=template-review-needed" \
+                -f "color=FFA500" \
+                -f "description=Template update includes files that may have project-specific customizations" \
+                --silent 2>/dev/null || true
+              LABELS="--label template-review-needed"
+            fi
+
+            # Create PR
+            PR_URL=$(gh pr create \
+              --repo "$repo" \
+              --base "$DEFAULT_BRANCH" \
+              --head "$BRANCH" \
+              --title "Template Update — ${DATE}" \
+              --body "$(echo -e "$PR_BODY")" \
+              $LABELS 2>&1) || true
+
+            echo "PR created: $PR_URL"
+
+            # Immediately merge if only safe files changed (no review-needed files)
+            if [ -z "$REVIEW_FILES" ] && [ -n "$PR_URL" ]; then
+              PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
+              if [ -n "$PR_NUMBER" ]; then
+                echo "  Merging PR #${PR_NUMBER} (safe files only — no review needed)"
+                gh pr merge "$PR_NUMBER" --repo "$repo" --squash --delete-branch 2>/dev/null || \
+                  echo "  Note: merge failed — PR left open for manual review"
+              fi
+            fi
+
+            echo ""
+
+          done <<< "${{ steps.config.outputs.repos }}"
+
+          echo "=== Propagation complete ==="

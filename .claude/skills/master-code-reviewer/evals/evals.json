@@ -1,0 +1,42 @@
+[
+  {
+    "input": "review my code changes",
+    "should_trigger": true,
+    "expected_behavior": "Runs full review phases 0-7 on current git diff"
+  },
+  {
+    "input": "review this PR",
+    "should_trigger": true,
+    "expected_behavior": "Runs full review on PR diff with intent gate"
+  },
+  {
+    "input": "check this diff for issues",
+    "should_trigger": true,
+    "expected_behavior": "Runs full review with scoring algorithm"
+  },
+  {
+    "input": "review this SQL migration",
+    "should_trigger": false,
+    "expected_behavior": "Should route to postgresql-code-review instead"
+  },
+  {
+    "input": "do a security audit of our codebase",
+    "should_trigger": false,
+    "expected_behavior": "Should route to master-security-review instead"
+  },
+  {
+    "input": "when should I request a code review?",
+    "should_trigger": false,
+    "expected_behavior": "Should route to requesting-code-review instead"
+  },
+  {
+    "input": "how should I handle this review feedback?",
+    "should_trigger": false,
+    "expected_behavior": "Should route to receiving-code-review instead"
+  },
+  {
+    "input": "review this PR that touches both React components and Supabase migrations",
+    "should_trigger": true,
+    "expected_behavior": "Runs master review AND invokes postgresql-code-review companion for SQL portions"
+  }
+]

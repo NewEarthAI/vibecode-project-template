@@ -1,0 +1,77 @@
+{
+  "skill": "reduce-to-first-principles",
+  "version": "1.0",
+  "description": "Trigger-accuracy and behavioural evals. Trigger evals check whether the skill should fire on given prompts. Behavioural evals reference the inline ## Tests section of SKILL.md (14 acceptance test cases).",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-framing-audit",
+      "prompt": "Before the council deliberates on adopt-Hermes-or-build-native, reduce that question to first principles — what is it actually asking, and what did the framing add on top?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill runs the MVI gate before producing any reduction",
+        "Skill produces an irreducible_question stopped at the decision-relevance floor",
+        "Output includes a delta_table classifying added_constraint / presupposition / smuggled_conclusion",
+        "Output includes framing_verdict (SOUND | ADDS_CONSTRAINTS | SMUGGLES_CONCLUSIONS)"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-gate-audit",
+      "prompt": "This phase's gate is called a 'reproducibility check'. Audit it — is the method we used actually answering what the gate is for?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill classifies input_type as protocol_gate",
+        "Skill runs the method-vs-gate comparison and records dropped_content",
+        "Output names the gate's first-principles purpose vs the method as executed"
+      ]
+    },
+    {
+      "id": "trigger-003-should-fire-anchored-reduction",
+      "prompt": "I think the real question here is just which option is cheaper to build. Reduce this proposal to first principles and tell me if I'm right.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill treats the operator statement as proposed_reduction with hypothesis_provenance: operator",
+        "Skill runs the independent reduction BEFORE comparing to the operator's proposed reduction",
+        "anti_anchoring.verdict is populated (AGREED | DISAGREED | INCONCLUSIVE)"
+      ]
+    },
+    {
+      "id": "trigger-004-should-NOT-fire-factual-question",
+      "prompt": "Did the schema migration apply successfully on the production database?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill is not invoked; if invoked anyway it refuses jurisdiction — pure factual yes/no with no decision framing",
+        "If invoked: verdict == SCOPE_REFUSAL, no reduction block produced"
+      ]
+    },
+    {
+      "id": "trigger-005-should-NOT-fire-dynamic-question",
+      "prompt": "Our signups grew steadily for 9 months then plateaued for 6 despite more marketing. What's going on?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill is not invoked; this is a dynamic / over-time behaviour question",
+        "If invoked: redirects to /map-feedback-loops, scope.in_jurisdiction == false"
+      ]
+    },
+    {
+      "id": "trigger-006-should-NOT-fire-sound-option-choice",
+      "prompt": "The framing is fine — I just need to pick between hiring a contractor or training someone internally. Which is the better call?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill is not invoked; the framing is explicitly not in question — this is an option-choice once the framing is already sound",
+        "If invoked: defers to /decide-under-uncertainty, OR returns SCOPE_REFUSAL with that redirect"
+      ]
+    },
+    {
+      "id": "trigger-007-should-fire-bare-topic-then-refuse",
+      "prompt": "Reduce Hermes to first principles.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill IS invoked — 'reduce ... to first principles' is an explicit invocation phrase",
+        "Skill returns INSUFFICIENT_INPUT verdict — 'Hermes' is a bare topic, not a stateable claim/proposal/gate",
+        "Output includes an example_input template instructing the operator to restate subject as a complete question with a verb",
+        "No fabricated irreducible question"
+      ]
+    }
+  ],
+  "behavioural_tests_reference": "See ## Tests section in SKILL.md for the 14 acceptance test cases (7 required per diagnostic-skill-anti-anchoring.md + 1 cross-skill chain + 6 added by the Session 6 Day 2 code-council for input-type, branch, and confidence coverage). Test 1 happy path is the dogfood anchor: the skill must independently reduce the Hermes adopt-vs-build proposal to the cheapest-reliable-path question and flag SMUGGLES_CONCLUSIONS."
+}

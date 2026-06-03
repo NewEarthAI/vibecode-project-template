@@ -1,0 +1,64 @@
+# Git / PR workflow expertise — universal patterns
+# Populated by /reflect. Mechanism-not-instance; placeholders for IDs.
+
+patterns:
+  - name: step_branch_merge_orphans_fix_claims
+    confidence: HIGH
+    detection: |
+      A fix-claim says it shipped (PR merged, council/review signs off,
+      plan marks complete) BUT live-smoke against production shows the
+      fix did not fire. First check:
+        gh pr view {{PR}} --json baseRefName,mergedAt
+      If baseRefName != "main" (or the repo's trunk), the fix landed on a
+      feature/step branch and may NOT have been forward-merged to trunk via
+      a follow-up PR. The "merged" state is real but against the wrong base.
+    resolution: |
+      1. gh pr view {{PR}} --json baseRefName,headRefName,mergeCommit
+      2. git fetch origin pull/{{PR}}/head:pr-{{PR}}-head
+      3. git diff origin/main pr-{{PR}}-head -- <target_file>
+         → see exactly what the PR really changed vs current trunk
+      4. If trunk lacks the changes: surgical forward-port via a fresh
+         trunk-rooted worktree + cherry-pick of just the commits carrying
+         unique content (see cherry_pick_over_rebase_when_most_commits_absorbed).
+      5. PR description must name the step branch + the gap explicitly so
+         the audit trail records WHY a forward-port PR exists.
+    precedent: |
+      A fix's $→% conversion + a resolver casing fix were merged into a
+      step branch (a feature branch off another feature branch), never
+      reaching trunk directly. Live-smoke on a production record showed the
+      values still wrong. Forward-ported surgically; the investigation also
+      caught a self-silent bug in the original PR (see code-review-lenses.yaml
+      select_source_mismatch_silent_undefined).
+
+  - name: cherry_pick_over_rebase_when_most_commits_absorbed
+    confidence: HIGH
+    detection: |
+      A PR is conflicting against trunk, has >5 commits ahead, and its base
+      branch (gh pr view --json baseRefName) has already been merged into
+      trunk via an integration PR. Naive instinct says "rebase the N commits";
+      reality is often "most commits' file content is already on trunk".
+    resolution: |
+      Map each commit's content against trunk BEFORE choosing rebase vs cherry-pick:
+        for cmt in $(git log origin/main..pr-head --pretty=%H); do
+          unique=0; total=0
+          for f in $(git show $cmt --name-only --pretty= | grep -E '\.(sql|ts|tsx|md|sh)$'); do
+            total=$((total+1))
+            git cat-file -e origin/main:$f 2>/dev/null || unique=$((unique+1))
+          done
+          echo "$cmt: $unique of $total files unique"
+        done
+      If only 1-2 commits have unique content: cherry-pick those onto a fresh
+      trunk-rooted worktree, open a new PR, close the original as superseded
+      with a pointer comment mapping every commit's disposition. Beats a
+      many-commit rebase that replays conflicts at every step for zero net
+      new value.
+      Append-only docs (progress-log-style) conflict on cherry-pick: keep
+      BOTH sides in chronological order (docs-only auto-resolution per the
+      rebase-semantics rule).
+    precedent: |
+      A conflicting PR had 12 commits ahead of trunk; 11 of 12 were already
+      absorbed via an integration PR. Only one commit had unique content
+      (a monitoring lockstep migration + canary + audit doc). Surgical
+      cherry-pick with one append-only-docs conflict resolved by keeping
+      both sides; original PR closed as superseded with a per-commit
+      disposition table in the close comment.

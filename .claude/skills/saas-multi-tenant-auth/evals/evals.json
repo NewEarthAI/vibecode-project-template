@@ -1,0 +1,85 @@
+{
+  "skill_name": "saas-multi-tenant-auth",
+  "classification": "encoded-preference",
+  "evals": [
+    {
+      "id": "eval-001-explicit-trigger",
+      "prompt": "I want to add multi-tenant auth to my Supabase + React project so multiple organizations can each have their own team of users. Where do I start?",
+      "should_trigger": true,
+      "expectations": [
+        "References the six-tier shipping plan (Tier 1 through Tier 6)",
+        "Mentions Pillar 1 (security_invoker=true) when discussing views",
+        "Recommends starting with Tier 1 foundation (tables + RLS + helper function)",
+        "Surfaces the pre-flight checklist (extensions, env vars, redirect URLs)",
+        "Cites the 12 doctrinal pillars or at least 3 of them by name",
+        "Does NOT skip directly to writing code without doctrine"
+      ]
+    },
+    {
+      "id": "eval-002-invitation-system",
+      "prompt": "Help me build a team invitation system where org admins can invite teammates by email. The teammate clicks a link in their email and joins the org.",
+      "should_trigger": true,
+      "expectations": [
+        "Mentions Pillar 5 (atomic claim via RPC + partial unique index)",
+        "Mentions Pillar 4 (JWT-derived invited_by, never from request body)",
+        "Warns about two-tab race conditions and idempotent already_claimed=200",
+        "Mentions Pillar 10 (pagination-safe duplicate check, NOT auth.admin.listUsers)",
+        "References templates/02_invites.sql AND templates/send-invite-edge-function.ts",
+        "Surfaces Pillar 12 with code='email_send_failed' for retry UI"
+      ]
+    },
+    {
+      "id": "eval-003-rls-leak-debugging",
+      "prompt": "Users in Tenant A can see data from Tenant B in our Supabase pipeline view. How do I fix this?",
+      "should_trigger": true,
+      "expectations": [
+        "Diagnoses likely cause as Pillar 1 violation (view missing security_invoker=true)",
+        "References pitfalls.md P-1 OR doctrine.md Pillar 1",
+        "Provides the CI grep query for views without security_invoker=on",
+        "Mentions Pillar 3 (qual=true SELECT policies forbidden) as second-line check",
+        "Cites the dd_deal_reviews failure precedent OR similar leak example",
+        "Recommends running the cross-tenant penetration tests"
+      ]
+    },
+    {
+      "id": "eval-004-owner-transfer",
+      "prompt": "How do I implement a 'transfer ownership' button in my team management UI without locking the org out of having any owner?",
+      "should_trigger": true,
+      "expectations": [
+        "Mentions Pillar 6 (promote-BEFORE-demote in single transaction)",
+        "Explains why reverse order fails (last-owner trigger blocks demote-self)",
+        "References templates/03_team_mgmt.sql transfer_ownership RPC",
+        "Mentions the last-owner guard trigger as a safety net",
+        "Recommends single-transaction atomic implementation, NOT two separate RPC calls"
+      ]
+    },
+    {
+      "id": "eval-005-no-trigger-stripe",
+      "prompt": "How do I integrate Stripe subscription billing with usage-based pricing for my SaaS?",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-006-no-trigger-mobile-auth",
+      "prompt": "I'm building a React Native mobile app and need biometric auth + secure token storage on iOS.",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-007-edge-non-supabase",
+      "prompt": "I want multi-tenant auth using Better Auth with Drizzle ORM and Postgres, no Supabase. Can this skill help?",
+      "should_trigger": false,
+      "expectations": [
+        "Notes that this skill is Supabase-specific",
+        "Suggests better-auth-security skill instead",
+        "Optionally notes the doctrine pillars are still useful as conceptual reference"
+      ]
+    }
+  ],
+  "validation_notes": {
+    "validated_on": [
+      "BuyBox-AI CM.32 (origin — 4 phases shipped 2026-04-19 to 2026-04-21)"
+    ],
+    "held_out_test": "Apply skill to a fresh Supabase + Vite + React project with no existing auth/team concepts. All 6 tiers should ship cleanly using only the skill's references and templates."
+  }
+}

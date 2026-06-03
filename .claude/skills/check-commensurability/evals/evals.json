@@ -1,0 +1,297 @@
+{
+  "skill": "check-commensurability",
+  "version": "1.0",
+  "description": "Trigger-accuracy and behavioural evals. Trigger evals check whether the skill should fire on given prompts. Behavioural evals reference the inline ## Tests section of SKILL.md (20 acceptance test cases). The skill is a markdown procedure — a behavioural eval 'passes' when the procedure walked against the input yields the documented verdict.",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-comparison-strength",
+      "prompt": "Before the council locks the adopt-Hermes-or-build-native verdict, check how strong that comparison actually is — are we comparing apples to pears?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill runs the MVI gate and names side_a and side_b",
+        "Skill runs independent basis classification on each side before any compare",
+        "Skill returns a ladder_position 1-5 and a calibration_gate decision",
+        "Skill emits a counterfactual against the operator's default_action"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-build-vs-buy",
+      "prompt": "We're deciding build-vs-buy on the notification service. How solid is the comparison we're about to decide on?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill classifies the input as a comparison-based decision (in jurisdiction)",
+        "Skill classifies each side as estimate or experience",
+        "Skill names the gap to the next rung"
+      ]
+    },
+    {
+      "id": "trigger-003-should-not-fire-framing-question",
+      "prompt": "Is 'adopt or build native' even the right question to be asking here?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill recognises this as a framing question, not a comparison-strength question",
+        "Skill defers to /reduce-to-first-principles"
+      ]
+    },
+    {
+      "id": "trigger-004-should-not-fire-single-option",
+      "prompt": "Should we ship the cache-key hotfix today?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill recognises this as a single-option go/no-go with no comparison mechanism",
+        "Skill returns SCOPE_REFUSAL — there is nothing to place on the ladder"
+      ]
+    },
+    {
+      "id": "trigger-005-should-not-fire-feedback-loop",
+      "prompt": "What happens to the system over the next year if we keep adding skills at this rate?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill recognises this as dynamic / over-time behaviour",
+        "Skill defers to /map-feedback-loops"
+      ]
+    },
+    {
+      "id": "behaviour-001-happy-path-hermes",
+      "test_ref": "SKILL.md Test 1",
+      "prompt": "Adopt Hermes Agent or build a native equivalent? side_a: build native (estimated 3-4.5 sessions, projected from comparable builds, not yet built). side_b: integrate Hermes (estimated 6-9 sessions, projected, Hermes not run by the team). competitor_context: side_b is an external tool, high GitHub stars, active production deployment, churning releases. default_action: lock the build-native verdict.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == PASS",
+        "both sides classified estimate (basis-honesty guard — the precise session ranges are projections)",
+        "ladder_position == 1",
+        "calibration_gate.decision == FIRES; qualifying_competitor == true; enforcement_active == false",
+        "falsifier present with all three sub-fields",
+        "recommendation blocks the verdict pending a hands-on Hermes calibration run"
+      ]
+    },
+    {
+      "id": "behaviour-002-adversarial-anchored",
+      "test_ref": "SKILL.md Test 2",
+      "prompt": "Test 1 input plus proposed_rung: 4, hypothesis_provenance: operator.",
+      "should_trigger": true,
+      "expectations": [
+        "independent classification runs first and yields rung 1",
+        "anti_anchoring.verdict == DISAGREED",
+        "anti_anchoring.independent_ladder_position == 1; over_claimed_side populated",
+        "gate fires on the independent rung-1 classification, not the operator's proposed rung 4",
+        "no silent adoption of proposed_rung"
+      ]
+    },
+    {
+      "id": "behaviour-003-vague-input-side-unnamed",
+      "test_ref": "SKILL.md Test 3",
+      "prompt": "Should we compare Hermes against our own approach? side_a: Hermes. side_b: (empty).",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == INSUFFICIENT_INPUT",
+        "mvi.passed == false; mvi.missing includes side_b",
+        "no fabricated ladder position",
+        "example input template emitted"
+      ]
+    },
+    {
+      "id": "behaviour-004-empty-input",
+      "test_ref": "SKILL.md Test 4",
+      "prompt": "(skill invoked with no subject and no sides)",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == INSUFFICIENT_INPUT",
+        "mvi.missing includes subject, side_a, side_b",
+        "output contains an example_input block",
+        "no fabrication"
+      ]
+    },
+    {
+      "id": "behaviour-005-out-of-scope-single-option",
+      "test_ref": "SKILL.md Test 5",
+      "prompt": "Should we ship the cache-key hotfix today? There is no genuine second option.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == SCOPE_REFUSAL",
+        "scope.in_jurisdiction == false; scope.redirect populated",
+        "no ladder block produced"
+      ]
+    },
+    {
+      "id": "behaviour-006-same-as-default-counterfactual",
+      "test_ref": "SKILL.md Test 6",
+      "prompt": "Keep our current ETL pipeline (18 months production use, this exact workload) or switch to the new one (ran in production 3 months, this exact workload)? Both basis_evidence supplied. default_action: decide directly.",
+      "should_trigger": true,
+      "expectations": [
+        "both sides classified experience (4-question probe passes for both)",
+        "ladder_position == 4; calibration_gate.decision == DOES_NOT_FIRE",
+        "counterfactual.difference in {none, marginal}",
+        "verdict == ADVISORY_PENDING; recommendation hands off to /decide-under-uncertainty"
+      ]
+    },
+    {
+      "id": "behaviour-007-non-author-domain-freight",
+      "test_ref": "SKILL.md Test 7",
+      "prompt": "Buy a third delivery truck (estimated payback 14 months, projected) or sub-contract the overflow loads (sub-contracted all of last quarter; Q1 invoices and on-time-delivery records)? default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "side_a classified estimate; side_b classified experience",
+        "ladder_position == 2 — read off the Step 5 table by the basis pair (estimate, experience) -> 2; rungs 2 and 3 are equal strength but distinct positions keyed to the basis pair, NOT derived from which side is grounded in the abstract",
+        "calibration_gate.decision == DOES_NOT_FIRE; qualifying_competitor == false (neither side is an external software tool)",
+        "output vocabulary is generic and freight-relevant — no real-estate / programme assumptions"
+      ]
+    },
+    {
+      "id": "behaviour-008-cross-skill-chain",
+      "test_ref": "SKILL.md Test 8",
+      "prompt": "Test 1 input plus proposed_rung from an upstream /diagnose-bottleneck invocation, hypothesis_provenance: prior_skill, source_hypothesis populated with upstream_skill and upstream_invocation_id.",
+      "should_trigger": true,
+      "expectations": [
+        "Branch B (validate-upstream) fires",
+        "anti_anchoring.verdict in {validate_upstream_stable, validate_upstream_unstable}",
+        "verdict is NEVER AGREED/DISAGREED/INCONCLUSIVE for prior_skill provenance (AP8)",
+        "if unstable, the skill BLOCKS and emits no downstream ladder verdict"
+      ]
+    },
+    {
+      "id": "behaviour-009-rung1-no-qualifying-competitor",
+      "test_ref": "SKILL.md Test 9",
+      "prompt": "Build the new search index with approach A (estimated, not built) or approach B (estimated, not built)? Both are internal engineering approaches. competitor_context: neither side is an external tool. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "both sides classified estimate; ladder_position == 1",
+        "calibration_gate.decision == DOES_NOT_FIRE; qualifying_competitor == false",
+        "gate does NOT fire on rung 1 here (AP7 over-fire guard)",
+        "recommendation names empirical-data-gathering on the cheaper side, explicitly not the formal Calibration Gate"
+      ]
+    },
+    {
+      "id": "behaviour-010-rung5-detection",
+      "test_ref": "SKILL.md Test 10",
+      "prompt": "Adopt model A (measured on the held-out eval set) or model B (measured on the same held-out eval set, same harness, same run)? The A-vs-B variation was set up deliberately as an A/B test. Both basis_evidence name the controlled run.",
+      "should_trigger": true,
+      "expectations": [
+        "both sides classified experience",
+        "all three rung-5 criteria hold (same task class, same environment, deliberate control)",
+        "ladder_position == 5; ladder.controlled == true",
+        "gap_to_next_rung.missing_data == null"
+      ]
+    },
+    {
+      "id": "behaviour-011-calibration-gate-indeterminate",
+      "test_ref": "SKILL.md Test 11",
+      "prompt": "Test 1 input but with competitor_context absent — side_b is plausibly an external tool with basis estimate but its qualification signals are not supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "ladder_position == 1",
+        "calibration_gate.decision == INDETERMINATE; qualification_route == unknown",
+        "skill names the missing fact (GitHub star count / production-deployment evidence) and asks",
+        "skill does NOT silently resolve to DOES_NOT_FIRE"
+      ]
+    },
+    {
+      "id": "behaviour-012-basis-honesty-ap3",
+      "test_ref": "SKILL.md Test 12",
+      "prompt": "Use vendor A (projected 99.2% accuracy, 1.4s latency, from the vendor's published benchmark) or vendor B (projected 98.8% accuracy, vendor benchmark)? Neither tested by the team.",
+      "should_trigger": true,
+      "expectations": [
+        "both sides classified estimate, not experience, despite the precise decimal figures",
+        "basis_evidence notes the figures are vendor-published projections, not the team's measured runs",
+        "ladder_position == 1",
+        "the skill does not classify experience on the strength of numeric precision (AP3 guard)"
+      ]
+    },
+    {
+      "id": "behaviour-013-high-confidence-falsifier-medium-downgrade",
+      "test_ref": "SKILL.md Test 13",
+      "prompt": "A comparison whose competitor side is estimate (gate FIRES) but for which no specific-observable falsifier can be named — the basis classification rests on inference, not an observable record.",
+      "should_trigger": true,
+      "expectations": [
+        "Step 11 cannot produce a specific-observable falsifier",
+        "confidence == MEDIUM (not HIGH) per Step 10",
+        "falsifier absent is acceptable at MEDIUM; the downgrade reason is recorded in confidence_basis, NOT advisory_pending_reasons",
+        "verdict == PASS — a MEDIUM-confidence completed analysis is PASS-eligible; the falsifier-absence downgrade does not flip the verdict to ADVISORY_PENDING",
+        "no confidence:HIGH + gate-FIRES + empty-falsifier output is ever emitted"
+      ]
+    },
+    {
+      "id": "behaviour-014-bundled-side",
+      "test_ref": "SKILL.md Test 14",
+      "prompt": "Build native or adopt Hermes? side_a: build native — covers a vector-recall layer (the team has built and runs one in production today), a mid-session-reframing layer (the team has never built this, projected), an output-cache (the team has built and runs one in production today). side_b: adopt Hermes (estimated, Hermes not run by the team). default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "side_a detected as bundled; comparison.side_a_basis == mixed",
+        "sub_capability_breakdown has three entries with distinct bases (experience, estimate, experience) — all grounded in the team's own build history, not a vendor's record",
+        "ladder mapping uses the weakest sub-basis (estimate) → side_a effective basis estimate; side_b estimate → ladder_position == 1",
+        "the skill does NOT classify side_a experience on the strength of its two stronger sub-capabilities (AP9 guard holds)"
+      ]
+    },
+    {
+      "id": "behaviour-015-version-mismatch-experience",
+      "test_ref": "SKILL.md Test 15",
+      "prompt": "Keep tool X v1.2 (side_a_basis_evidence: 18 months production use on v1.2; the comparison turns on the v2.0 streaming capability, which we have not used) or move to a new tool (estimated)? default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "the 4-question probe runs on side_a and Q2 (same version/capability) fails",
+        "side_a classified estimate for the purposes of this comparison",
+        "basis_evidence names version-mismatch as the species of analogue failure",
+        "ladder_position == 1, not 3"
+      ]
+    },
+    {
+      "id": "behaviour-016-three-option-subject",
+      "test_ref": "SKILL.md Test 16",
+      "prompt": "Adopt Hermes, build native, or wait six months and re-evaluate? side_a: adopt Hermes. side_b: build native. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "Step 2 does NOT halt — analysis proceeds on the two named sides",
+        "advisory_pending_reasons names the excluded 'wait six months and re-evaluate' option",
+        "the ladder and gate are evaluated on side_a vs side_b only, with the constraint surfaced"
+      ]
+    },
+    {
+      "id": "behaviour-017-pure-false-negative",
+      "test_ref": "SKILL.md Test 17",
+      "prompt": "Adopt tool X or build native? side_a: adopt tool X — 'we ran extensive analysis: tool X handles 4.2M requests/day at 99.95% uptime'. The figures are tool X's published production stats; the team has not run tool X. No proposed_rung. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "no proposed_rung, so the anti-anchoring compare does NOT fire — Step 4 (incl. the 4.6 self-adversarial pass) alone must catch this",
+        "side_a classified estimate — the published stats are not the team's lived data",
+        "basis_evidence distinguishes 'the vendor's published production stats' from 'our measured run'",
+        "no experience classification on the strength of the engineered wording 'we ran extensive analysis'"
+      ]
+    },
+    {
+      "id": "behaviour-018-session-history-branch-c",
+      "test_ref": "SKILL.md Test 18",
+      "prompt": "Adopt Hermes or build native? side_a: build native (estimated). side_b: integrate Hermes (estimated). proposed_rung: 1. hypothesis_provenance: session_history. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "the operator-confirmation question fires BEFORE any compare ('is this rung yours, or did Claude propose it earlier?')",
+        "'Mine' routes to Branch A; 'Claude proposed it' routes to Branch B degraded mode (Step 4.6 self-adversarial stability check — no skill to re-invoke)",
+        "anti_anchoring.verdict is never silently not_applicable",
+        "unresolved ambiguity after one re-ask → verdict == INSUFFICIENT_INPUT with mvi.missing naming the unresolved provenance"
+      ]
+    },
+    {
+      "id": "behaviour-019-agreed-verdict",
+      "test_ref": "SKILL.md Test 19",
+      "prompt": "Adopt Hermes or build native? side_a: build native (estimated). side_b: integrate Hermes (estimated). proposed_rung: 1. hypothesis_provenance: operator. default_action supplied. The operator's proposed rung matches what the independent classification will find.",
+      "should_trigger": true,
+      "expectations": [
+        "Steps 4-5 run the independent classification FIRST — not skipped because the operator's rung happens to match",
+        "anti_anchoring.verdict == AGREED; anti_anchoring.independent_ladder_position == 1",
+        "reasoning_chain shows Steps 4-5 ran independently (the Step 4.6 counter-case is recorded)",
+        "the AGREED is verified by independent classification, not assumed from a matching proposed_rung"
+      ]
+    },
+    {
+      "id": "behaviour-020-mixed-side-non-rung-1",
+      "test_ref": "SKILL.md Test 20",
+      "prompt": "Build native or keep the current pipeline? side_a: build native — bundles a recall layer (the team has built and runs one in production) and a reframing layer (the team has never built this). side_b: keep the current pipeline — 2 years production use on this exact workload (side_b_basis_evidence: production change-log and uptime records 2024-2026). default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "side_a is bundled → comparison.side_a_basis == mixed; sub_capability_breakdown has two entries",
+        "side_a effective basis estimate (weakest sub-basis); side_b_basis == experience",
+        "ladder_position == 2 — the basis pair (estimate, experience) read off the Step 5 table; a mixed side mapping to a rung unreachable from a plain estimate/estimate pair",
+        "calibration_gate.decision == DOES_NOT_FIRE (neither side is an external tool)"
+      ]
+    }
+  ]
+}

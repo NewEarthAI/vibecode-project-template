@@ -1,0 +1,180 @@
+{
+  "skill": "define-destination",
+  "version": "1.1",
+  "description": "Trigger-accuracy and behavioural evals. 6 trigger evals check whether the skill should fire. 11 behavioural evals exercise the 11 SKILL.md acceptance tests (Tests 1-11); the vague-input case (Test 4) is covered at the trigger layer by trigger-006, which fires the skill and expects an INSUFFICIENT_INPUT verdict. behaviour-010 / 010b exercise the v1.1 Step 7.5 emitter — the artefact-checkable branch and the honest-decline branch respectively.",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-destination-kickoff",
+      "prompt": "We're starting the buyer-tagging sync project. Define the destination for it — what does done actually look like?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill runs the MVI gate before authoring anything",
+        "Skill runs Element 0 (the three-way scope gate) first",
+        "Skill walks Elements 1-5 and writes DESTINATION.md at the project root",
+        "DESTINATION.md frontmatter carries the generative_primitive tag with generated_at and an absolute-path project_root"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-where-headed",
+      "prompt": "Before we do any more work on this venture I want a written statement of where we're headed and how we'd know we got there.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill authors a destination with a third-party-observable binary success test (Element 2)",
+        "Skill produces a could-the-test-lie clause (Element 4) distinct from the still-true-later clause (Element 3)",
+        "Output is written to DESTINATION.md, not returned only inline"
+      ]
+    },
+    {
+      "id": "trigger-003-should-fire-scope-gate-exploration",
+      "prompt": "Author a destination for this workshop — it's an open-ended R&D thinking space with no fixed end point.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill runs Element 0 and the operator can answer 'No, and not ever'",
+        "On no-forever: skill REFUSES to write a hollow destination, verdict == SCOPE_REFUSAL",
+        "Skill routes to /reduce-to-first-principles and /map-feedback-loops; no DESTINATION.md written"
+      ]
+    },
+    {
+      "id": "trigger-004-should-NOT-fire-daily-glance",
+      "prompt": "Show me today's destination glance before the task list.",
+      "should_trigger": false,
+      "expectations": [
+        "Skill is not invoked; the daily destination glance is the daily-plan flow's job, not this skill's",
+        "If invoked anyway: skill clarifies it authors/reviews destinations, it does not run the daily glance"
+      ]
+    },
+    {
+      "id": "trigger-005-should-NOT-fire-diagnostic-framing-audit",
+      "prompt": "Is the question 'adopt Hermes or build native' framed right? Audit it.",
+      "should_trigger": false,
+      "expectations": [
+        "Skill is not invoked; auditing an existing framing is /reduce-to-first-principles' job",
+        "This skill AUTHORS a destination; it does not diagnose an existing question"
+      ]
+    },
+    {
+      "id": "trigger-006-should-fire-vague-input-then-refuse",
+      "prompt": "Define the destination for making the business better.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill IS invoked — the explicit trigger phrase 'Define the destination for' routes here; the skill is what runs the MVI gate",
+        "MVI gate fails — 'make the business better' names no observable change",
+        "verdict == INSUFFICIENT_INPUT with an example_input template; no destination fabricated"
+      ]
+    },
+    {
+      "id": "behaviour-001-happy-path",
+      "prompt": "Define the destination for the buyer-tagging sync: it pulls tagged buyers from the CRM into the deal-matching pipeline so dispo can match a new deal to ready buyers fast.",
+      "should_trigger": true,
+      "expectations": [
+        "Scope gate answered Yes; verdict == PASS; scope_gate_branch == yes",
+        "DESTINATION.md written with status: confirmed, version: 1, written: true, reviewed_advanced: true",
+        "Element 1 is a condition in the world, not an output ('X was shipped')",
+        "Element 2 is a third-party-observable binary test",
+        "Frontmatter carries provenance: generative_primitive, generated_at, an absolute-path project_root, reviewed"
+      ]
+    },
+    {
+      "id": "behaviour-002-adversarial-output-as-end-state",
+      "prompt": "Define the destination. The end-state is: the buyer-tagging feature is shipped to production.",
+      "should_trigger": true,
+      "expectations": [
+        "The output-vs-condition general test fires (an artefact + a verb of creation)",
+        "Skill restates 'shipped' as the condition the output was meant to create and asks the operator to confirm",
+        "guards_fired includes the output-as-end-state restatement; recipe.element_1_end_state is a condition"
+      ]
+    },
+    {
+      "id": "behaviour-003-internal-consensus-test",
+      "prompt": "Define the destination. The success test is: the founding team agrees we should keep going.",
+      "should_trigger": true,
+      "expectations": [
+        "The third-party-observable general test fires — internal agreement is not externally checkable",
+        "Skill asks for the external evidence the agreement would rest on and uses that as the test",
+        "guards_fired includes the internal-consensus challenge; element_2_binary_test is third-party-observable"
+      ]
+    },
+    {
+      "id": "behaviour-004-pre-existing-file-no-silent-overwrite",
+      "prompt": "Define the destination for this project. (A DESTINATION.md already exists at the project root.)",
+      "should_trigger": true,
+      "expectations": [
+        "Skill detects review mode; surfaces the current destination; does NOT overwrite silently",
+        "Choice (a) still-holds: verdict == PASS, written == false, reviewed_advanced == true, no archive",
+        "Choice (b) without confirm_overwrite: verdict == OVERWRITE_BLOCKED, no write",
+        "Choice (b) with confirm_overwrite: prior file archived as DESTINATION.v1.md, new version: 2",
+        "Choice (c) abandon: verdict == PASS, written == false, reviewed_advanced == false, file unchanged"
+      ]
+    },
+    {
+      "id": "behaviour-005-scope-gate-no-forever",
+      "prompt": "Define the destination for our research track — it's pure open-ended exploration; there's no measurable end-state and there never will be.",
+      "should_trigger": true,
+      "expectations": [
+        "Element 0 scope gate answered 'No, and not ever'; verdict == SCOPE_REFUSAL",
+        "scope_gate_branch == no_forever; destination_file.written == false — no hollow destination authored",
+        "hand_offs names /reduce-to-first-principles and /map-feedback-loops; the refusal records the gate was run"
+      ]
+    },
+    {
+      "id": "behaviour-006-scope-gate-not-yet-draft",
+      "prompt": "Define the destination for this venture — we have a direction but the success metric isn't defined yet.",
+      "should_trigger": true,
+      "expectations": [
+        "Element 0 scope gate answered 'Not yet'; the skill asks the one lightweight question",
+        "verdict == DRAFT; scope_gate_branch == not_yet; DESTINATION.md status: DRAFT — UNCONFIRMED",
+        "Elements 1-2 carry the literal HYPOTHESIS: prefix; Elements 3-5 are also populated on top of them"
+      ]
+    },
+    {
+      "id": "behaviour-007-empty-input",
+      "prompt": "Define a destination.",
+      "should_trigger": true,
+      "expectations": [
+        "No project_scope supplied; MVI gate fails; verdict == INSUFFICIENT_INPUT",
+        "mvi.missing includes project_scope; a structured example_input block is returned; no destination fabricated"
+      ]
+    },
+    {
+      "id": "behaviour-008-non-author-domain",
+      "prompt": "Define the destination for the depot's new third delivery route — a freight-operations project.",
+      "should_trigger": true,
+      "expectations": [
+        "A valid six-part artefact is produced with generic vocabulary — no workshop/synthesis-programme assumptions",
+        "The recipe applies cleanly in the freight domain; the elements are freight-relevant"
+      ]
+    },
+    {
+      "id": "behaviour-009-handoff-accepted-by-diagnostic-suite",
+      "prompt": "Take the DESTINATION.md this project authored and feed its end-state to /reduce-to-first-principles to audit the destination question.",
+      "should_trigger": false,
+      "expectations": [
+        "This is the Component 1 end-to-end integration check — define-destination is NOT re-invoked here; /reduce-to-first-principles is",
+        "/reduce-to-first-principles receives hypothesis_provenance: generative_primitive with a source_hypothesis built from the DESTINATION.md frontmatter (generated_at + absolute-path project_root)",
+        "Branch D fires; the bounds check passes (same project, in-window); the destination is ACCEPTED — anti_anchoring.verdict in {AGREED, DISAGREED, INCONCLUSIVE}, never validate_upstream_*, never blocked"
+      ]
+    },
+    {
+      "id": "behaviour-010-goal-condition-emitter",
+      "prompt": "Define the destination for the buyer-tagging sync, then give me the /goal condition to drive the next session.",
+      "should_trigger": true,
+      "expectations": [
+        "Step 7.5 derives the /goal condition from the nearest milestone in Element 5's backward chain — NOT from Element 2 (often a real-world metric no session can demonstrate)",
+        "If the nearest milestone is artefact-checkable: a ready-to-paste /goal condition phrased as a Bash check the session must run and surface; never a self-certifiable 'I have done X' claim",
+        "If no milestone is artefact-checkable: an honest decline naming the real-world milestone; no fabricated check",
+        "goal_completion_condition output block populated (artefact_checkable, selected_milestone, condition or decline_reason, derived_from); the block is omitted on any halt"
+      ]
+    },
+    {
+      "id": "behaviour-010b-goal-condition-honest-decline",
+      "prompt": "Define the destination for improving our brand reputation — we'll know we've arrived when NPS is above 60 and we're quoted in three industry publications — then give me the /goal condition.",
+      "should_trigger": true,
+      "expectations": [
+        "Element 5's nearest milestone resolves to a real-world / longitudinal outcome — Step 7.5.2 classifies it NOT artefact-checkable",
+        "Step 7.5 emits an HONEST DECLINE — it does NOT fabricate a shell check for an unmeasurable-in-session milestone",
+        "The decline names the milestone's class (real-world vs runtime-dependent) and lists 7.5.2b-computed artefact-checkable milestones, or 'none'",
+        "goal_completion_condition.artefact_checkable == false; .condition == null; .decline_reason populated"
+      ]
+    }
+  ]
+}

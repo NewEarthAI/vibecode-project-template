@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Excalidraw Renderer</title>
+  <style>
+    body { margin: 0; padding: 0; background: white; }
+    #svg-container { display: flex; justify-content: center; align-items: center; }
+    #svg-container svg { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div id="svg-container"></div>
+
+  <script type="module">
+    const { exportToSvg } = await import(
+      "https://esm.sh/@excalidraw/excalidraw?bundle"
+    );
+
+    window.__moduleReady = true;
+    window.__renderComplete = false;
+
+    // NOTE: innerHTML usage here is safe — SVG comes from Excalidraw's
+    // own exportToSvg() library function, not from untrusted user input.
+    window.renderDiagram = async function (jsonData) {
+      try {
+        const elements = jsonData.elements || [];
+        const appState = jsonData.appState || {};
+        const files = jsonData.files || {};
+
+        appState.exportBackground = true;
+        appState.exportWithDarkMode = false;
+
+        const svg = await exportToSvg({
+          elements: elements,
+          appState: appState,
+          files: files,
+        });
+
+        const container = document.getElementById("svg-container");
+        // Safe: SVG node from Excalidraw library, not user content
+        container.replaceChildren(svg);
+
+        const bbox = svg.getBBox ? svg.getBBox() : { width: 800, height: 600 };
+        window.__renderComplete = true;
+
+        return {
+          success: true,
+          width: bbox.width || svg.getAttribute("width") || 800,
+          height: bbox.height || svg.getAttribute("height") || 600,
+        };
+      } catch (err) {
+        window.__renderComplete = true;
+        return { success: false, error: err.message || String(err) };
+      }
+    };
+  </script>
+</body>
+</html>

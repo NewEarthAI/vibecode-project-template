@@ -1,0 +1,56 @@
+{
+  "evals": [
+    {
+      "id": "eval-001-trigger-basic",
+      "prompt": "add project shortcut for my client project at ~/client-project with alias 'cln'",
+      "should_trigger": true,
+      "expectations": [
+        "Skill should identify alias='cln', directory='~/client-project'",
+        "Alias should be added to shell config (~/.zshrc or ~/.bashrc)",
+        "Alias command should include 'cd' and 'git pull --ff-only' and 'tx-claude'"
+      ]
+    },
+    {
+      "id": "eval-002-trigger-with-description",
+      "prompt": "create quick launch alias 'myapp' for /Users/me/projects/my-app with description 'My Application'",
+      "should_trigger": true,
+      "expectations": [
+        "Skill should parse alias, directory, and description correctly",
+        "Comment 'My Application' should appear in shell config",
+        "Alias should be usable immediately after shell reload"
+      ]
+    },
+    {
+      "id": "eval-003-no-trigger-general",
+      "prompt": "how do I create a tmux session in bash?",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-004-no-trigger-git-only",
+      "prompt": "set up a git pull workflow for my projects",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005-validation-invalid-path",
+      "prompt": "add alias 'test' for /nonexistent/directory/path",
+      "should_trigger": true,
+      "expectations": [
+        "Skill should validate directory exists",
+        "Should return error: 'Directory does not exist'",
+        "Should not modify shell config"
+      ]
+    },
+    {
+      "id": "eval-006-validation-invalid-alias",
+      "prompt": "create shortcut with alias '123invalid' pointing to ~/my-project",
+      "should_trigger": true,
+      "expectations": [
+        "Skill should validate alias format (must start with letter/underscore)",
+        "Should return error about invalid alias format",
+        "Should not modify shell config"
+      ]
+    }
+  ]
+}

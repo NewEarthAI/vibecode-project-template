@@ -1,0 +1,74 @@
+{
+  "skill": "cost-spike-diagnostic",
+  "version": "2.0.0",
+  "evals": [
+    {
+      "id": "cost-spike-001-openai-jump",
+      "name": "OpenAI daily bill jumps from $5 to $80",
+      "should_trigger": true,
+      "user_message": "My OpenAI bill went from $5/day to $80/day three days ago and I don't know why",
+      "expectations": {
+        "must_invoke_phases": ["1a", "1b", "1c", "2", "3", "5"],
+        "must_classify_consumers_as_LIVE_or_BACKFILL": true,
+        "must_check_for_cron_multipliers": true,
+        "must_ask_for_concrete_dashboard_observation_by_phase_5": true,
+        "must_NOT_declare_victory_on_db_evidence_alone": true,
+        "expected_outputs_contain": ["Phase 1b", "cron multiplier", "BACKFILL", "hour-by-hour", "billing CSV"]
+      }
+    },
+    {
+      "id": "cost-spike-002-day-after-fix",
+      "name": "Day-after follow-up: fix shipped yesterday but bill still high",
+      "should_trigger": true,
+      "user_message": "Here i am a day later and I am still getting charged tons for gpt 4o!!",
+      "expectations": {
+        "must_invoke_phase_7_re_verification": true,
+        "must_compare_hourly_rate_before_vs_after_fix": true,
+        "must_consider_attribution_was_wrong": true,
+        "must_NOT_assume_yesterday_fix_targeted_the_real_burner": true,
+        "expected_outputs_contain": ["attribution", "hour-by-hour", "rate did not drop", "restart Phase 1"]
+      }
+    },
+    {
+      "id": "cost-spike-003-backfill-class",
+      "name": "Backfill-class consumer identified during Phase 1c",
+      "should_trigger": true,
+      "user_message": "Help me audit OpenAI spend — I think there's a pod-ocr-backfill function eating money",
+      "expectations": {
+        "must_classify_as_BACKFILL_in_phase_1c": true,
+        "must_apply_no_backfilling_memory_rule": true,
+        "must_NOT_re_enable_paused_backfill_without_explicit_user_OK_with_dollar_figure": true,
+        "must_estimate_cost_before_acting": true,
+        "expected_outputs_contain": ["BACKFILL", "explicit", "dollar figure", "feedback_no_backfilling_without_permission"]
+      }
+    },
+    {
+      "id": "cost-spike-004-cron-blindspot",
+      "name": "Cron multiplier blindspot — function looks cheap, cron makes it expensive",
+      "should_trigger": true,
+      "user_message": "This edge function is only $0.02 per call, surely it can't be the source of my spend",
+      "expectations": {
+        "must_enumerate_all_cron_jobs_firing_the_function": true,
+        "must_compute_max_daily_cost_with_multiplier": true,
+        "must_NOT_accept_per_call_cost_as_proxy_for_daily_cost": true,
+        "expected_outputs_contain": ["Phase 1b", "schedule", "multiplier", "max_daily_cost"]
+      }
+    },
+    {
+      "id": "cost-spike-005-not-a-cost-question",
+      "name": "Skill should NOT trigger on non-cost questions",
+      "should_trigger": false,
+      "user_message": "Can you help me write a SQL migration to add a column to the fleet_bookings table?",
+      "expectations": {
+        "must_NOT_invoke_cost_spike_diagnostic": true,
+        "should_route_to": "general SQL / sql-defensive-defaults rule",
+        "reasoning": "No mention of cost, billing, API spend, or external-API consumer. This is a schema-change task, not a cost audit."
+      }
+    }
+  ],
+  "validation_notes": {
+    "discriminating_quality": "Each should_trigger=true case names a different failure mode (general spike, day-after, backfill, cron-blindspot). A skill that only handles the general case would fail evals 002-004.",
+    "should_trigger_false_quality": "Eval 005 is a schema task that shares no keywords with cost-spike-diagnostic's trigger phrases. A skill that triggers on the word 'SQL' or 'migration' would false-positive here.",
+    "v2_specific_assertions": "Evals 001, 002, 004 specifically test the v2 changes (Phase 1b cron multiplier, Phase 1c BACKFILL classification, Phase 7 hourly billing-rate verification). A v1 skill would fail these expectations."
+  }
+}

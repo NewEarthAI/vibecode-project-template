@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server"],
+      "env": {
+        "SUPABASE_URL": "YOUR_SUPABASE_URL",
+        "SUPABASE_KEY": "YOUR_SUPABASE_ANON_KEY"
+      }
+    },
+    "n8n": {
+      "command": "npx",
+      "args": ["-y", "@n8n/mcp-server"],
+      "env": {
+        "N8N_HOST": "YOUR_N8N_HOST",
+        "N8N_API_KEY": "YOUR_N8N_API_KEY"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@github/mcp-server"]
+    }
+  }
+}

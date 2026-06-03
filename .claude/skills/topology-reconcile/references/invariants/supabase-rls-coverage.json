@@ -1,0 +1,12 @@
+{
+  "id": "inv-supabase-rls-coverage",
+  "kind": "derivation",
+  "source_file": "references/invariants/supabase-rls-coverage.json",
+  "source_commit": "m4-v1",
+  "assertion": "the supabase-live dimension must be covered for this invariant to compare rls_policy presence; if the dimension is declared-missing it is unverifiable, NOT in_sync",
+  "reads_dimension": "supabase-live",
+  "left_view_filter": "[.nodes[] | select(.kind==\"rls_policy\")]",
+  "right_view_filter": "[.nodes[] | select(.kind==\"rls_policy\")]",
+  "cadence": "on-demand",
+  "source_of_truth_ref": "the unverifiable_dimension demonstrator — proves the P6 path: a declared-missing emitter dimension returns unverifiable_dimension, never a false in_sync over a dark surface"
+}

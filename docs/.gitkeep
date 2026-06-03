@@ -1,0 +1,8 @@
+# docs/
+
+Project documentation directory.
+
+Recommended files:
+- architecture.md — System design and app structure
+- changelog.md — Chronological list of changes
+- project_status.md — Current milestones and session end-points

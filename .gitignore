@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# MCP (contains secrets)
+.mcp.json
+
+# Claude Code local settings (machine-specific permissions + hooks)
+.claude/settings.local.json
+
+# Claude Code session data (local only)
+.claude/sessions/
+.claude/daily-plans/
+
+# Build outputs
+dist/
+build/
+.next/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+
+# Cache
+.cache/
+.pytest_cache/
+.ruff_cache/
+
+# Bootstrap credentials (NEVER commit)
+*.env.nirvana
+# Session-coordination heartbeats (transient, per-machine, written by SessionStart hook)
+.claude/worktrees/

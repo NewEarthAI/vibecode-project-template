@@ -1,0 +1,10 @@
+[
+  {"input": "set up Tailwind v4 theming", "should_trigger": true, "expected_behavior": "Walk through Four-Step Architecture"},
+  {"input": "add a shadcn component", "should_trigger": true, "expected_behavior": "Apply composition rules"},
+  {"input": "migrate from Tailwind v3 to v4", "should_trigger": true, "expected_behavior": "Show migration reference table"},
+  {"input": "set up dark mode", "should_trigger": true, "expected_behavior": "CSS variable switching pattern"},
+  {"input": "add form validation", "should_trigger": true, "expected_behavior": "RHF + Zod + shadcn Form components"},
+  {"input": "review this UI for issues", "should_trigger": false, "expected_behavior": "Route to design-review"},
+  {"input": "what are our brand colors?", "should_trigger": false, "expected_behavior": "Route to brand-visual-identity"},
+  {"input": "build a dashboard", "should_trigger": false, "expected_behavior": "Route to build-dashboard"}
+]

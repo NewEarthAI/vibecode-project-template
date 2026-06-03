@@ -1,0 +1,67 @@
+{
+  "skill": "decide-under-uncertainty",
+  "version": "1.0",
+  "description": "Trigger-accuracy and behavioural evals. Includes test 8 cross-skill chain — the novel work of Session 4 (first exercise of validate-upstream mode in code).",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-two-option-decision",
+      "prompt": "We need to decide whether to hire an SDR or invest in marketing automation for Q3 lead-gen. I'm leaning toward the SDR but want to stress-test.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill invokes Decision-Quality procedure",
+        "Skill runs anti-anchoring guard with hypothesis_provenance: operator branch",
+        "Output includes single verdict (PROCEED / DEFER / REFRAME)",
+        "Output includes counterfactual statement",
+        "If HIGH confidence: output includes specific-observable falsifier"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-prior-skill-chain",
+      "prompt": "I just ran /diagnose-bottleneck and it identified legal contract negotiation as the constraint. Now I'm deciding: hire another lawyer, automate templates, or restructure to bypass legal. Can you adjudicate?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill recognises chain handoff (hypothesis_provenance should be prior_skill)",
+        "Skill triggers validate-upstream mode (Branch B)",
+        "Skill re-runs /diagnose-bottleneck with alternative parameters",
+        "anti_anchoring.verdict is validate_upstream_stable OR validate_upstream_unstable, NOT AGREED/DISAGREED/INCONCLUSIVE"
+      ]
+    },
+    {
+      "id": "trigger-003-should-NOT-fire-bottleneck-question",
+      "prompt": "Where is the bottleneck in our pipeline right now? We have throughput numbers per stage.",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction; redirects to /diagnose-bottleneck",
+        "verdict: SCOPE_REFUSAL"
+      ]
+    },
+    {
+      "id": "trigger-004-should-NOT-fire-dynamic-question",
+      "prompt": "Why has our MRR plateaued after 9 months of 15% growth?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction; redirects to /map-feedback-loops",
+        "verdict: SCOPE_REFUSAL"
+      ]
+    },
+    {
+      "id": "trigger-005-should-NOT-fire-menu-question",
+      "prompt": "We have three options: A, B, C. Which one is best?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill detects AP3 (menu without preferred option)",
+        "Skill redirects to brainstorming or /council, not this skill"
+      ]
+    },
+    {
+      "id": "trigger-006-should-NOT-fire-aesthetic",
+      "prompt": "Should the brand logo be navy or charcoal?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction (pure aesthetic / values; no discriminating observable)",
+        "verdict: SCOPE_REFUSAL"
+      ]
+    }
+  ],
+  "behavioural_tests_reference": "See ## Tests section in SKILL.md for the 8 acceptance test cases per spec §9 (tests 1-7 mandatory per shared library; test 8 novel cross-skill chain test added by Phase 3.5 rule patch — first exercise of validate-upstream mode in code)."
+}

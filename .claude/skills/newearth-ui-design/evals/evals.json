@@ -1,0 +1,128 @@
+{
+  "skill": "newearth-ui-design",
+  "version": "1.0",
+  "description": "Eval set for the NewEarth UI design skill. Tests that the skill triggers on design tasks, applies the locked tokens, rejects banned patterns, and composes correctly with guided-tour.",
+  "evals": [
+    {
+      "id": "eval-001-trigger-new-component",
+      "prompt": "Create a new KPI card component that shows total revenue with a variance indicator. It should feel premium.",
+      "should_trigger": true,
+      "expectations": [
+        "Uses --ne-bg-base or #FBFBFA for card background, not bg-white",
+        "Uses rounded-xl or smaller, never rounded-2xl or rounded-3xl",
+        "Uses JetBrains Mono (or font-mono) for the numeric value",
+        "Uses DM Sans for the label",
+        "Uses --ne-kpi-value or clamp() responsive sizing for the number",
+        "Uppercase label is tracked wide (tracking-wider or letter-spacing)",
+        "Variance indicator uses semantic token (--ne-success or --ne-critical) based on sign",
+        "Applies the signature hover curve (transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5) OR uses the ne-card-interactive class",
+        "Does NOT use emoji, backdrop-blur, or bg-gradient-to-*",
+        "Card border is hairline (border-[var(--ne-border-hairline)] or #EAEAEA)"
+      ]
+    },
+    {
+      "id": "eval-002-trigger-review-mode",
+      "prompt": "Review this component for design quality: <Card className='rounded-2xl backdrop-blur-md bg-white/30 shadow-2xl'><h2>Revenue 🎉</h2><p className='text-pink-500'>R1,151,700</p></Card>",
+      "should_trigger": true,
+      "expectations": [
+        "Flags rounded-2xl as banned (should cap at rounded-xl)",
+        "Flags backdrop-blur-md as glassmorphism ban violation",
+        "Flags bg-white/30 as translucent white ban violation",
+        "Flags shadow-2xl as too blurry for cards",
+        "Flags emoji in heading as banned",
+        "Flags text-pink-500 as unsemantic color (pink is not a NewEarth semantic slot)",
+        "Proposes corrected version using --ne-bg-base, rounded-xl, two-layer shadow, neutral card, semantic variance color only if the number is carrying a variance signal"
+      ]
+    },
+    {
+      "id": "eval-003-silver-signature-application",
+      "prompt": "I want the hero KPI cards at the top of my dashboard to feel distinctly NewEarth — apply the silver signature.",
+      "should_trigger": true,
+      "expectations": [
+        "Applies Mode A (hairline metallic border) via ne-silver-edge class or ne-card-premium combination",
+        "Uses the locked silver gradient (#D4D7DC → #B8BCC2 → #D4D7DC) not a flat gray",
+        "Uses mask-composite technique for the 1px gradient border",
+        "Does NOT apply silver as a background fill",
+        "Does NOT animate the silver (no shimmer, no gradient-flow)",
+        "Pairs with Mode C hover ring (--ne-silver-ring at 40% opacity)",
+        "Does NOT use on non-premium surfaces (buttons, inputs, list rows)"
+      ]
+    },
+    {
+      "id": "eval-004-no-trigger-backend-task",
+      "prompt": "Fix the bug in the Supabase RPC get_dashboard_canonical_metrics where the trip count is off by one",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005-no-trigger-data-query",
+      "prompt": "Query the fleet_events table to show me all LOAD_COMPLETE events from yesterday",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-006-theming-new-client",
+      "prompt": "I'm starting a new client project called Acme Logistics. Their brand color is orange #EA580C. Set up the design tokens.",
+      "should_trigger": true,
+      "expectations": [
+        "Copies tokens.css from the skill's assets/ into the project",
+        "Replaces {{primary_color}} with #EA580C",
+        "Replaces {{primary_color_foreground}} with an accessible contrast color (white or near-black)",
+        "Does NOT change the locked neutrals (#FBFBFA / #F7F6F3 / #EAEAEA / #E8E7E3)",
+        "Does NOT change the locked semantic palette (#B42318 / #B54708 / #067647 / #175CD3)",
+        "Does NOT change the locked silver values",
+        "Imports DM Sans + JetBrains Mono via @fontsource or Google Fonts",
+        "Does NOT import Inter, Roboto, or system-ui as primary"
+      ]
+    },
+    {
+      "id": "eval-007-audit-existing-project",
+      "prompt": "Audit the current project's UI for design compliance issues",
+      "should_trigger": true,
+      "expectations": [
+        "Runs scripts/audit-forbidden-patterns.sh on the target project root",
+        "Runs scripts/audit-colors.sh on the target project root",
+        "Runs scripts/audit-hover-consistency.sh on the target project root",
+        "Reports violations as file:line references with explanation",
+        "Produces a markdown table of findings ordered by severity",
+        "Does NOT modify files — audit is read-only"
+      ]
+    },
+    {
+      "id": "eval-008-color-discipline-pastel-rejection",
+      "prompt": "Make the status badges more colorful — add pastel backgrounds so they stand out",
+      "should_trigger": true,
+      "expectations": [
+        "Rejects the request to use pastel backgrounds",
+        "Explains the color discipline rule (semantic-only, pastels banned)",
+        "Proposes alternative: use the locked --ne-critical-bg / --ne-warning-bg / --ne-success-bg tokens (which are tuned neutrals, not pastels)",
+        "Offers the text-only neutral variant for non-state badges",
+        "Does NOT add emoji or decorative icons to badges"
+      ]
+    },
+    {
+      "id": "eval-009-compose-with-guided-tour",
+      "prompt": "Build a dashboard header with a 'Take a Tour' button that matches the client's brand color",
+      "should_trigger": true,
+      "expectations": [
+        "References guided-tour skill for tour button implementation (does not reimplement it)",
+        "Uses {{primary_color}} parameter for the tour button background",
+        "Uses {{primary_color_foreground}} for the tour button text",
+        "Does NOT override guided-tour's z-index (10000/10001)",
+        "Does NOT add backdrop-filter anywhere in the header",
+        "Header itself uses neutral --ne-bg-base, not a gradient or colored background"
+      ]
+    },
+    {
+      "id": "eval-010-no-trigger-infrastructure",
+      "prompt": "Deploy the edge function daily-fleet-report to supabase",
+      "should_trigger": false,
+      "expectations": []
+    }
+  ],
+  "success_criteria": {
+    "trigger_accuracy": 0.9,
+    "expectation_pass_rate": 0.8,
+    "notes": "Should trigger on UI/design/theming tasks. Should NOT trigger on backend, data, or infrastructure tasks even when the codebase contains both."
+  }
+}

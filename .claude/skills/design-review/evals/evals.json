@@ -1,0 +1,9 @@
+[
+  {"input": "review this UI for issues", "should_trigger": true, "expected_behavior": "Priority-weighted review with screenshot loop"},
+  {"input": "check accessibility", "should_trigger": true, "expected_behavior": "Focus on WCAG rules and contrast"},
+  {"input": "visual inspection of the dashboard", "should_trigger": true, "expected_behavior": "Screenshot-based review at multiple viewports"},
+  {"input": "fix design issues on this page", "should_trigger": true, "expected_behavior": "Review + fix + verify loop"},
+  {"input": "build a component with shadcn", "should_trigger": false, "expected_behavior": "Route to tailwind-shadcn-system"},
+  {"input": "audit website for SEO and security", "should_trigger": false, "expected_behavior": "Route to audit-website"},
+  {"input": "build a landing page", "should_trigger": false, "expected_behavior": "Route to landing-page-mvp"}
+]

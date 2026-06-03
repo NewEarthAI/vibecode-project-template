@@ -1,0 +1,32 @@
+# Code-review lens expertise — universal patterns
+# Populated by /reflect. Mechanism-not-instance; placeholders for IDs.
+
+patterns:
+  - name: select_source_mismatch_silent_undefined
+    confidence: HIGH
+    detection: |
+      Any handler that reads recordVar['fieldName'] (or recordVar.fieldName)
+      where recordVar was built from a runtime projection — a Supabase
+      .select(...), PostgREST select, ORM select, or raw SQL column list.
+      Grep the projection's column list against every property accessed
+      downstream. If a downstream-accessed property is NOT in the projection,
+      every access returns undefined; any null-guard (`!= null`, `&&`,
+      optional chaining) silently fails closed and the dependent logic never
+      fires. TypeScript does NOT catch this — index access on a typed record
+      is `undefined`, not a compile error.
+    resolution: |
+      Either (a) add the missing column to the projection's column list, or
+      (b) read from the correct source object — frequently a joined view that
+      DOES carry the column (e.g., a denormalised read-view vs the base-table
+      SELECT). Pair the fix with an inline comment naming WHY the source is
+      what it is, so the next reviewer doesn't reintroduce the bug.
+      Code reviewers: add "projection-vs-access cross-check" to the lens set
+      for any diff that reads typed records built from SELECTs.
+    precedent: |
+      A "$ → %" conversion fix referenced a denominator field from one result
+      object, but that field was not in that object's SELECT — it lived on a
+      joined view object instead. The guard `obj['field'] != null` was always
+      false → the converted value returned null for every record even after
+      the "fix" deployed. A downstream doc flagged the divergence but never
+      root-caused it; repaired by reading the field from the correct view
+      object — the same source an adjacent already-working field used.

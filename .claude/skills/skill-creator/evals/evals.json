@@ -1,0 +1,56 @@
+{
+  "skill": "skill-creator",
+  "version": "4.0",
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "Create a skill for the webhook retry pattern I keep using — exponential backoff with jitter, idempotency check, and dead letter queue after 3 failures",
+      "should_trigger": true,
+      "expectations": [
+        "Should follow A.U.D.N. lifecycle — search existing skills before creating",
+        "Should extract the retry mechanism, not the specific webhook URL or payload",
+        "Should parameterize backoff values and max retries",
+        "Should classify as capability-uplift or encoded-preference"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Save this debugging workflow as a reusable skill — I always check pipeline throughput, then batch health, then stale data, then error rates",
+      "should_trigger": true,
+      "expectations": [
+        "Should recognize the 4-step diagnostic pattern as the mechanism",
+        "Should create a parameterized template with configurable check targets",
+        "Should write evals for the new skill",
+        "Should run validate.sh before storing"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Test the council skill — run its evals and tell me the pass rate",
+      "should_trigger": true,
+      "expectations": [
+        "Should locate council skill's evals directory",
+        "Should run eval infrastructure against the skill",
+        "Should report pass rate and any failures"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Audit this external skill from GitHub and merge the best patterns into our version",
+      "should_trigger": false,
+      "expectations": [
+        "Should NOT trigger skill-creator — this is skill-auditor-merger territory",
+        "Should recognize audit+merge as a different workflow from create+test"
+      ]
+    },
+    {
+      "id": "eval-005",
+      "prompt": "Fix the bug in the fleet-ops-debugger skill where it misses stuck-as-loaded fleets",
+      "should_trigger": false,
+      "expectations": [
+        "Should NOT trigger skill-creator — this is a bug fix in an existing skill",
+        "Should recognize editing existing code vs creating a new skill"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+name: E2E Regression Tests
+on:
+  deployment_status:
+  merge_group:
+
+concurrency:
+  group: e2e-${{ github.event.deployment.sha || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    if: >
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment_status.environment == 'Preview') ||
+      github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Run Playwright smoke tests
+        run: npx playwright test --grep @smoke
+        env:
+          BASE_URL: ${{ github.event.deployment_status.environment_url || '' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          HOME: /root
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

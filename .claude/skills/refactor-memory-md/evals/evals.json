@@ -1,0 +1,50 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "My MEMORY.md is 226 lines and content is getting cut off. Can you fix it?",
+      "should_trigger": true,
+      "expectations": [
+        "Should measure current MEMORY.md line count",
+        "Should audit all topic files in memory directory",
+        "Should identify inline content that belongs in topic files",
+        "Should present a refactoring plan before executing",
+        "Should produce MEMORY.md under 200 lines"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Clean up my memory files, there's a lot of stale stuff in there",
+      "should_trigger": true,
+      "expectations": [
+        "Should check dates in each memory file for staleness",
+        "Should identify project-type memories older than 60 days",
+        "Should NOT archive feedback or user type memories based on age alone",
+        "Should propose archiving stale items to archive/ subdirectory, not deleting"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Refactor my CLAUDE.md, it's getting too long",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Remember that I prefer dark mode in all my applications",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005",
+      "prompt": "Run a memory audit and tell me what's duplicated between MEMORY.md and CLAUDE.md",
+      "should_trigger": true,
+      "expectations": [
+        "Should cross-reference MEMORY.md content against CLAUDE.md",
+        "Should cross-reference against .claude/rules/ files",
+        "Should identify and flag duplicate content",
+        "Should recommend removing duplicates from memory (keeping in CLAUDE.md/rules)"
+      ]
+    }
+  ]
+}

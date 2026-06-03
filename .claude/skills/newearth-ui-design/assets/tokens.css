@@ -1,0 +1,575 @@
+/* ============================================================================
+ * NewEarth AI Design Tokens
+ * ----------------------------------------------------------------------------
+ * Drop this into your project's main stylesheet (e.g., src/index.css or
+ * src/styles/tokens.css). Everything else is LOCKED — do not modify
+ * without updating the newearth-ui-design skill and pushing changes to the
+ * template repo.
+ *
+ * !! CRITICAL — BEFORE USE !!
+ * This file contains {{primary_color}} and {{primary_color_foreground}}
+ * placeholders that MUST be replaced with real hex values before the CSS
+ * will parse. Unreplaced placeholders produce invalid CSS — primary buttons
+ * will render invisible and color-mix() calls will silently fail.
+ *
+ * Either:
+ *   (a) let /push-to-template handle substitution (preferred for new projects)
+ *   (b) manually find-and-replace {{primary_color}} and {{primary_color_foreground}}
+ *       with your client brand color hex (e.g., "#06B6D4" + "#FFFFFF")
+ *
+ * Usage after substitution:
+ *   @import './tokens.css';
+ *
+ * Or inline at the top of your existing CSS.
+ *
+ * Browser targets: Chrome 111+, Safari 16.2+, Firefox 113+ (2023+). Uses
+ * color-mix() and mask-composite. No IE11/legacy fallbacks.
+ *
+ * Version: 1.0
+ * ============================================================================ */
+
+/* ---- Font loading ---------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ---- Root tokens ----------------------------------------------------------- */
+:root {
+  /* ---- Neutral palette (warm off-white stack) — LOCKED ---- */
+  --ne-bg-base: #FBFBFA;
+  --ne-bg-subtle: #F7F6F3;
+  --ne-bg-muted: #E8E7E3;
+  --ne-border-hairline: #EAEAEA;
+  --ne-border-strong: #D4D4D4;
+  --ne-fg-primary: #0A0A0B;
+  --ne-fg-secondary: #555555;
+  --ne-fg-tertiary: #999999;
+  --ne-fg-disabled: #C9C9C9;
+
+  /* ---- Silver signature (NewEarth fingerprint) — LOCKED ---- */
+  --ne-silver-light: #D4D7DC;
+  --ne-silver-mid: #B8BCC2;
+  --ne-silver-ring: #C0C3C7;
+  --ne-silver-gradient: linear-gradient(135deg, #D4D7DC 0%, #B8BCC2 50%, #D4D7DC 100%);
+  --ne-silver-edge-strip: linear-gradient(90deg, transparent 0%, #B8BCC2 50%, transparent 100%);
+  --ne-silver-divider: linear-gradient(90deg, transparent 0%, #B8BCC2 20%, #B8BCC2 80%, transparent 100%);
+
+  /* ---- Semantic palette — LOCKED ---- */
+  --ne-critical: #B42318;
+  --ne-critical-bg: #FEF3F2;
+  --ne-warning: #B54708;
+  --ne-warning-bg: #FEF6EE;
+  --ne-success: #067647;
+  --ne-success-bg: #ECFDF3;
+  --ne-info: #175CD3;
+  --ne-info-bg: #EFF4FF;
+
+  /* ---- Primary brand color — PARAMETERIZED (per-client) ---- */
+  --ne-primary: {{primary_color}};
+  --ne-primary-fg: {{primary_color_foreground}};
+  --ne-primary-hover: color-mix(in srgb, {{primary_color}} 90%, black);
+  --ne-primary-muted: color-mix(in srgb, {{primary_color}} 12%, var(--ne-bg-base));
+
+  /* ---- Typography — LOCKED ---- */
+  --ne-font-sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ne-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Consolas, monospace;
+
+  /* Responsive KPI type scale */
+  --ne-kpi-label: clamp(12px, 0.9vw + 10px, 14px);
+  --ne-kpi-value: clamp(32px, 5vw, 56px);
+  --ne-kpi-value-hero: clamp(40px, 6vw, 72px);
+
+  /* Text scale */
+  --ne-text-xs: 0.75rem;
+  --ne-text-sm: 0.875rem;
+  --ne-text-base: 1rem;
+  --ne-text-lg: 1.125rem;
+  --ne-text-xl: 1.25rem;
+  --ne-text-2xl: 1.5rem;
+  --ne-text-3xl: 1.875rem;
+
+  /* Letter spacing for uppercase labels */
+  --ne-tracking-label: 0.08em;
+  --ne-tracking-label-wide: 0.12em;
+
+  /* ---- Shadows — LOCKED (grayscale, two-layer) ---- */
+  --ne-shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  --ne-shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -1px rgb(0 0 0 / 0.04);
+  --ne-shadow-dropdown: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -2px rgb(0 0 0 / 0.04);
+  --ne-shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+
+  /* ---- Motion — LOCKED ---- */
+  --ne-duration-fast: 150ms;
+  --ne-duration-base: 300ms;
+  --ne-duration-slow: 500ms;
+  --ne-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ne-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Radius — LOCKED (cap at rounded-xl / 12px) ---- */
+  --ne-radius-sm: 2px;
+  --ne-radius: 4px;
+  --ne-radius-md: 6px;
+  --ne-radius-lg: 8px;
+  --ne-radius-xl: 12px;   /* maximum for cards */
+  --ne-radius-full: 9999px;
+}
+
+/* ---- Base styles ----------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--ne-font-sans);
+  background: var(--ne-bg-base);
+  color: var(--ne-fg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11'; /* DM Sans stylistic set for cleaner digits */
+}
+
+/* Numbers always tabular — prevents digit jitter on live KPIs */
+.ne-num,
+[data-ne-num] {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--ne-font-mono);
+}
+
+/* Uppercase labels always tracked */
+.ne-label {
+  text-transform: uppercase;
+  letter-spacing: var(--ne-tracking-label);
+  font-size: var(--ne-text-xs);
+  font-weight: 500;
+  color: var(--ne-fg-secondary);
+}
+
+/* ---- The signature card base ----------------------------------------------- */
+.ne-card {
+  background: var(--ne-bg-base);
+  border: 1px solid var(--ne-border-hairline);
+  border-radius: var(--ne-radius-xl);
+  box-shadow: var(--ne-shadow-card);
+  transition: all var(--ne-duration-base) var(--ne-ease-in-out);
+}
+
+/* ---- Interactive card: the signature hover curve + silver ring (Mode C) ---- */
+.ne-card-interactive {
+  background: var(--ne-bg-base);
+  border: 1px solid var(--ne-border-hairline);
+  border-radius: var(--ne-radius-xl);
+  box-shadow: var(--ne-shadow-card);
+  transition: all var(--ne-duration-base) var(--ne-ease-in-out);
+  outline: 1px solid transparent; /* reserve space to prevent layout shift on hover */
+  outline-offset: -1px;
+  cursor: pointer;
+}
+
+.ne-card-interactive:hover {
+  box-shadow: var(--ne-shadow-card-hover);
+  transform: translateY(-2px);
+  outline-color: rgb(192 195 199 / 0.4); /* --ne-silver-ring at 40% */
+}
+
+.ne-card-interactive:focus-visible {
+  outline-color: rgb(192 195 199 / 0.6);
+  outline-width: 2px;
+}
+
+.ne-card-interactive:active {
+  transform: translateY(-1px);
+  box-shadow: var(--ne-shadow-card);
+}
+
+/* ---- Silver metallic edge (Mode A — premium cards) ------------------------ */
+.ne-silver-edge {
+  position: relative;
+  background: var(--ne-bg-base);
+  border-radius: var(--ne-radius-xl);
+}
+
+.ne-silver-edge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--ne-silver-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ---- Silver top-edge stripe (Mode B — hero / proposal cards) -------------- */
+.ne-silver-top {
+  position: relative;
+  background: var(--ne-bg-base);
+  border: 1px solid var(--ne-border-hairline);
+  border-radius: var(--ne-radius-xl);
+  overflow: hidden;
+}
+
+.ne-silver-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--ne-silver-edge-strip);
+  pointer-events: none;
+}
+
+/* ---- Silver divider (Mode D — structural section breaks) ----------------- */
+.ne-divider-silver {
+  height: 1px;
+  border: none;
+  background: var(--ne-silver-divider);
+  margin: 1.5rem 0;
+}
+
+/* ---- Silver edge button (Mode G — premium edge CTA) ---------------------- */
+/* 1px metallic-gradient ring around a neutral-fill button. Sits between the
+   brand-color default (heavy) and Mode E silver fill (heaviest). The mask-
+   composite trick paints the gradient on a 1px ring and masks out the
+   interior so the parent's bg-base shows through. Static — no continuous
+   animation; the only motion is a 300ms opacity transition on hover/focus. */
+.ne-button-silver-edge {
+  position: relative;
+  background: var(--ne-bg-base);
+}
+
+.ne-button-silver-edge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--ne-silver-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.65;
+  transition: opacity var(--ne-duration-base) var(--ne-ease-in-out);
+}
+
+.ne-button-silver-edge:hover::before,
+.ne-button-silver-edge:focus-visible::before {
+  opacity: 1;
+}
+
+/* ---- Recommended combination: A + C (premium interactive card) ------------ */
+.ne-card-premium {
+  /* Inherits from ne-silver-edge for the metallic border */
+  position: relative;
+  background: var(--ne-bg-base);
+  border-radius: var(--ne-radius-xl);
+  box-shadow: var(--ne-shadow-card);
+  transition: all var(--ne-duration-base) var(--ne-ease-in-out);
+  outline: 1px solid transparent;
+  outline-offset: -1px;
+  cursor: pointer;
+}
+
+.ne-card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--ne-silver-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity var(--ne-duration-base) var(--ne-ease-in-out);
+}
+
+.ne-card-premium:hover {
+  box-shadow: var(--ne-shadow-card-hover);
+  transform: translateY(-2px);
+  outline-color: rgb(192 195 199 / 0.4);
+}
+
+.ne-card-premium:focus-visible {
+  outline-color: rgb(192 195 199 / 0.6);
+  outline-width: 2px;
+}
+
+/* ---- KPI typography helpers ------------------------------------------------ */
+.ne-kpi-label {
+  font-size: var(--ne-kpi-label);
+  text-transform: uppercase;
+  letter-spacing: var(--ne-tracking-label);
+  font-weight: 500;
+  color: var(--ne-fg-secondary);
+}
+
+.ne-kpi-value {
+  font-size: var(--ne-kpi-value);
+  font-family: var(--ne-font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ne-fg-primary);
+  line-height: 1.05;
+}
+
+.ne-kpi-value-hero {
+  font-size: var(--ne-kpi-value-hero);
+  font-family: var(--ne-font-mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ne-fg-primary);
+  line-height: 1.05;
+}
+
+/* ---- Section header (drawer-style) ---------------------------------------- */
+.ne-section-header {
+  background: var(--ne-bg-subtle);
+  border-bottom: 1px solid var(--ne-border-hairline);
+  padding: 0.75rem 1.5rem;
+  font-size: var(--ne-text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--ne-tracking-label);
+  color: var(--ne-fg-secondary);
+  font-weight: 600;
+}
+
+/* ---- Semantic text utilities ---------------------------------------------- */
+.ne-text-critical { color: var(--ne-critical); }
+.ne-text-warning  { color: var(--ne-warning); }
+.ne-text-success  { color: var(--ne-success); }
+.ne-text-info     { color: var(--ne-info); }
+
+/* ---- Accessibility --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ne-card-interactive,
+  .ne-card-premium,
+  .ne-card {
+    transition: none;
+  }
+  .ne-card-interactive:hover,
+  .ne-card-premium:hover {
+    transform: none;
+  }
+}
+
+/* ---- Tour button harmony (composes with guided-tour skill) ---------------- */
+/* The tour button uses brand primary color — matches guided-tour skill parameter */
+[data-tour-header-btn],
+.driver-popover-next-btn {
+  background: var(--ne-primary) !important;
+  color: var(--ne-primary-fg) !important;
+}
+
+/* ============================================================================
+ * DARK MODE — Required for every NewEarth project
+ * ----------------------------------------------------------------------------
+ * Applied via Tailwind's class strategy: <html class="dark">
+ * Use the useTheme hook in references/dark-mode.md for toggle behavior.
+ * ============================================================================ */
+
+.dark {
+  /* ---- Dark neutrals (warm ink stack) ---- */
+  --ne-bg-base: #0D0D0E;       /* Warm ink — NEVER pure #000 */
+  --ne-bg-subtle: #151517;
+  --ne-bg-muted: #1E1E20;
+  --ne-bg-elevated: #232326;   /* Dark-only: popover/dropdown surfaces */
+  --ne-border-hairline: #27272A;
+  --ne-border-strong: #3F3F46;
+  --ne-fg-primary: #FAFAFA;    /* Near-white, slightly warm — NEVER pure #FFF */
+  --ne-fg-secondary: #A1A1AA;
+  --ne-fg-tertiary: #71717A;
+  --ne-fg-disabled: #52525B;
+
+  /* ---- Silver signature in dark mode (brighter, more prominent) ---- */
+  --ne-silver-light: #E5E8ED;
+  --ne-silver-mid: #C9CDD3;
+  --ne-silver-ring: #D4D7DC;
+  --ne-silver-gradient: linear-gradient(135deg, #E5E8ED 0%, #C9CDD3 50%, #E5E8ED 100%);
+  --ne-silver-edge-strip: linear-gradient(90deg, transparent 0%, #C9CDD3 50%, transparent 100%);
+  --ne-silver-divider: linear-gradient(90deg, transparent 0%, #C9CDD3 20%, #C9CDD3 80%, transparent 100%);
+
+  /* ---- Semantic colors in dark mode (brighter, for visibility) ---- */
+  --ne-critical: #F04438;
+  --ne-critical-bg: #55160C;
+  --ne-warning: #F79009;
+  --ne-warning-bg: #4E1D09;
+  --ne-success: #12B76A;
+  --ne-success-bg: #053321;
+  --ne-info: #2E90FA;
+  --ne-info-bg: #102A56;
+
+  /* ---- Shadow strategy: inset highlights instead of drop shadows ---- */
+  --ne-shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --ne-shadow-card-hover: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --ne-shadow-dropdown: 0 10px 20px -3px rgb(0 0 0 / 0.6), 0 4px 6px -2px rgb(0 0 0 / 0.4);
+  --ne-shadow-modal: 0 20px 40px -5px rgb(0 0 0 / 0.7), 0 10px 20px -5px rgb(0 0 0 / 0.5);
+}
+
+/* Dark mode hover ring uses higher opacity for visibility against dark */
+.dark .ne-card-interactive:hover,
+.dark .ne-card-premium:hover {
+  outline-color: rgb(212 215 220 / 0.55);
+}
+
+.dark .ne-card-interactive:focus-visible,
+.dark .ne-card-premium:focus-visible {
+  outline-color: rgb(212 215 220 / 0.75);
+}
+
+/* Dark mode guided-tour popover override — composes with guided-tour skill */
+.dark .driver-popover {
+  background: var(--ne-bg-elevated) !important;
+  color: var(--ne-fg-primary) !important;
+  border: 1px solid var(--ne-border-hairline) !important;
+}
+
+.dark .driver-popover-title {
+  color: var(--ne-fg-primary) !important;
+}
+
+.dark .driver-popover-description {
+  color: var(--ne-fg-secondary) !important;
+}
+
+/* ============================================================================
+ * ATELIER DARK PRESET — Optional editorial variant
+ * ----------------------------------------------------------------------------
+ * Opt-in via <html data-theme="atelier-dark"> (not the default dark mode).
+ * See references/atelier-dark-preset.md for full philosophy and usage.
+ * This preset REPLACES the default token system entirely when active.
+ * ============================================================================ */
+
+[data-theme="atelier-dark"] {
+  /* ---- Five-color palette (locked — never add a sixth) ---- */
+  --ne-ink: #0A0A0B;
+  --ne-oxide: #2A1F1A;
+  --ne-parchment: #F0E8D8;
+  --ne-verdigris: #4A7C5D;
+  --ne-bronze: #A87841;
+
+  /* ---- Remap standard tokens to Atelier palette ---- */
+  --ne-bg-base: var(--ne-ink);
+  --ne-bg-subtle: color-mix(in srgb, var(--ne-ink) 90%, var(--ne-oxide));
+  --ne-bg-muted: var(--ne-oxide);
+  --ne-bg-elevated: color-mix(in srgb, var(--ne-oxide) 90%, var(--ne-parchment));
+
+  --ne-fg-primary: var(--ne-parchment);
+  --ne-fg-secondary: color-mix(in srgb, var(--ne-parchment) 70%, transparent);
+  --ne-fg-tertiary: color-mix(in srgb, var(--ne-parchment) 50%, transparent);
+  --ne-fg-disabled: color-mix(in srgb, var(--ne-parchment) 30%, transparent);
+
+  --ne-border-hairline: color-mix(in srgb, var(--ne-parchment) 8%, transparent);
+  --ne-border-strong: color-mix(in srgb, var(--ne-parchment) 16%, transparent);
+
+  /* Primary and semantic colors — Atelier uses bronze/verdigris instead of brand + full semantic palette */
+  --ne-primary: var(--ne-bronze);
+  --ne-primary-fg: var(--ne-ink);
+  --ne-primary-hover: color-mix(in srgb, var(--ne-bronze) 90%, white);
+
+  --ne-success: var(--ne-verdigris);
+  --ne-success-bg: color-mix(in srgb, var(--ne-verdigris) 20%, var(--ne-ink));
+  --ne-critical: #C84630;  /* deep oxide-red, not generic red */
+  --ne-critical-bg: color-mix(in srgb, #C84630 15%, var(--ne-ink));
+  --ne-warning: var(--ne-bronze);
+  --ne-warning-bg: color-mix(in srgb, var(--ne-bronze) 15%, var(--ne-ink));
+  --ne-info: color-mix(in srgb, var(--ne-parchment) 60%, var(--ne-verdigris));
+  --ne-info-bg: color-mix(in srgb, var(--ne-verdigris) 10%, var(--ne-ink));
+
+  /* Triple type system — licensed primaries with free fallbacks */
+  --ne-font-display: 'PP Editorial New', 'Fraunces', Georgia, serif;
+  --ne-font-grotesk: 'Söhne', 'Inter Tight', system-ui, sans-serif;
+  --ne-font-data: 'Berkeley Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --ne-font-sans: var(--ne-font-grotesk);
+
+  /* Atelier motion tokens — editorial slow */
+  --ne-duration-fast: 250ms;
+  --ne-duration-base: 500ms;
+  --ne-duration-slow: 700ms;
+  --ne-ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --ne-ease-reveal: cubic-bezier(0.19, 1, 0.22, 1);
+
+  /* Atelier radius — tight editorial corners */
+  --ne-radius-lg: 2px;
+  --ne-radius-xl: 2px;
+
+  /* Atelier label tracking — more generous */
+  --ne-tracking-label: 0.16em;
+  --ne-tracking-label-wide: 0.20em;
+
+  /* Letterpress shadow language (replaces two-layer drop shadows) */
+  --ne-shadow-card: 0 1px 0 0 rgb(240 232 216 / 0.03), inset 0 1px 0 0 rgb(240 232 216 / 0.04);
+  --ne-shadow-card-hover:
+    0 1px 0 0 rgb(240 232 216 / 0.05),
+    inset 0 1px 0 0 rgb(240 232 216 / 0.08),
+    0 0 20px -5px rgb(168 120 65 / 0.15);
+  --ne-shadow-letterpress-text: 0 1px 0 rgb(0 0 0 / 0.3);
+}
+
+/* Paper-grain texture — applied to body in Atelier Dark only */
+[data-theme="atelier-dark"] body {
+  background-color: var(--ne-ink);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  background-blend-mode: overlay;
+  font-family: var(--ne-font-grotesk);
+}
+
+/* Atelier Dark display type */
+[data-theme="atelier-dark"] h1,
+[data-theme="atelier-dark"] h2,
+[data-theme="atelier-dark"] .ne-display {
+  font-family: var(--ne-font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+/* Atelier Dark card — no hover-lift; bronze glow instead */
+[data-theme="atelier-dark"] .ne-card-interactive:hover {
+  transform: none; /* Atelier cards don't lift */
+  border-color: color-mix(in srgb, var(--ne-bronze) 30%, transparent);
+  box-shadow: var(--ne-shadow-card-hover);
+  outline-color: transparent; /* no silver ring — bronze border instead */
+}
+
+/* Atelier Dark parchment mode (light reversal of the 5-color palette) */
+[data-theme="atelier-dark"].parchment {
+  --ne-bg-base: var(--ne-parchment);
+  --ne-bg-subtle: #E5DDCC;
+  --ne-bg-muted: #D9D1BF;
+  --ne-fg-primary: var(--ne-ink);
+  --ne-fg-secondary: color-mix(in srgb, var(--ne-ink) 70%, transparent);
+  --ne-fg-tertiary: color-mix(in srgb, var(--ne-ink) 50%, transparent);
+  /* bronze and verdigris stay unchanged — mid-luminance works in both modes */
+}
+
+[data-theme="atelier-dark"].parchment body {
+  background-color: var(--ne-parchment);
+  background-blend-mode: multiply; /* paper grain multiplies against cream */
+}
+
+/* ============================================================================
+ * Accessibility — reduce motion support (applies to all modes)
+ * ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-card-interactive,
+  .ne-card-premium,
+  .ne-card,
+  [data-theme="atelier-dark"] * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .ne-card-interactive:hover,
+  .ne-card-premium:hover {
+    transform: none;
+  }
+}

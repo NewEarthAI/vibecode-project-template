@@ -1,0 +1,59 @@
+{
+  "skill": "diagnose-bottleneck",
+  "version": "1.0",
+  "description": "Trigger-accuracy and behavioural evals. Trigger evals check whether the skill should fire on given prompts. Behavioural evals reference the inline ## Tests section of SKILL.md.",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-throughput",
+      "prompt": "Our deal-intake pipeline runs through five stages (form, qualification call, comp pull, MAO calc, offer letter). We're getting 200 forms/day but only sending 40 offers/day. Where's the bottleneck?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill invokes Theory of Constraints procedure",
+        "Skill runs MVI gate before producing any constraint claim",
+        "Output includes anti_anchoring.verdict field",
+        "Output includes ranked interventions in exploit/subordinate/elevate order"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-stress-test",
+      "prompt": "Our team is convinced engineering bandwidth is the constraint. Is that actually true? We have throughput numbers for each stage.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill invokes anti-anchoring guard before accepting operator's named bottleneck",
+        "If independent location disagrees, output presents both options without silent pick",
+        "hypothesis_provenance: operator branch fires"
+      ]
+    },
+    {
+      "id": "trigger-003-should-NOT-fire-dynamic-question",
+      "prompt": "Our MRR grew 15% per month for 9 months then flat for 6 despite increasing marketing spend. What's going on?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction; redirects to /map-feedback-loops",
+        "No TOC analysis produced",
+        "scope.in_jurisdiction == false"
+      ]
+    },
+    {
+      "id": "trigger-004-should-NOT-fire-decision-question",
+      "prompt": "Should we hire two engineers, automate the legal step, or restructure the workflow to skip legal entirely?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction; redirects to /decide-under-uncertainty",
+        "No TOC ranked-intervention output produced",
+        "scope.in_jurisdiction == false"
+      ]
+    },
+    {
+      "id": "trigger-005-should-NOT-fire-vague",
+      "prompt": "Why is everything so slow?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill returns INSUFFICIENT_INPUT verdict",
+        "Output includes example_input template",
+        "No fabricated constraint location"
+      ]
+    }
+  ],
+  "behavioural_tests_reference": "See ## Tests section in SKILL.md for the 7 acceptance test cases per spec §11."
+}

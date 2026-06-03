@@ -1,0 +1,31 @@
+# Token efficiency — prevent Claude from reading irrelevant files during codebase exploration
+# These files are never relevant to coding tasks and waste context tokens when indexed
+
+# Screenshots and media
+e2e-screenshots/
+diagrams/*.png
+diagrams/*.svg
+
+# Session history (183+ files, read explicitly when needed)
+.claude/sessions/
+
+# Archive and old completions
+archive/
+continuations/
+
+# Research outputs (read explicitly when relevant)
+research-outputs/
+council/sessions/
+
+# External resources
+youtube_resources/
+PRD,_Vision_Document,_and_Implementation_Guides (1)/
+Noah's Ark Bank - LIFE OS Vault/
+
+# Build artifacts (if they appear)
+node_modules/
+dist/
+build/
+.next/
+*.tgz
+*.lock

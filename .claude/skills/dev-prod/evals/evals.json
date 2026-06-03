@@ -1,0 +1,62 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "I made a schema change to a production-mirrored table. Is this safe to ship to prod?",
+      "should_trigger": true,
+      "expectations": [
+        "Routes the answer through the pre-promotion checklist, not a yes/no guess",
+        "Requires evidence it ran in staging and passed a smoke test (and that staging was healthy, not timed out)",
+        "Requires a schema-drift check between staging and production",
+        "Explicitly greps for hardcoded production project refs / service-role keys in the affected edge functions (exhaustive, not sampled)",
+        "Requires a rehearsed rollback under the target time",
+        "Names any gap rather than declaring safe by default"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Promote the dev change to production for an entity whose STATUS is stub.",
+      "should_trigger": true,
+      "expectations": [
+        "Looks up the entity in the routing registry",
+        "Identifies it as a stub (not yet wired) and STOPS",
+        "Does NOT invent a staging target",
+        "Tells the operator the entity is not yet wired"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Wire /autovibe so an autonomous run can't accidentally deploy straight to production.",
+      "should_trigger": true,
+      "expectations": [
+        "Describes the hard staging-first gate inserted before the /ship phase (Phase 5.5)",
+        "States production-direct requires BOTH a truthy flag AND an externally-attributed, verified logged record",
+        "Default path is staging; no flag means halt + continuation, never silent prod ship",
+        "References the autovibe-gate-wiring contract"
+      ]
+    },
+    {
+      "id": "eval-006",
+      "prompt": "An autovibe run has AUTOVIBE_PROD_DIRECT=1 but the kernel record write fails. What happens?",
+      "should_trigger": true,
+      "expectations": [
+        "The run halts — does NOT proceed to /ship",
+        "A continuation is written",
+        "The override-record failure is classified as a gate failure (HALT discipline), not a soft log-and-continue failure",
+        "States the order is write -> read-back-verify -> only then /ship"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Deploy the new landing page to Vercel and set the build command.",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005",
+      "prompt": "The n8n VPS disk is at 90% — clean it up.",
+      "should_trigger": false,
+      "expectations": []
+    }
+  ]
+}

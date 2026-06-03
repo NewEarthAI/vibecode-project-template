@@ -1,0 +1,88 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "I need to add guided tours to our React dashboard so new users know what each page does. Can you help set that up?",
+      "should_trigger": true,
+      "expectations": [
+        "Should recommend installing driver.js",
+        "Should create a tour registry with localStorage-based state management",
+        "Should create a usePageTour hook with anchor polling guardrail",
+        "Should mention 3-5 step limit per tour with research backing",
+        "Should include safe localStorage wrappers for iOS private browsing",
+        "Should create step files with data-tour attribute targeting pattern"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Add a walkthrough for the Settings page that highlights the profile section, notification preferences, and theme toggle",
+      "should_trigger": true,
+      "expectations": [
+        "Should create a step file with 3-4 steps targeting data-tour attributes",
+        "Should register the tour in tourRegistry.ts",
+        "Should add usePageTour hook call in the Settings page component",
+        "Should follow copy rules: max 2 sentences, no jargon, value-first",
+        "Step copy should use boss framing (Your settings, Your preferences)"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Build an interactive demo tour for our analytics dashboard that zooms into charts and toggles data layers",
+      "should_trigger": true,
+      "expectations": [
+        "Should use useDemoTour hook (not usePageTour)",
+        "Should create DemoStep interfaces with action callbacks",
+        "Should create project-specific demo helpers (navigateTo, toggleFeature, etc.)",
+        "Should implement double-tap guard for async actions",
+        "Should include per-step overlayOpacity (0 for actions, 0.15 for narration)",
+        "Should set overlay opacity directly on SVG path, NOT via setConfig()"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "We need contextual help tooltips on all the KPI cards in our dashboard",
+      "should_trigger": true,
+      "expectations": [
+        "Should create centralized tooltip-content.ts file",
+        "Should create InfoTooltip component wrapping Radix UI Tooltip",
+        "Should write tooltip copy in plain English, no jargon",
+        "Tooltip content should be 1 sentence per field"
+      ]
+    },
+    {
+      "id": "eval-005",
+      "prompt": "Can you add a page guide / SOP section to our Reports page that explains what each report type does?",
+      "should_trigger": true,
+      "expectations": [
+        "Should create SOP types (SopContent, SopFeature, SopStep, SopQuestion)",
+        "Should add content entry in sopContent.ts",
+        "Should render via PageGuide component (collapsible, default collapsed)",
+        "Content should include: pageDescription, features, howToUse, commonQuestions"
+      ]
+    },
+    {
+      "id": "eval-006",
+      "prompt": "Fix the bug where our API endpoint returns 500 for large payloads",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-007",
+      "prompt": "Set up authentication with OAuth2 and refresh tokens",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-008",
+      "prompt": "Our tour has 12 steps and nobody finishes it. How do we fix completion rates?",
+      "should_trigger": true,
+      "expectations": [
+        "Should cite Chameleon research: 4-step tours = 74% completion, 7+ = 16%",
+        "Should recommend splitting into 3-5 step micro-tours",
+        "Should suggest contextual triggers (page visit, drawer open, tab switch)",
+        "Should recommend removing gamification if present",
+        "Should recommend value-first copy (first step shows result, not explanation)"
+      ]
+    }
+  ]
+}

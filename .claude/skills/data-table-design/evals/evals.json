@@ -1,0 +1,34 @@
+{
+  "skill": "data-table-design",
+  "evals": [
+    {
+      "id": "eval-001-fix-misaligned-table",
+      "prompt": "The data table on our admin page looks messy — headers don't line up with the values underneath, and the right-aligned currency columns feel disconnected from their headers. Can you neaten it up?",
+      "should_trigger": true,
+      "expectations": [
+        "Recommends header always centred",
+        "Removes right-alignment from all currency / percentage / numeric columns and centres them",
+        "Identifies long-text columns (address, name, notes) as exceptions that stay left-aligned",
+        "Mentions inline-flex requirement for cell content wrappers"
+      ]
+    },
+    {
+      "id": "eval-002-build-new-table",
+      "prompt": "I need to build a new properties table for a client agency project. It'll have address, city, state, zip, county, asking price, ARV, yield, and a status badge column. What's the right pattern?",
+      "should_trigger": true,
+      "expectations": [
+        "Headers centred for all columns",
+        "Address + city + county + status all centre header; address cell left-aligned, others centred",
+        "asking_price / ARV / yield cells centred (not right-aligned)",
+        "USPS Pub 28 suffix abbreviation applied to address rendering",
+        "Subtle vertical dividers in body rows only, 15% opacity"
+      ]
+    },
+    {
+      "id": "eval-003-card-grid-not-table",
+      "prompt": "I want to build a dashboard of KPI cards — like 4 big numbers with deltas across the top of the screen. How should I lay it out?",
+      "should_trigger": false,
+      "expectations": []
+    }
+  ]
+}

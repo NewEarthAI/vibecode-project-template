@@ -1,0 +1,11 @@
+[
+  {"input": "what are our brand colors?", "should_trigger": true, "expected_behavior": "Show NewEarth AI brand token table"},
+  {"input": "extract design system from this website", "should_trigger": true, "expected_behavior": "Run 7-step extraction workflow"},
+  {"input": "reverse-engineer the styles from competitor.com", "should_trigger": true, "expected_behavior": "Playwright extraction with safety boundaries"},
+  {"input": "set up brand typography", "should_trigger": true, "expected_behavior": "Show Poppins/Lora system with size rules"},
+  {"input": "generate CSS variables for our brand", "should_trigger": true, "expected_behavior": "Output CSS custom properties from token table"},
+  {"input": "build a component with shadcn", "should_trigger": false, "expected_behavior": "Route to tailwind-shadcn-system"},
+  {"input": "review this UI for issues", "should_trigger": false, "expected_behavior": "Route to design-review"},
+  {"input": "create a presentation", "should_trigger": false, "expected_behavior": "Route to presentation"},
+  {"input": "build a landing page", "should_trigger": false, "expected_behavior": "Route to landing-page-mvp"}
+]

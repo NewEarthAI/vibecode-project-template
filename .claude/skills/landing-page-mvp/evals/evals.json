@@ -1,0 +1,86 @@
+{
+  "skill": "landing-page-mvp",
+  "version": "2.2",
+  "evals": [
+    {
+      "id": "trigger-cinematic",
+      "type": "should_trigger",
+      "input": "Build me a cinematic landing page with scroll-driven animations for my SaaS product",
+      "expected": "landing-page-mvp activates, asks 5 intake questions"
+    },
+    {
+      "id": "trigger-gsap",
+      "type": "should_trigger",
+      "input": "I need a GSAP-powered landing page with parallax sections",
+      "expected": "landing-page-mvp activates"
+    },
+    {
+      "id": "trigger-premium-animated",
+      "type": "should_trigger",
+      "input": "Create a premium animated site with theatrical scroll transitions",
+      "expected": "landing-page-mvp activates"
+    },
+    {
+      "id": "trigger-motion-heavy",
+      "type": "should_trigger",
+      "input": "I want a motion-heavy landing page where every section has weighted entrance animations",
+      "expected": "landing-page-mvp activates"
+    },
+    {
+      "id": "anti-trigger-general-page",
+      "type": "should_NOT_trigger",
+      "input": "Build me a simple landing page for my consulting business",
+      "expected": "frontend-design plugin handles this — no GSAP/animation specificity in request",
+      "route_to": "frontend-design"
+    },
+    {
+      "id": "anti-trigger-component",
+      "type": "should_NOT_trigger",
+      "input": "Create a pricing table component with React and Tailwind",
+      "expected": "frontend-design plugin handles this — component work, not cinematic page",
+      "route_to": "frontend-design"
+    },
+    {
+      "id": "anti-trigger-static-site",
+      "type": "should_NOT_trigger",
+      "input": "I need a clean, minimal portfolio website",
+      "expected": "frontend-design plugin handles this — minimal/clean implies no animation focus",
+      "route_to": "frontend-design"
+    },
+    {
+      "id": "anti-trigger-dashboard",
+      "type": "should_NOT_trigger",
+      "input": "Build me an admin dashboard with charts and data tables",
+      "expected": "Not a landing page skill — neither landing-page-mvp nor frontend-design aesthetics focus",
+      "route_to": "other"
+    },
+    {
+      "id": "preset-warm",
+      "type": "aesthetic_match",
+      "input": "Build a cinematic landing page for 'Harbor Bakery' — a neighborhood sourdough bakery with warm, inviting vibes",
+      "expected_preset": "E (Warm Harbor) or custom warm composite",
+      "should_NOT_produce": "Dark backgrounds, snappy/brutalist animations, monospace fonts"
+    },
+    {
+      "id": "preset-clinical",
+      "type": "aesthetic_match",
+      "input": "Create a scroll-driven landing page for 'Helix Therapeutics' — a biotech startup focused on gene therapy precision",
+      "expected_preset": "F (Clinical Precision) or custom clinical composite",
+      "should_NOT_produce": "Bouncy animations, warm earthy colors, playful typography"
+    },
+    {
+      "id": "preset-dark-tech",
+      "type": "aesthetic_match",
+      "input": "Build a cinematic GSAP landing page for 'Nexus AI' — a dark, premium AI infrastructure platform",
+      "expected_preset": "A (Organic Tech) or B (Midnight Luxe)",
+      "should_NOT_produce": "Light pastel backgrounds, rounded friendly UI, playful bouncy animations"
+    },
+    {
+      "id": "preset-playful",
+      "type": "aesthetic_match",
+      "input": "I need an animated landing page for 'ToyBox' — a children's educational toy subscription with fun, bouncy energy",
+      "expected_preset": "G (Playful Kinetic)",
+      "should_NOT_produce": "Dark moody backgrounds, slow luxury reveals, editorial serif typography"
+    }
+  ]
+}

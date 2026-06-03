@@ -1,0 +1,57 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "I just installed a community skill at .claude/skills/mapbox-cartography/. Can you audit it and tell me if it meets our quality standards before I start using it?",
+      "description": "Core audit flow with local installed skill",
+      "should_trigger": true,
+      "expectations": [
+        "Produces structured audit report with 7 scored dimensions and weighted letter grade",
+        "Identifies missing frontmatter fields and runs validate.sh binary checks",
+        "Identifies at least one superior pattern with adopt/adapt/reference recommendation",
+        "Provides merge recommendation (Proceed, Extract-patterns-only, Skip, or Incompatible)"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Audit and merge all the skills from this GitHub repo into our ecosystem: https://github.com/anthropics/claude-code-skills",
+      "description": "Batch mode with GitHub URL",
+      "should_trigger": true,
+      "expectations": [
+        "Resolves GitHub URL and discovers multiple SKILL.md files",
+        "Presents batch summary table with grade and merge recommendation per skill",
+        "Asks user which skills to merge before proceeding — does NOT auto-merge"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Here's a skill someone shared with me. Audit and merge it:\n\n# PostgreSQL Debugging Helper\n\nWhen you see a slow query, check the execution plan first.\n\nCommon issues:\n- Sequential scans on large tables: add an index\n- Nested loop joins: consider hash joins\n\nAlways use EXPLAIN ANALYZE, not just EXPLAIN.",
+      "description": "Messy inline skill with no frontmatter",
+      "should_trigger": true,
+      "expectations": [
+        "Creates frontmatter scaffold for the missing metadata",
+        "Assigns grade D or F due to missing structure, anti-patterns, evals",
+        "Identifies PostgreSQL debugging domain knowledge as superior pattern worth absorbing",
+        "Produces merged SKILL.md with proper frontmatter and anti-patterns table"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Create a new skill for debugging PostgreSQL connection timeouts",
+      "description": "Must NOT trigger — skill creation belongs to /skill-creator",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005",
+      "prompt": "Compare the patterns in our logistics-dashboard-builder with this external Grafana dashboards skill. What superior patterns should we absorb?",
+      "description": "FOR-superior-patterns audit direction with cross-skill comparison",
+      "should_trigger": true,
+      "expectations": [
+        "Reads both skills and identifies transferable patterns with specific recommendations",
+        "Does NOT suggest merging the two into one skill",
+        "Distinguishes between format improvements and genuine domain knowledge transfers"
+      ]
+    }
+  ]
+}

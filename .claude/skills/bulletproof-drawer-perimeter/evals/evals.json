@@ -1,0 +1,41 @@
+{
+  "skill": "bulletproof-drawer-perimeter",
+  "classification": "encoded-preference",
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "The property drawer keeps breaking in subtle ways. Users edit a fee, they see the new value for a second, then it snaps back. This has shipped three times now. Please add regression tests so this stops happening.",
+      "should_trigger": true,
+      "expectations": [
+        "Output acknowledges that repeat-bug = missing perimeter, not a new bug",
+        "Output proposes a Playwright spec following the bulletproof-drawer-perimeter skill, not ad-hoc tests",
+        "Output includes an idempotent round-trip pattern (capture → mutate → verify → cleanup)",
+        "Output addresses the Radix popover / React Query realtime race — cleanup via REST PATCH, not UI re-click",
+        "Output refuses graceful-skip patterns and names zero-skip discipline explicitly",
+        "Output scopes drawer queries to role=dialog or equivalent, not page-wide text match"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Can you write me a quick smoke test that just checks the landing page loads and the login form appears?",
+      "should_trigger": false,
+      "expectations": [
+        "Does not activate bulletproof-drawer-perimeter skill (scope mismatch: no drawer/modal, no write surfaces)",
+        "Uses e2e-test or a simple smoke pattern instead"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "We're building a new detail modal for the customer list. It has inline editing for customer name, assigned-to, and tags. Before I ship it I want to make sure future engineers can't regress it silently. What testing approach should I use?",
+      "should_trigger": true,
+      "expectations": [
+        "Output proposes the 8-pattern bulletproof-drawer-perimeter approach",
+        "Output identifies the distinct mutation paths (one round-trip per hook, not per surface — per AP6)",
+        "Output flags the virtualized-table cell[1] click pattern if the customer list is virtualized",
+        "Output includes the Escape-doesn't-close-drawer invariant (B1 + B2 pair)",
+        "Output recommends serial mode if the app uses realtime subscriptions",
+        "Output names the storageState auth-token capture pattern for REST cleanup"
+      ]
+    }
+  ]
+}

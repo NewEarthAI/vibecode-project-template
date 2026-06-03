@@ -1,0 +1,33 @@
+name: CI
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+jobs:
+  # Dedicated typecheck job — isolated so a typecheck failure is attributable at a glance
+  # in branch protection. Requires the project to define "typecheck" in package.json
+  # scripts (typically `tsc --noEmit -p tsconfig.app.json` for Vite+React projects with
+  # project references). See .claude/rules/typecheck-and-review-gates.md for why bare
+  # `npx tsc --noEmit` is a silent no-op on any repo with root-tsconfig project refs
+  # + "files": [].
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run typecheck
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test

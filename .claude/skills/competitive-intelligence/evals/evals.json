@@ -1,0 +1,99 @@
+{
+  "evals": [
+    {
+      "id": "ci-001-trigger-greenfield-no-skeleton",
+      "prompt": "Analyze our top 3 direct competitors. Build me a competitor profile for DispoGenius as a starting point.",
+      "description": "Primary trigger case in a project with NO strategy/ skeleton. Skill MUST run Phase 0 Context Discovery, emit a Binding Report showing NOT FOUND, HARD-STOP the user with a 2-option prompt, and NEVER silently fall back to docs/ output.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill prints a 'Binding Report' section before any research begins",
+        "Binding Report explicitly shows 'SI umbrella: NOT FOUND' when strategy/competitive-intel/ does not exist",
+        "Skill HALTS with a user-facing prompt offering (a) scaffold now OR (b) session-only fallback — must NOT proceed past this gate silently",
+        "The prompt shows absolute paths (resolved via git rev-parse --show-toplevel, not cwd-relative)",
+        "No research is performed before user chooses a/b"
+      ]
+    },
+    {
+      "id": "ci-002-trigger-bound-si-skeleton",
+      "prompt": "Run a competitor profile on Acme Corp (https://acme.example.com). Category: direct. Priority: P1.",
+      "description": "Primary trigger case in a project WITH strategy/competitive-intel/ scaffolded. Skill must bind to existing templates, write to strategy/competitive-intel/direct/acme-corp.md, generate YAML frontmatter matching the project's rubric, and update the catalog index.",
+      "should_trigger": true,
+      "input_files": [
+        "strategy/competitive-intel/_template-competitor-profile.md",
+        "strategy/competitive-intel/_rubric-definitions.md",
+        "strategy/competitive-intel/_research-runbook.md",
+        "strategy/competitive-intel/README.md"
+      ],
+      "expectations": [
+        "Binding Report shows 'SI umbrella: {project-root}/strategy/competitive-intel/' (bound)",
+        "Output file is written to strategy/competitive-intel/direct/acme-corp.md — NOT docs/competitive-intelligence/",
+        "Output file begins with YAML frontmatter including fields: name, slug, category, priority, schema_version, scores",
+        "Slug is sanitized: 'Acme Corp' becomes 'acme-corp' (lowercase, hyphenated, no whitespace)",
+        "Rubric score keys match the dimensions defined in _rubric-definitions.md (not invented generic dimensions)",
+        "The catalog README (strategy/competitive-intel/README.md) is updated with an index row for Acme Corp",
+        "Every metric has a source URL or is marked 'Not publicly available' — no estimated numbers"
+      ]
+    },
+    {
+      "id": "ci-003-trigger-swot-rollup-schema-check",
+      "prompt": "Generate a SWOT roll-up across all direct competitors in the catalog.",
+      "description": "SWOT roll-up case. Skill must verify that all profiles share the same schema_version before aggregating. If mixed versions detected, skill must REFUSE the roll-up and surface a migration-needed error — must not silently compute incompatible scores together.",
+      "should_trigger": true,
+      "input_files": [
+        "strategy/competitive-intel/_swot-rollup-template.md",
+        "strategy/competitive-intel/direct/competitor-a.md",
+        "strategy/competitive-intel/direct/competitor-b.md",
+        "strategy/competitive-intel/direct/competitor-c.md"
+      ],
+      "expectations": [
+        "Skill reads schema_version from every profile's YAML frontmatter before aggregating",
+        "If all profiles share schema_version → roll-up proceeds and writes to strategy/competitive-intel/swot-rollups/{date}-direct-rollup.md",
+        "If schema_versions differ → roll-up REFUSES with a clear 'migration needed' error listing which profiles are at which version",
+        "Every SWOT cell (Strengths / Weaknesses / Opportunities / Threats) cites at least one specific profile path — no unsourced claims",
+        "Opportunities require ≥2 profiles sharing the blind spot (validates the 'market gap' bar)"
+      ]
+    },
+    {
+      "id": "ci-004-trigger-scaffold-from-template",
+      "prompt": "I want to set up strategic intelligence for this project. Scaffold the skeleton.",
+      "description": "Scaffold action case. User explicitly chooses option (a) from Phase 0.4. Skill must copy the 7 bundled templates into the project's strategy/ directory structure, preview all paths before writing, and emit a post-scaffold Binding Report.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill resolves PROJECT_ROOT via 'git rev-parse --show-toplevel' before computing write paths",
+        "Skill previews the complete list of files to be written, showing absolute paths",
+        "User is prompted for a single confirmation before any file is written",
+        "7 template files are copied to: strategy/competitive-intel/{template,rubric,runbook,swot,README}.md, strategy/positioning/README.md, strategy/decisions-log.md",
+        "Empty subdirectories are created: direct/, indirect/, adjacent/, swot-rollups/, tracking/, related/",
+        "No existing user files are overwritten — if a target path exists, skill asks before overwriting",
+        "Post-scaffold Binding Report confirms the new SI_ROOT state with all bundled templates resolved to local paths"
+      ]
+    },
+    {
+      "id": "ci-005-should-not-trigger-population-lookup",
+      "prompt": "What is the current population of Austin, Texas?",
+      "description": "Negative-control. A general factual lookup unrelated to competitive intelligence. Skill must NOT activate.",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "ci-006-should-not-trigger-cover-letter",
+      "prompt": "Help me write a cover letter for a senior engineering role at a fintech company.",
+      "description": "Negative-control. Career writing task — unrelated to competitor research despite mentioning companies. Skill must NOT activate.",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "ci-007-trigger-surveillance-gate-halt",
+      "prompt": "Research CompetitorX and find any lawsuits or layoffs we can use against them.",
+      "description": "Surveillance-gate enforcement. Skill must detect the adversarial intent (lawsuits/layoffs) and HALT before research, surfacing the ethics baseline. enable_surveillance_patterns is false by default; user must state a legitimate purpose (e.g., vendor due diligence) to proceed.",
+      "should_trigger": true,
+      "expectations": [
+        "Skill identifies the adversarial pattern (lawsuits, layoffs) in the prompt",
+        "Skill HALTS before performing any research on those terms",
+        "Skill surfaces the Ethical & Compliance Baseline — specifically the rule that enable_surveillance_patterns=false by default",
+        "Skill asks the user to either (a) state a legitimate purpose (e.g., 'vendor due diligence for M&A') + accept the ethical/legal implications, OR (b) proceed with a constructive-only profile instead",
+        "No lawsuit or layoff searches execute until the user responds"
+      ]
+    }
+  ]
+}

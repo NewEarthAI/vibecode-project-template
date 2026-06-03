@@ -1,0 +1,141 @@
+{
+  "skill": "landing-page-mvp",
+  "version": "2.2",
+  "description": "Per-preset aesthetic quality criteria. Use during self-review to verify output matches brand personality. These are reviewer-checkable, not bash-automatable.",
+  "preset_evals": {
+    "A_organic_tech": {
+      "should_produce": [
+        "Weighted entrance animations (>1s duration) with power4/expo easing",
+        "Dark background with organic green or earth-toned accent",
+        "SVG noise grain overlay for texture",
+        "Geometric sans-serif display font (Space Grotesk or similar)",
+        "Parallax depth layers on hero section",
+        "Smooth-scroll feel with scrub values >1.0"
+      ],
+      "should_NOT_produce": [
+        "Light/pastel backgrounds",
+        "Bouncy or elastic entrance animations",
+        "Rounded, friendly UI patterns",
+        "Serif or handwritten display fonts"
+      ]
+    },
+    "B_midnight_luxe": {
+      "should_produce": [
+        "Slow, dramatic reveal animations (>1.5s duration) with expo easing",
+        "True black or near-black background with soft violet/gold accent",
+        "SVG noise grain overlay",
+        "High-contrast serif display font (Playfair Display or similar)",
+        "Long stagger values (amount: 0.8+) for cascading reveals",
+        "Typography-led hero with large display sizes"
+      ],
+      "should_NOT_produce": [
+        "Fast/snappy animations under 0.5s",
+        "Bright or saturated multi-color palette",
+        "Monospace or condensed sans-serif display fonts",
+        "Bouncy easing (elastic, back with high overshoot)"
+      ]
+    },
+    "C_brutalist_signal": {
+      "should_produce": [
+        "Snappy entrance animations (<0.6s) with back/elastic easing",
+        "Light background with heavy black borders and red accent",
+        "ALL-CAPS condensed display font (Bebas Neue or similar)",
+        "Monospace body text as design commitment",
+        "High contrast, raw visual energy",
+        "No noise overlay — clean, stark surfaces"
+      ],
+      "should_NOT_produce": [
+        "Slow, flowing animations",
+        "Soft gradients or blurred backgrounds",
+        "Rounded corners or gentle shadows",
+        "Serif luxury fonts"
+      ]
+    },
+    "D_vapor_clinic": {
+      "should_produce": [
+        "Dreamy, floating animations with sine easing (>1s duration)",
+        "Deep indigo/purple-black background with soft indigo accent",
+        "SVG noise grain overlay (subtle)",
+        "Futuristic wide display font (Syne or similar)",
+        "High scrub values (2.0+) for ultra-smooth scroll linking",
+        "Ethereal, almost weightless element movement"
+      ],
+      "should_NOT_produce": [
+        "Punchy/snappy animations",
+        "Warm color palette",
+        "Bold condensed typography",
+        "Sharp angular layouts"
+      ]
+    },
+    "E_warm_harbor": {
+      "should_produce": [
+        "Gentle entrance animations (1.0-1.4s) with expo.out/sine.out easing",
+        "Warm cream/light background with orange or earthy accent",
+        "Long stagger values (0.25s+) for unhurried cascading",
+        "Soft serif display font (Fraunces or similar) with rounded body font",
+        "NO noise overlay — clean, warm surfaces",
+        "Rounded corners, soft shadows, approachable spacing"
+      ],
+      "should_NOT_produce": [
+        "Dark or moody backgrounds",
+        "Snap-scroll between full-viewport dark sections",
+        "Aggressive parallax or horizontal scroll effects",
+        "Monospace or brutalist typography",
+        "SVG grain texture"
+      ]
+    },
+    "F_clinical_precision": {
+      "should_produce": [
+        "Fast, precise animations (0.3-0.5s) with power2 easing",
+        "White/light background with sky blue accent",
+        "Tight stagger values (0.06s) for near-simultaneous reveals",
+        "Clean geometric sans-serif (Plus Jakarta Sans or similar)",
+        "NO noise overlay — clinical cleanliness",
+        "Generous whitespace, data-forward layouts"
+      ],
+      "should_NOT_produce": [
+        "Slow, dramatic reveals",
+        "Warm or earthy color palette",
+        "Playful bouncy animations",
+        "Decorative or editorial serif fonts",
+        "SVG grain texture"
+      ]
+    },
+    "G_playful_kinetic": {
+      "should_produce": [
+        "Bouncy entrance animations with elastic/back easing",
+        "Light, colorful background with rose/vibrant accent",
+        "Playful hover effects (scale 1.05+, slight rotation)",
+        "Rounded geometric display font with personality",
+        "NO noise overlay — bright, clean energy",
+        "Character-level text animations where possible",
+        "Elements that feel alive and springy"
+      ],
+      "should_NOT_produce": [
+        "Dark moody backgrounds",
+        "Slow luxury reveals (>1.2s entrance)",
+        "Editorial serif typography",
+        "Subtle, barely-perceptible animations",
+        "Film grain or noise textures"
+      ]
+    },
+    "H_editorial_noir": {
+      "should_produce": [
+        "Typography-IS-the-animation — character-by-character reveals",
+        "Near-black background with white-as-accent",
+        "SVG noise grain overlay (film grain effect)",
+        "Refined serif display font (Instrument Serif or similar)",
+        "Dramatic expo.inOut easing on text",
+        "Magazine editorial layout — large type, generous leading",
+        "Minimal imagery — typography and negative space dominate"
+      ],
+      "should_NOT_produce": [
+        "Colorful multi-accent palette",
+        "Playful bouncy animations",
+        "Rounded, friendly UI elements",
+        "Dense card-based layouts",
+        "Sans-serif display font"
+      ]
+    }
+  }
+}

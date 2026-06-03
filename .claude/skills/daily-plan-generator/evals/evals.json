@@ -1,0 +1,98 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "daily plan",
+      "description": "Core trigger: first run of the day with no existing plan file. Tests full generation pipeline including continuation scanning.",
+      "should_trigger": true,
+      "expectations": [
+        "Must read ROADMAP.md to extract System/Project/Milestone hierarchy",
+        "Must run git log and git diff ROADMAP.md in parallel with other context reads",
+        "Must check for yesterday's plan in .claude/daily-plans/ and skip gracefully if not found",
+        "Must scan continuations/ for recent files (last 3 days) and cross-reference with git log to classify as executed/unverified/not-started/stale",
+        "Must score work items using the NSM-impact scoring table with carry-forward at 85 and project >80% completion bonus of +10",
+        "Must score not-started continuations at 82 points, with FORGED-* prefix getting +3 bonus",
+        "Must surface max 3 continuations in the plan, preferring forged > master > unverified",
+        "Must assign complexity tags [TRIVIAL], [MODERATE], or [COMPLEX] to every step — never time estimates",
+        "Must write plan file to .claude/daily-plans/PLAN-{YYYY-MM-DD}.md",
+        "Every step in the plan must show System > Project > Milestone hierarchy chain",
+        "Must display chat summary with step count, complexity breakdown, and highest-impact step",
+        "Must wait for user approval before starting any work — never auto-execute"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "what should I work on",
+      "description": "Second+ call of the day when plan already exists. Tests resume-not-regenerate behavior.",
+      "should_trigger": true,
+      "input_files": [".claude/daily-plans/PLAN-{today}.md"],
+      "expectations": [
+        "Must read the existing plan file instead of generating from scratch",
+        "Must cross-reference ROADMAP.md and recent git commits against the existing plan to identify completions",
+        "Must show completed vs remaining steps as a refreshed summary",
+        "Must only regenerate the plan file if significant items have changed",
+        "Must show approval gate for remaining work — never auto-start"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "/daily-plan",
+      "description": "Tests Vault Pulse section when Obsidian is configured and commands are overdue.",
+      "should_trigger": true,
+      "input_files": [".claude/obsidian-second-brain.local.md", ".claude/vault-cadence.local.md"],
+      "expectations": [
+        "Must check vault_pulse_enabled parameter and .claude/obsidian-second-brain.local.md existence before running Vault Pulse",
+        "Must read .claude/vault-cadence.local.md for last-run dates",
+        "Must calculate overdue status: /drift (14-day cadence), /emerge (30-day cadence), /vault-review (14-day cadence)",
+        "Must query Supabase for pending vault_deposit actions or note MCP unavailability gracefully",
+        "Must include Vault Pulse section in the plan file after Context Health",
+        "Vault Pulse must be informational only — must never block the plan or change task scoring",
+        "Must surface vault summary in chat output if any item is actionable"
+      ]
+    },
+    {
+      "id": "eval-006",
+      "prompt": "plan my day",
+      "description": "Tests continuation and forged prompt scanning when multiple recent prompts exist in continuations/.",
+      "should_trigger": true,
+      "input_files": ["continuations/FORGED-SESSION-7-DRAWER-BEAUTIFICATION.md", "continuations/MEDIA-EVIDENCE-PIPELINE-FIX-2026-03-27.md"],
+      "expectations": [
+        "Must glob continuations/ for files from the last 3 days",
+        "Must cross-reference each continuation filename/title with git log subjects to determine execution status",
+        "Must classify continuations as: Executed & Verified, Executed & Unverified, Not Started, or Stale",
+        "Must give FORGED-* prefix files a +3 scoring bonus over non-forged continuations",
+        "Must surface max 3 continuations in the plan with Continuation: path shown in each step",
+        "Must NOT auto-delete any continuation files",
+        "If >5 stale continuations exist, must add a housekeeping task to review and archive them"
+      ]
+    },
+    {
+      "id": "eval-007",
+      "prompt": "go team",
+      "description": "Tests agent team offer after plan approval. Should propose parallelizable steps.",
+      "should_trigger": true,
+      "input_files": [".claude/daily-plans/PLAN-{today}.md"],
+      "expectations": [
+        "Must assess which plan steps are independent (no dependencies between them)",
+        "Must propose a team structure with named agents based on independent steps",
+        "Must NOT parallelize steps with write operations to the same systems",
+        "Must keep user-interaction steps with the lead agent",
+        "Must confirm team structure before spawning agents"
+      ]
+    },
+    {
+      "id": "eval-004-neg",
+      "prompt": "Build the authentication module for the dashboard",
+      "description": "Implementation request should not trigger daily-plan-generator. Should route to direct implementation or build-with-agent-team.",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005-neg",
+      "prompt": "Prime me on this codebase, I want to understand the architecture",
+      "description": "Codebase exploration request should route to /prime, not /daily-plan. Tests boundary discrimination between session-start commands.",
+      "should_trigger": false,
+      "expectations": []
+    }
+  ]
+}

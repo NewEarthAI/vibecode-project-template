@@ -1,0 +1,36 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "I need to set up SSH access on this new Mac so n8n can trigger Claude Code remotely",
+      "should_trigger": true,
+      "expectations": [
+        "Should check Remote Login is enabled",
+        "Should verify autossh is installed",
+        "Should assign a tunnel port (2222-2224+)",
+        "Should create a reverse SSH tunnel to VPS",
+        "Should create a launchd plist for persistence",
+        "Should add UFW rules on VPS (deny public, allow Docker subnet)",
+        "Should guide creating n8n SSH credential with Docker gateway IP as host",
+        "Should update REPO_MAP in SSH execution workflow"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "The SSH execution from n8n keeps returning exit -1 with no output",
+      "should_trigger": true,
+      "expectations": [
+        "Should check if the issue is $json.code vs $json.exitCode field name",
+        "Should check authentication parameter matches credential type",
+        "Should check REPO_MAP paths are correct for this Mac",
+        "Should reference the troubleshooting table"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "How do I deploy a Next.js app to Vercel via SSH?",
+      "should_trigger": false,
+      "expectations": []
+    }
+  ]
+}

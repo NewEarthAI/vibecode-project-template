@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Skill Eval Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0d1117; color: #c9d1d9; padding: 2rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+  h1 { color: #f0f6fc; margin-bottom: 0.5rem; font-size: 1.5rem; }
+  .meta { color: #8b949e; font-size: 0.85rem; margin-bottom: 2rem; }
+  .drop-zone {
+    border: 2px dashed #30363d; border-radius: 8px; padding: 3rem; text-align: center;
+    cursor: pointer; transition: border-color 0.2s;
+    margin-bottom: 2rem;
+  }
+  .drop-zone:hover, .drop-zone.active { border-color: #58a6ff; }
+  .drop-zone p { color: #8b949e; font-size: 1rem; }
+  .drop-zone small { color: #484f58; display: block; margin-top: 0.5rem; }
+  #results { display: none; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .summary-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 1rem; }
+  .summary-card .label { color: #8b949e; font-size: 0.75rem; text-transform: uppercase; }
+  .summary-card .value { font-size: 1.5rem; font-weight: 600; margin-top: 0.25rem; }
+  .score-good { color: #3fb950; }
+  .score-ok { color: #d29922; }
+  .score-bad { color: #f85149; }
+  table { width: 100%; border-collapse: collapse; background: #161b22; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+  th { background: #21262d; color: #8b949e; text-align: left; padding: 0.5rem 0.75rem; font-size: 0.75rem; text-transform: uppercase; }
+  td { padding: 0.5rem 0.75rem; border-top: 1px solid #30363d; font-size: 0.85rem; }
+  .pass { color: #3fb950; }
+  .fail { color: #f85149; }
+  h2 { color: #f0f6fc; margin: 2rem 0 0.75rem; font-size: 1.2rem; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem; }
+</style>
+</head>
+<body>
+  <h1>Skill Eval Viewer</h1>
+  <div class="meta">Drop a JSON result file to visualize</div>
+
+  <div class="drop-zone" id="dropZone">
+    <p>Drop eval_results.json, grading.json, or benchmark.json here</p>
+    <small>Or click to select a file</small>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const resultsDiv = document.getElementById('results');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('active');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+    function handleFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          renderResults(data, file.name);
+        } catch (err) {
+          alert('Invalid JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function scoreClass(rate) {
+      if (rate >= 0.8) return 'score-good';
+      if (rate >= 0.5) return 'score-ok';
+      return 'score-bad';
+    }
+
+    function renderResults(data, filename) {
+      resultsDiv.style.display = 'block';
+      let html = `<h2>${filename}</h2>`;
+
+      // Detect type and render accordingly
+      if (data.summary && data.results) {
+        // Eval results
+        const s = data.summary;
+        html += `
+          <div class="summary-grid">
+            <div class="summary-card"><div class="label">Pass Rate</div><div class="value ${scoreClass(s.pass_rate)}">${(s.pass_rate * 100).toFixed(0)}%</div></div>
+            <div class="summary-card"><div class="label">Total</div><div class="value">${s.total_queries || s.total || 0}</div></div>
+            <div class="summary-card"><div class="label">Correct</div><div class="value">${s.correct || s.passed || 0}</div></div>
+          </div>
+          <table>
+            <thead><tr><th>Status</th><th>Query</th><th>Expected</th><th>Actual</th><th>Time</th></tr></thead>
+            <tbody>
+        `;
+        for (const r of data.results) {
+          const ok = r.correct || r.passed;
+          html += `<tr>
+            <td class="${ok ? 'pass' : 'fail'}">${ok ? '&#10003;' : '&#10007;'}</td>
+            <td>${(r.query || r.text || '?').substring(0, 60)}...</td>
+            <td>${r.should_trigger ? 'trigger' : 'no-trigger'}</td>
+            <td>${r.triggered ? 'triggered' : 'silent'}</td>
+            <td>${r.duration_ms || '-'}ms</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      } else if (data.history) {
+        // Loop results
+        html += `
+          <div class="summary-grid">
+            <div class="summary-card"><div class="label">Best Rate</div><div class="value ${scoreClass(data.best_pass_rate || 0)}">${((data.best_pass_rate || 0) * 100).toFixed(0)}%</div></div>
+            <div class="summary-card"><div class="label">Iterations</div><div class="value">${data.iterations || 0}</div></div>
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Train</th><th>Test</th><th>Description</th></tr></thead>
+            <tbody>
+        `;
+        for (const h of data.history) {
+          const isBest = h.iteration === data.best_iteration;
+          html += `<tr${isBest ? ' style="background:#1a2332"' : ''}>
+            <td>${isBest ? '&#9733; ' : ''}${h.iteration + 1}</td>
+            <td class="${scoreClass(h.train_pass_rate)}">${(h.train_pass_rate * 100).toFixed(0)}%</td>
+            <td>${h.test_pass_rate != null ? (h.test_pass_rate * 100).toFixed(0) + '%' : '-'}</td>
+            <td>${(h.description || '').substring(0, 60)}...</td>
+          </tr>`;
+        }
+        html += '</tbody></table>';
+      } else {
+        html += `<pre style="background:#161b22;padding:1rem;border-radius:6px;overflow:auto;max-height:600px">${JSON.stringify(data, null, 2)}</pre>`;
+      }
+
+      resultsDiv.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

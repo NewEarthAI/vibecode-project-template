@@ -1,0 +1,311 @@
+{
+  "skill": "audit-artefact-grounding",
+  "version": "1.0",
+  "shared_library_version": "1.0",
+  "description": "Trigger-accuracy and behavioural evals. Trigger evals check whether the skill should fire on given prompts. Behavioural evals reference the inline ## Tests section of SKILL.md (20 acceptance test cases). The skill is a markdown procedure — a behavioural eval 'passes' when the A1-A9 protocol walked against the input yields the documented verdict.",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-audit-skill",
+      "prompt": "Audit this skill — has /map-feedback-loops drifted from what it was originally built to do?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill runs the MVI gate (artefact_path, artefact_type, repo_context, default_action)",
+        "Skill runs the A1-A9 deterministic protocol over the 6-axis rubric",
+        "Skill returns a keep / refactor / deprecate artefact_verdict derived from the axis scores",
+        "Skill emits a counterfactual against the operator's default_action"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-grounding-check",
+      "prompt": "Before we propagate this rule to the client repos, is it actually grounded in first principles?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill classifies the input as a single Claude Code artefact (in jurisdiction)",
+        "Skill runs the 6-axis rubric, trigger-gating which composed primitives fire",
+        "Skill emits a propagation_flag (repo_local / upstream / not_propagated)"
+      ]
+    },
+    {
+      "id": "trigger-003-should-fire-purpose-drift-boundary",
+      "prompt": "Has this skill's stated purpose drifted from a real, decision-relevant question?",
+      "should_trigger": true,
+      "expectations": [
+        "Skill recognises this as an artefact-grounding audit (axis 1 + axis 2 territory), NOT a standalone framing question about a live decision",
+        "Skill runs the full artefact audit — it does NOT defer to /reduce-to-first-principles, because the subject is a standing artefact, not a decision in flight",
+        "this pins the discrimination boundary against trigger-005 (a genuine framing question DOES defer)"
+      ]
+    },
+    {
+      "id": "trigger-004-should-not-fire-code-review",
+      "prompt": "Review the TypeScript in usePropertyEnriched.ts for bugs.",
+      "should_trigger": false,
+      "expectations": [
+        "Skill recognises this as executable code, not a Claude Code artefact",
+        "Skill returns SCOPE_REFUSAL and redirects to /code-council"
+      ]
+    },
+    {
+      "id": "trigger-005-should-not-fire-whole-repo",
+      "prompt": "Audit every skill in the skills directory at once.",
+      "should_trigger": false,
+      "expectations": [
+        "Skill recognises this as a whole-repo request",
+        "Skill returns SCOPE_REFUSAL and redirects: audit one artefact per invocation, loop per-artefact"
+      ]
+    },
+    {
+      "id": "trigger-006-should-not-fire-framing-question",
+      "prompt": "Is 'adopt or build native' even the right question to be asking here?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill recognises this as a framing question about a live decision, not an artefact-grounding audit",
+        "Skill defers to /reduce-to-first-principles — no need to wrap it in an artefact audit"
+      ]
+    },
+    {
+      "id": "behaviour-001-happy-path-keep",
+      "test_ref": "SKILL.md Test 1",
+      "prompt": "Audit this rule. artefact_path: a well-formed rule file. artefact_type: rule. repo_context: workshop. operator_verdict not supplied. default_action: propagate this rule to the client repos without a grounding check.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == PASS",
+        "all 6 axes score pass or not_applicable",
+        "artefact_verdict == keep",
+        "counterfactual.difference in {substantial, transformative} — verified grounding before a multi-repo propagation vs propagating blind",
+        "falsifier present with all three sub-fields (HIGH confidence)",
+        "propagation_flag set",
+        "anti_anchoring.hypothesis_provenance == not_applicable; anti_anchoring.verdict == not_applicable; anti_anchoring.independent_artefact_verdict is populated"
+      ]
+    },
+    {
+      "id": "behaviour-002-adversarial-anchored",
+      "test_ref": "SKILL.md Test 2",
+      "prompt": "Audit this artefact (deletion test fails — duplicates another rule fully). operator_verdict: keep. hypothesis_provenance: operator. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "the 6-axis rubric runs independently before any compare",
+        "axis 3 (deletion test) scores fail → independent_artefact_verdict == deprecate",
+        "anti_anchoring.verdict == DISAGREED",
+        "artefact_verdict == deprecate (the independent verdict, not the operator's keep)",
+        "the operator's keep is recorded in anti_anchoring.operator_verdict; no silent adoption"
+      ]
+    },
+    {
+      "id": "behaviour-003-vague-input-type-mismatch",
+      "test_ref": "SKILL.md Test 3",
+      "prompt": "Audit this. artefact_path: a rule .md file. artefact_type: skill. repo_context and default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == INSUFFICIENT_INPUT",
+        "mvi.passed == false; mvi.missing names the artefact_type-vs-file mismatch",
+        "no fabricated artefact_verdict; artefact_verdict == not_evaluated",
+        "example input template emitted"
+      ]
+    },
+    {
+      "id": "behaviour-004-empty-input",
+      "test_ref": "SKILL.md Test 4",
+      "prompt": "(skill invoked with no artefact_path)",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == INSUFFICIENT_INPUT",
+        "mvi.missing includes artefact_path",
+        "output contains an example_input block",
+        "artefact_verdict == not_evaluated; no fabrication"
+      ]
+    },
+    {
+      "id": "behaviour-005-out-of-scope-code-file",
+      "test_ref": "SKILL.md Test 5",
+      "prompt": "Audit this artefact. artefact_path: a .ts file. artefact_type: skill.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == SCOPE_REFUSAL",
+        "scope.in_jurisdiction == false; scope.redirect names /code-council",
+        "no audit block produced; artefact_verdict == not_evaluated"
+      ]
+    },
+    {
+      "id": "behaviour-006-same-as-default-counterfactual",
+      "test_ref": "SKILL.md Test 6",
+      "prompt": "Audit this clean, well-formed skill. artefact_type: skill. operator_verdict not supplied. default_action: keep using it, it's fine.",
+      "should_trigger": true,
+      "expectations": [
+        "all 6 axes score pass",
+        "artefact_verdict == keep",
+        "counterfactual.difference in {none, marginal} — the verdict matches the operator's default and nothing material surfaced",
+        "verdict == ADVISORY_PENDING; advisory_pending_reasons includes the counterfactual-below-substantial reason",
+        "anti_anchoring.verdict == not_applicable; anti_anchoring.independent_artefact_verdict is populated"
+      ]
+    },
+    {
+      "id": "behaviour-007-non-author-domain-freight",
+      "test_ref": "SKILL.md Test 7",
+      "prompt": "Audit this freight-dispatch depot-handover rule. artefact_type: rule. repo_context: client. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict in {PASS, ADVISORY_PENDING}",
+        "every axis_scores[*].score is one of pass / weak / fail / not_applicable",
+        "artefact_verdict is one of keep / refactor / deprecate reached from the freight rule's own axis scores",
+        "axis_scores[*].cited_reasoning contains no string from the leak-set {CV.1, Wave 3a, synthesis-programme, ARV, MAO, real-estate} — vocabulary stays generic"
+      ]
+    },
+    {
+      "id": "behaviour-008-cross-skill-chain",
+      "test_ref": "SKILL.md Test 8",
+      "prompt": "Audit this artefact. operator_verdict is the output of an upstream /skill-auditor-merger invocation. hypothesis_provenance: prior_skill. source_hypothesis populated with upstream_skill and upstream_invocation_id. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "A3.2 Branch B (validate-upstream) fires; the re-derivation runs under an alternative frame (artefact_type first)",
+        "anti_anchoring.verdict in {validate_upstream_stable, validate_upstream_unstable}",
+        "anti_anchoring.reasoning_chain contains a step naming the alternative frame used",
+        "verdict is NEVER AGREED/DISAGREED/INCONCLUSIVE for prior_skill provenance (AAP6)",
+        "if validate_upstream_unstable, verdict == ADVISORY_PENDING and artefact_verdict == not_evaluated, with independent_artefact_verdict still populated"
+      ]
+    },
+    {
+      "id": "behaviour-009-deprecate-path",
+      "test_ref": "SKILL.md Test 9",
+      "prompt": "Audit this rule that duplicates content fully covered by another rule — deleting it causes nothing to reappear. artefact_type: rule. default_action: keep it.",
+      "should_trigger": true,
+      "expectations": [
+        "axis 3 (deletion test) scores fail — no specific consumer can be named",
+        "artefact_verdict == deprecate (deprecate triggers on axis 3 fail)",
+        "cited_reasoning for axis 3 states no consumer could be named",
+        "recommendation.recommended_action names the deletion path"
+      ]
+    },
+    {
+      "id": "behaviour-010-refactor-path",
+      "test_ref": "SKILL.md Test 10",
+      "prompt": "Audit this skill whose procedure has partially drifted from its stated purpose but which has named consumers and is salvageable with a bounded edit. artefact_type: skill. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "axis 2 (procedure-purpose fidelity) scores fail or weak — the procedure drifted",
+        "axis 3 (deletion test) scores pass — the artefact earns its keep",
+        "the fix is bounded-edit-class (core mechanism sound), not rewrite-class → not deprecate",
+        "artefact_verdict == refactor; recommendation.refactor_detail names the specific bounded fix"
+      ]
+    },
+    {
+      "id": "behaviour-011-composition-contradiction",
+      "test_ref": "SKILL.md Test 11",
+      "prompt": "Audit this rule whose core procedure is centrally a comparison. axis-2 Primitive-1 reads the procedure as faithfully serving the purpose; axis-4 Primitive-3 reads the embedded comparison as rung-1 / incommensurable. artefact_type: rule. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "A5 detects the contradiction between Primitive 1 (axis 2) and Primitive 3 (axis 4) about the same property",
+        "composition_contradictions has >=1 entry with both assessment_a and assessment_b populated verbatim",
+        "the verdict is NOT averaged; A5 floors artefact_verdict at refactor",
+        "artefact_verdict in {refactor, deprecate} — never keep; neither primitive output is silently dropped (AAP4 guard)"
+      ]
+    },
+    {
+      "id": "behaviour-012-not-applicable-axis-4",
+      "test_ref": "SKILL.md Test 12",
+      "prompt": "Audit this simple naming-convention rule that encodes no comparison and handles no operator pushback. artefact_type: rule. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "axis 4 both structural indicators absent → score not_applicable; trigger_fired == false",
+        "axis 4 cited_reasoning documents why neither indicator was present",
+        "the artefact is not penalised for the not_applicable axis",
+        "a clean artefact still reaches keep with axis 4 not_applicable"
+      ]
+    },
+    {
+      "id": "behaviour-013-gap1-missing-success-criteria",
+      "test_ref": "SKILL.md Test 13",
+      "prompt": "Audit this rule that prescribes success-criteria discipline for other artefacts but carries no Success Criteria / verification block on itself. artefact_type: rule. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "axis 6 (verifiability) scores fail — the rule states no checkable success criteria for itself",
+        "cited_reasoning for axis 6 names the missing self-applied success criteria",
+        "artefact_verdict == refactor (a fail axis with the artefact still earning its keep → refactor)",
+        "recommendation.refactor_detail says add a Success Criteria / verification block to the rule itself"
+      ]
+    },
+    {
+      "id": "behaviour-014-recursion-guard",
+      "test_ref": "SKILL.md Test 14",
+      "prompt": "Audit this artefact. audit_loop_depth: 2.",
+      "should_trigger": true,
+      "expectations": [
+        "A1 recursion guard fires — audit_loop_depth > 1 is a runaway (AAP8)",
+        "verdict == SCOPE_REFUSAL; scope.redirect states the recursion-depth-exceeded reason",
+        "no audit block produced; artefact_verdict == not_evaluated",
+        "the skill halts before the rubric runs"
+      ]
+    },
+    {
+      "id": "behaviour-015-session-history-branch-c",
+      "test_ref": "SKILL.md Test 15",
+      "prompt": "Audit this artefact. operator_verdict: keep. hypothesis_provenance: session_history. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "the operator-confirmation question fires (AskUserQuestion) BEFORE any compare — is the verdict yours or did Claude propose it earlier?",
+        "'Mine' routes to Branch A; 'Claude proposed it' routes to Branch B with a synthesised source_hypothesis (upstream_skill: claude_session), running the claude_session degraded-mode self-adversarial re-derivation",
+        "anti_anchoring.verdict is never silently not_applicable",
+        "unresolved ambiguity after one re-ask → verdict == INSUFFICIENT_INPUT, artefact_verdict == not_evaluated, mvi.missing names the unresolved provenance, independent_artefact_verdict still populated"
+      ]
+    },
+    {
+      "id": "behaviour-016-out-of-scope-n8n-workflow",
+      "test_ref": "SKILL.md Test 16",
+      "prompt": "Audit this artefact. artefact_path: an n8n workflow JSON. artefact_type: skill.",
+      "should_trigger": true,
+      "expectations": [
+        "verdict == SCOPE_REFUSAL",
+        "scope.in_jurisdiction == false",
+        "scope.redirect contains 'out of jurisdiction' and does NOT name /code-council — distinct from the executable-code redirect",
+        "no audit block produced; artefact_verdict == not_evaluated"
+      ]
+    },
+    {
+      "id": "behaviour-017-recursion-accept-boundary",
+      "test_ref": "SKILL.md Test 17",
+      "prompt": "Audit this artefact. audit_loop_depth: 1.",
+      "should_trigger": true,
+      "expectations": [
+        "the recursion guard does NOT fire at depth 1 — depth 1 is the legitimate audit-the-skills-loop depth",
+        "verdict in {PASS, ADVISORY_PENDING} — NOT SCOPE_REFUSAL",
+        "the audit block is produced; the rubric runs normally",
+        "invocation_metadata.audit_loop_depth == 1"
+      ]
+    },
+    {
+      "id": "behaviour-018-deprecate-via-axis-1",
+      "test_ref": "SKILL.md Test 18",
+      "prompt": "Audit this artefact with no discernible stated purpose — its content is a mechanism with no end it serves. artefact_type: rule. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "mvi.passed == true — a missing stated purpose does NOT halt MVI; the skill proceeds to the audit",
+        "artefact.stated_purpose == null",
+        "axis 1 scores fail — Primitive 1 cannot extract a decision-relevant irreducible question (solution in search of a problem)",
+        "artefact_verdict == deprecate (deprecate triggers on axis 1 fail — the second of the three deprecate triggers)"
+      ]
+    },
+    {
+      "id": "behaviour-019-axis-5-fail-escalation",
+      "test_ref": "SKILL.md Test 19",
+      "prompt": "Audit this hook whose silent action drives a slow feedback loop that crowds out a better artefact over time. artefact_type: hook. default_action supplied.",
+      "should_trigger": true,
+      "expectations": [
+        "the light axis-5 scan spots a non-obvious candidate adverse effect (depends on a multi-step chain)",
+        "axis 5 escalates to a /map-feedback-loops DECISION-mode invocation (decision = keep this artefact)",
+        "axis_scores[4].score == fail; axis_scores[4].composed_primitive == map-feedback-loops; trigger_fired == true",
+        "artefact_verdict in {refactor, deprecate}"
+      ]
+    },
+    {
+      "id": "behaviour-020-anti-sycophancy-thin-artefact",
+      "test_ref": "SKILL.md Test 20",
+      "prompt": "Audit this thin / near-stub artefact — well-formatted but little real content, no checkable success criteria, no nameable consumer. artefact_type: skill. default_action: keep it.",
+      "should_trigger": true,
+      "expectations": [
+        "the skill does NOT rubber-stamp a HIGH keep (AAP2) — a near-empty artefact cannot earn HIGH confidence",
+        "confidence in {MEDIUM, LOW}",
+        "the verdict is NOT HIGH keep; artefact_verdict is derived strictly from the axis scores (AAP1 holds)",
+        "the skill does NOT manufacture a deprecate on a thin-but-grounded artefact (AAP3) — the verdict tracks the axis scores"
+      ]
+    }
+  ]
+}

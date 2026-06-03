@@ -1,0 +1,10 @@
+[
+  {"input": "security review this codebase", "should_trigger": true, "expected_behavior": "Full audit (Mode 3) with 4-tier review"},
+  {"input": "is this code secure?", "should_trigger": true, "expected_behavior": "Passive detection or full audit depending on context"},
+  {"input": "check for vulnerabilities", "should_trigger": true, "expected_behavior": "Full audit with structured output"},
+  {"input": "audit for XSS", "should_trigger": true, "expected_behavior": "Full audit focused on XSS patterns"},
+  {"input": "threat model this system", "should_trigger": false, "expected_behavior": "Route to security-threat-model"},
+  {"input": "configure Better Auth", "should_trigger": false, "expected_behavior": "Route to better-auth-security"},
+  {"input": "scan my Claude config", "should_trigger": false, "expected_behavior": "Route to security-scan-agentshield"},
+  {"input": "code review this PR", "should_trigger": false, "expected_behavior": "Route to master-code-reviewer"}
+]

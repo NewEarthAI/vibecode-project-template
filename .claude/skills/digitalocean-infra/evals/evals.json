@@ -1,0 +1,65 @@
+[
+  {
+    "id": "do-infra-health-check",
+    "prompt": "Check the health of our n8n DigitalOcean droplet",
+    "should_trigger": true,
+    "expectations": [
+      "SSH into the droplet to check disk, memory, and container status",
+      "Check n8n API health via curl localhost:5678/healthz",
+      "Check SQLite database size",
+      "Produce a structured health card with OK/WARN/CRIT status per check",
+      "Check external accessibility via HTTPS"
+    ]
+  },
+  {
+    "id": "do-infra-remediate-disk",
+    "prompt": "The n8n server disk is at 92%. Fix it.",
+    "should_trigger": true,
+    "expectations": [
+      "Run n8n-disk-guard.sh via SSH",
+      "Check SQLite size and run orphan cleanup + VACUUM if needed",
+      "Report before/after disk percentages",
+      "Follow guard limits (max 1 per hour, check free space before VACUUM)"
+    ]
+  },
+  {
+    "id": "do-infra-container-restart",
+    "prompt": "n8n is returning 502, the container seems down",
+    "should_trigger": true,
+    "expectations": [
+      "SSH to check docker ps status",
+      "Verify disk has >2GB free before attempting restart",
+      "Run docker compose up -d n8n",
+      "Verify health after restart with curl healthz",
+      "Not exceed 3 restart attempts per hour"
+    ]
+  },
+  {
+    "id": "do-infra-snapshot",
+    "prompt": "Take a snapshot of the n8n droplet before we do maintenance",
+    "should_trigger": true,
+    "expectations": [
+      "Use doctl or DigitalOcean API to create snapshot",
+      "Name snapshot with date prefix",
+      "Wait for snapshot completion before proceeding"
+    ]
+  },
+  {
+    "id": "do-infra-negative-react-component",
+    "prompt": "Create a React component for the settings page",
+    "should_trigger": false,
+    "expectations": [
+      "Should NOT trigger digitalocean-infra skill",
+      "This is a frontend development task, not infrastructure"
+    ]
+  },
+  {
+    "id": "do-infra-negative-supabase",
+    "prompt": "Check the Supabase database for missing records",
+    "should_trigger": false,
+    "expectations": [
+      "Should NOT trigger digitalocean-infra skill",
+      "This is a database query task, not droplet infrastructure"
+    ]
+  }
+]

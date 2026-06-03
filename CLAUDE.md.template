@@ -1,0 +1,287 @@
+# Project Memory
+
+> **Grade**: {{GRADE_LEVEL}} | **Last Updated**: {{DATE}}
+
+## What This Is
+
+{{PROJECT_DESCRIPTION — One paragraph explaining what this project does, who it's for, and why it matters}}
+
+## Success Looks Like
+
+{{SUCCESS_METRICS — Specific outcomes that indicate we've won}}
+
+## Stack
+
+| Layer | Technology | MCP Server |
+|-------|------------|------------|
+| Database | {{DATABASE}} | `{{MCP_DATABASE}}` |
+| Auth | {{AUTH}} | — |
+| Backend | {{BACKEND}} | — |
+| Frontend | {{FRONTEND}} | — |
+| Workflows | {{WORKFLOWS}} | `{{MCP_WORKFLOWS}}` |
+| External | {{EXTERNAL_APIS}} | — |
+
+## Project Structure
+
+```
+/{{PROJECT_ROOT}}
+├── {{DIR_1}}/           # {{Purpose}}
+├── {{DIR_2}}/           # {{Purpose}}
+├── {{DIR_3}}/           # {{Purpose}}
+├── .claude/
+│   ├── commands/        # Slash commands
+│   ├── agents/          # Sub-agents
+│   └── skills/          # Knowledge bundles
+├── specs/               # Implementation plans
+├── docs/                # Architecture docs
+└── CLAUDE.md            # This file
+```
+
+---
+
+## Core Entities
+
+### {{ENTITY_1}}
+- **What**: {{Definition}}
+- **Key Fields**: {{id, name, status, etc.}}
+- **States**: {{draft → active → archived}}
+- **Source**: {{Table/API}}
+- **Relationships**: {{belongs_to X, has_many Y}}
+
+### {{ENTITY_2}}
+- **What**: {{Definition}}
+- **Key Fields**: {{fields}}
+- **States**: {{states}}
+- **Source**: {{source}}
+- **Relationships**: {{relationships}}
+
+### {{ENTITY_3}}
+<!-- Add more as needed -->
+
+---
+
+## Key Flows
+
+### Flow 1: {{FLOW_NAME}}
+```
+[Trigger] → [Step 1] → [Step 2] → [Step 3] → [Result]
+     ↓           ↓          ↓          ↓
+  {{what}}   {{what}}   {{what}}   {{what}}
+```
+
+### Flow 2: {{FLOW_NAME}}
+```
+{{Diagram or description}}
+```
+
+---
+
+## Key Tables
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `{{table_1}}` | {{Purpose}} | {{fields}} |
+| `{{table_2}}` | {{Purpose}} | {{fields}} |
+| `{{table_3}}` | {{Purpose}} | {{fields}} |
+
+**Quick queries**:
+```sql
+-- Get recent {{entities}}
+SELECT * FROM {{table}} ORDER BY created_at DESC LIMIT 10;
+
+-- Find by {{field}}
+SELECT * FROM {{table}} WHERE {{field}} = '{{value}}';
+```
+
+---
+
+## Key Workflows
+
+| Workflow | ID | Trigger | Purpose |
+|----------|-----|---------|---------|----
+| {{Name_1}} | `{{ID}}` | {{Webhook/Cron}} | {{What it does}} |
+| {{Name_2}} | `{{ID}}` | {{Trigger}} | {{Purpose}} |
+
+**Debug patterns**:
+```
+# Get workflow details
+n8n_get_workflow(id="{{ID}}", mode="full")
+
+# Check recent executions
+n8n_executions(action="list", workflowId="{{ID}}", limit=5)
+```
+
+---
+
+## External Integrations
+
+| Service | Purpose | Auth Method | Docs |
+|---------|---------|-------------|------|
+| {{Service_1}} | {{Purpose}} | {{API Key/OAuth}} | {{URL}} |
+| {{Service_2}} | {{Purpose}} | {{Auth}} | {{URL}} |
+
+---
+
+## Conventions
+
+### Naming
+- **Database**: snake_case (tables, columns)
+- **Code**: camelCase (vars), PascalCase (types/components)
+- **Files**: kebab-case.ts, PascalCase.tsx for components
+- **Workflows**: kebab-case-descriptive
+
+### Git
+- **Branches**: `feature/{{ticket}}-{{description}}`, `fix/{{ticket}}-{{description}}`
+- **Commits**: `type(scope): message`
+- **Main branch**: {{main/master}}
+
+### Code Style
+- {{Linter}}: {{config}}
+- {{Formatter}}: {{config}}
+- Always include error handling
+- Always enable RLS on Supabase tables
+
+---
+
+## Operations
+
+### Deployment
+- **Platform**: {{Where it deploys}}
+- **CI/CD**: {{How it deploys}}
+- **Environments**: {{dev, staging, prod}}
+
+### Monitoring
+- **Logs**: {{Where to find logs}}
+- **Errors**: {{Error tracking service}}
+- **Alerts**: {{Alerting channel}}
+
+---
+
+## Debug Guide
+
+| Symptom | Check First | Command/Tool |
+|---------|-------------|--------------|-----
+| {{Symptom_1}} | {{What to check}} | {{Command}} |
+| {{Symptom_2}} | {{What to check}} | {{Command}} |
+| {{Symptom_3}} | {{What to check}} | {{Command}} |
+
+---
+
+## Known Issues
+
+1. **{{Issue_1}}**: {{Description and workaround}}
+2. **{{Issue_2}}**: {{Description and workaround}}
+
+---
+
+## Don't Do
+
+> **Non-goals and constraints that shape decisions**
+
+- {{NON_GOAL_1 — What we're explicitly not building}}
+- {{NON_GOAL_2}}
+- {{CONSTRAINT_1 — Technical or business constraint}}
+- {{CONSTRAINT_2}}
+
+---
+
+## Hookify Architecture (13 Rules — Auto-Loaded)
+
+Token efficiency and safety are enforced by hooks, not manual skills. Patterns auto-inject when relevant tools are called.
+
+### SessionStart (1 hook)
+| Hook | Purpose |
+|------|---------|
+| `auto-rules` | 5 universal rules + hook reference tables |
+
+### Lazy-Loading addContext (3 hooks)
+| Hook | Triggers On | Injects |
+|------|------------|---------|
+| `supabase-auto-load` | Any Supabase MCP call | SQL patterns, anti-patterns, pre-query checklist |
+| `n8n-auto-load` | Any n8n MCP call | Mode reference, 7 safety rules, STOP conditions |
+| `task-context-injector` | Sub-agent spawn | Universal rules + CONTEXT_APPROVAL protocol |
+
+### Warning Hooks (7 hooks)
+| Hook | Triggers When | Fix |
+|------|--------------|-----|
+| `supabase-smart-query` | SQL missing LIMIT | Add LIMIT |
+| `supabase-select-star` | SQL has `SELECT *` | Specify columns |
+| `n8n-fetch-blocker` | `get_workflow` mode=full | Use mode=structure |
+| `n8n-update-safety` | Any workflow update | Pre-update checklist |
+| `n8n-executions-full` | `executions` mode=full | Use mode=error/summary |
+| `github-file-contents` | Direct file fetch | Tree/glob first |
+| `playwright-full-page` | fullPage=true | Viewport or snapshot |
+
+### Block Hooks (2 hooks)
+| Hook | What It Blocks |
+|------|---------------|
+| `mcp-server-guard` | Non-project MCP servers (configured by `/setup`) |
+| `safe-bash-enforcer` | Catastrophic Bash patterns (`rm -rf /`, `eval`, fork bombs) |
+
+### Safe-Bash (Privileged Workflow Enforcement)
+
+Task scripts in `scripts/` enforce audit logging, metacharacter rejection, and deterministic hashing for privileged operations (n8n API calls, git commits). See `.claude/skills/safe-bash/SKILL.md`.
+
+---
+
+## Skills
+
+Skills are in `.claude/skills/`. Claude auto-loads based on task.
+
+| Skill | When to Use |
+|-------|-------------|
+| `safe-bash` | Privileged workflow enforcement (n8n API, git commits) |
+| `skill-creator` | Create new skills from repeated patterns |
+| `agent-research` | Coordinated multi-agent research |
+| `{{project}}-workflows` | Project-specific workflow reference |
+
+### Skill Creation Triggers
+Create a skill when:
+- Same pattern used 3+ times
+- Same error corrected 2+ times
+- Multi-step orchestration repeated
+
+---
+
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|----
+| `specs/00_VISION.md` | Strategy and success metrics |
+| `specs/01_DOMAIN_MODEL.md` | Entities and relationships |
+| `docs/00_ARCHITECTURE.md` | System design |
+| `docs/01_DATA_PIPELINES.md` | Data flow |
+
+---
+
+## Quick Reference
+
+### Common Commands
+```bash
+# Development
+{{DEV_COMMAND}}
+
+# Testing
+{{TEST_COMMAND}}
+
+# Deployment
+{{DEPLOY_COMMAND}}
+```
+
+### Common Queries
+```sql
+-- {{Query_1_Purpose}}
+{{SQL_1}}
+
+-- {{Query_2_Purpose}}
+{{SQL_2}}
+```
+
+### Useful Links
+- **Repo**: {{REPO_URL}}
+- **Dashboard**: {{DASHBOARD_URL}}
+- **Docs**: {{DOCS_URL}}
+
+---
+
+*Last populated via `/setup` on {{DATE}}*

@@ -1,0 +1,55 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "My Supabase database just auto-expanded from 8GB to 12GB. How do I diagnose what's using the space and set up retention policies?",
+      "should_trigger": true,
+      "expectations": [
+        "Should recommend supabase inspect db table-sizes",
+        "Should check for unused indexes with 0 scans",
+        "Should verify stats_reset date before trusting index scan counts",
+        "Should propose tiered retention windows by data type",
+        "Should use batched DELETE with LIMIT, not single large DELETE",
+        "Should mention Supabase disk cannot shrink without Postgres upgrade"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "I need to optimize my Supabase SQL queries, they're running slow",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Set up pg_cron jobs to clean up old telematics data and GPS positions in my Supabase database. The tables have millions of rows.",
+      "should_trigger": true,
+      "expectations": [
+        "Should create a batched retention function with ctid + LIMIT pattern",
+        "Should include pg_sleep(0.1) between batches",
+        "Should include a 500K row safety cap",
+        "Should add defensive cron.unschedule before cron.schedule",
+        "Should stagger multiple backlog recovery jobs",
+        "Should schedule a cron.job_run_details purge job"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Help me set up Row Level Security policies on my Supabase tables",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005",
+      "prompt": "I have a table with 12x bloat and several unused indexes consuming 800MB. How do I safely reclaim the space on Supabase?",
+      "should_trigger": true,
+      "expectations": [
+        "Should recommend pg_repack over VACUUM FULL",
+        "Should verify stats_reset > 30 days before dropping indexes",
+        "Should use DROP INDEX (not CONCURRENTLY) inside migrations",
+        "Should check for constraint-backing indexes before dropping",
+        "Should recommend autovacuum_vacuum_scale_factor = 0.05 for high-churn tables",
+        "Should run pre-flight checklist before any destructive operation"
+      ]
+    }
+  ]
+}

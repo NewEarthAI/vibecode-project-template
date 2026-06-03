@@ -1,0 +1,57 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "I want to build a system that scrapes competitor pricing data from 5 websites, stores it in a database, and sends alerts when prices drop below our thresholds. Can you forge a prompt for this so I can start a new chat?",
+      "description": "Tests core forge flow: messy multi-system intent requiring classification, decomposition, infrastructure scan, and verification conditions",
+      "should_trigger": true,
+      "expectations": [
+        "Output contains a Classification section with scope, pattern, and complexity",
+        "Output contains discrete phases (at minimum: scraping, storage, alerting as separate phases)",
+        "Output contains machine-checkable Verification conditions (not just descriptive goals)",
+        "Output contains an Infrastructure Inventory referencing existing project assets if applicable",
+        "Output contains a Quality Scorecard with component presence tracking",
+        "Output is formatted as a single paste-ready prompt block"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "Improve this prompt I wrote: 'Fix the authentication bug where users get logged out after 30 minutes. The session token expires too early.'",
+      "description": "Tests audit mode on an existing simple prompt — should enhance with verification conditions and constraints without over-engineering a simple bug fix",
+      "should_trigger": true,
+      "expectations": [
+        "Output adds verification conditions (e.g., test command to confirm session persists beyond 30 min)",
+        "Output does NOT over-decompose a simple bug fix into 5+ phases",
+        "Output preserves the original intent without adding scope creep",
+        "Scorecard shows Verification as YES and marks unnecessary components as NA, not missing"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "Forge a prompt for a full agent team build — we need to rebuild our notification system with email, SMS, and push notification channels, each with their own queue, retry logic, and template system.",
+      "description": "Tests agent-team execution scale with file ownership, interface contracts, and shared decisions",
+      "should_trigger": true,
+      "expectations": [
+        "Output specifies execution_scale as agent-team",
+        "Output includes file ownership table (no two agents write same file)",
+        "Output includes interface contracts between agents",
+        "Output includes shared decisions section (naming conventions, data structures)",
+        "Output includes integration verification step"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Create a new skill for debugging WebSocket connection drops in our monitoring dashboard",
+      "description": "Tests negative case — this is skill CREATION, not prompt forging. Should NOT trigger prompt-forge; should trigger skill-creator instead",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005",
+      "prompt": "I need to carry forward everything we discussed today into tomorrow's session — the fuel reconciliation work, the 3 bug fixes, and the dashboard changes.",
+      "description": "Tests negative case — this is continuation/handoff, not prompt forging. Should NOT trigger; should trigger master-continuation-prompt instead",
+      "should_trigger": false,
+      "expectations": []
+    }
+  ]
+}

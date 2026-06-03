@@ -1,0 +1,9 @@
+# ai_docs/
+
+Store technology-specific documentation summaries here.
+Use the fetch-docs agent to populate this directory.
+
+Example files:
+- fastapi_security.md
+- pydantic_v2.md
+- supabase_auth.md

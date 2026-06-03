@@ -1,0 +1,26 @@
+{
+  "_comment_assets_immutable": "Vite/Webpack/esbuild emit content-hashed filenames in /assets/. The hash IS the cache key — the file is immutable by definition. Without this rule, every navigation forces a conditional GET (max-age=0, must-revalidate is the default). With it, repeat-page-load JS/CSS comes from disk cache, eliminating the spinner on back-nav. Failure precedent: 2026-04-25 — every chunk served must-revalidate, nuked perceived speed.",
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "X-DNS-Prefetch-Control", "value": "on" }
+      ]
+    }
+  ],
+  "_comment_rewrites": "SPA fallback. The negative-lookahead on /assets/ is critical — without it, a request for /assets/index-AbC.js would also rewrite to /index.html and serve HTML where JS was expected, producing 'Unexpected token <' errors in the console. Order matters: assets header rule above must come before this rewrite, but Vercel evaluates headers and rewrites independently so this is structural defense-in-depth.",
+  "rewrites": [
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ]
+}

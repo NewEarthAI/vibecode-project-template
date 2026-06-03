@@ -1,0 +1,56 @@
+[
+  {
+    "name": "triggers_on_research_command",
+    "input": "/agentresearch what are the best PropTech SaaS security practices?",
+    "should_trigger": true,
+    "expectations": ["pre-flight", "memory dedup", "ROADMAP", "sub-question", "worker", "verification", "SCQA"]
+  },
+  {
+    "name": "triggers_on_natural_language",
+    "input": "I need you to research this thoroughly — what do leading real estate platforms do for authentication and data security?",
+    "should_trigger": true,
+    "expectations": ["research team", "isolation", "SCQA", "pre-flight gates"]
+  },
+  {
+    "name": "triggers_on_competitive_analysis",
+    "input": "Do a deep dive on how PropStream, Privy, and DealMachine handle their pricing and onboarding",
+    "should_trigger": true,
+    "expectations": ["deep dive", "competitive analysis", "multiple workers", "synthesis"]
+  },
+  {
+    "name": "does_not_trigger_simple_lookup",
+    "input": "What is the Supabase anon key for this project?",
+    "should_trigger": false,
+    "expectations": []
+  },
+  {
+    "name": "does_not_trigger_code_search",
+    "input": "Find where usePropertyEnriched is defined",
+    "should_trigger": false,
+    "expectations": []
+  },
+  {
+    "name": "does_not_trigger_single_page_fetch",
+    "input": "What does the Resend API docs say about inbound webhooks?",
+    "should_trigger": false,
+    "expectations": []
+  },
+  {
+    "name": "respects_depth_quick",
+    "input": "/agentresearch --depth quick what CRM integrations do PropTech competitors offer?",
+    "should_trigger": true,
+    "expectations": ["quick", "1-2 agents", "inline verification", "no independent verifier"]
+  },
+  {
+    "name": "respects_depth_deep",
+    "input": "/agentresearch --depth deep comprehensive security audit of SaaS PropTech platforms",
+    "should_trigger": true,
+    "expectations": ["deep", "5-8 agents", "independent verification", "opus verifier"]
+  },
+  {
+    "name": "checks_memory_before_spawning",
+    "input": "/agentresearch what are Clozers AI comps capabilities?",
+    "should_trigger": true,
+    "expectations": ["memory dedup", "prior research", "clozers-ux-analysis", "incorporate or fresh"]
+  }
+]

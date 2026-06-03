@@ -1,0 +1,112 @@
+{
+  "skill": "map-feedback-loops",
+  "version": "1.2",
+  "description": "Trigger-accuracy and behavioural evals. Trigger evals check whether the skill should fire (and in which mode) on given prompts. Behavioural evals reference the inline ## Tests section (SYSTEM mode, 7 cases) and the ## Decision Mode section's Decision-Mode Tests (DECISION mode, 10 cases DT1-DT10) of SKILL.md. v1.1 (Session 8) added DECISION mode — second-order projection of a named decision. v1.2 (Session 9) amends DECISION mode to trace an order-tagged cascade (effect-of-effect to arbitrary depth) across three time bands (immediate / near-term / long-term).",
+  "evals": [
+    {
+      "id": "trigger-001-should-fire-plateau",
+      "prompt": "Our MRR grew 15% per month for 9 months, then flatlined for the last 6 months despite continuing to increase marketing spend by 30%. What's happening structurally?",
+      "should_trigger": true,
+      "expected_mode": "system",
+      "expectations": [
+        "Skill invokes Systems-Thinking diagnostic in SYSTEM mode",
+        "Skill builds CLD with R and B loops labelled",
+        "Skill considers limits-to-growth archetype with structural-match score",
+        "Output includes anti_anchoring.verdict field"
+      ]
+    },
+    {
+      "id": "trigger-002-should-fire-unintended-consequence",
+      "prompt": "We fixed the onboarding bug last quarter and conversion got better for 2 months, but now churn is climbing fast. Something feedback-loopy going on.",
+      "should_trigger": true,
+      "expected_mode": "system",
+      "expectations": [
+        "Skill considers fixes-that-fail or shifting-the-burden archetype",
+        "Skill surfaces time delays",
+        "Skill produces leverage-ranked intervention"
+      ]
+    },
+    {
+      "id": "trigger-003-should-NOT-fire-bottleneck",
+      "prompt": "Our deal pipeline has 5 stages and we're producing 200/day at intake but only 40/day at offer. Where's the bottleneck?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction; redirects to /diagnose-bottleneck",
+        "No CLD produced",
+        "scope.in_jurisdiction == false"
+      ]
+    },
+    {
+      "id": "trigger-004-should-NOT-fire-decision-optionset",
+      "prompt": "Should we hire two engineers, automate the legal step, or restructure to skip legal?",
+      "should_trigger": false,
+      "note": "An option-set adjudication. Neither SYSTEM mode nor DECISION mode fires — DECISION mode projects ONE decision, not an option-set (anti-pattern DAP4). Redirects to /decide-under-uncertainty.",
+      "expectations": [
+        "Skill refuses jurisdiction; redirects to /decide-under-uncertainty",
+        "scope.in_jurisdiction == false",
+        "If invoked with input_mode: decision, verdict == SCOPE_REFUSAL with the DAP4 catch message"
+      ]
+    },
+    {
+      "id": "trigger-005-should-NOT-fire-pure-notation",
+      "prompt": "Can you draw me a causal loop diagram for our customer acquisition system?",
+      "should_trigger": false,
+      "expectations": [
+        "Skill refuses jurisdiction; notes pure-notation requests are out of scope",
+        "scope.redirect indicates notation tools outside this skill"
+      ]
+    },
+    {
+      "id": "trigger-006-should-fire-decision-second-order",
+      "prompt": "We've committed to building a native FTS5 session-recall layer in W4 instead of integrating Hermes. What are the second-order effects on our skill and memory stack over the next 9 months?",
+      "should_trigger": true,
+      "expected_mode": "decision",
+      "expectations": [
+        "Skill invokes DECISION mode (input_mode: decision)",
+        "Skill builds a baseline CLD, names the decision delta, builds a projected CLD",
+        "Output second_order block populated across feedback_loops, compounding_effects, delayed_consequences, structural_couplings",
+        "Effects traced as an order-tagged cascade — every effect carries order, time_band, produced_by, terminal; max_order_reached >= 3",
+        "Output includes a band_coverage block covering immediate / near-term / long-term",
+        "Every projected feedback loop carries a non-null trigger_condition",
+        "Skill runs archetype check on the PROJECTED system"
+      ]
+    },
+    {
+      "id": "trigger-007-should-fire-decision-knock-on-non-software",
+      "prompt": "If we add a second freight depot 200km north, what knock-on effects compound over the next 18 months on our regional network?",
+      "should_trigger": true,
+      "expected_mode": "decision",
+      "expectations": [
+        "Skill invokes DECISION mode",
+        "Projection uses freight-domain vocabulary, not software vocabulary (non-author-domain — DT7)",
+        "Senge archetypes and the Meadows leverage hierarchy apply unmodified",
+        "Delayed consequences each carry an estimated_horizon"
+      ]
+    },
+    {
+      "id": "trigger-008-decision-mode-vague-refusal",
+      "prompt": "What are the second-order effects of modernising our search?",
+      "should_trigger": false,
+      "note": "DECISION-mode shape but below MVI — no target_system, no system_current_state, no projection_horizon. Skill must return INSUFFICIENT_INPUT, not hallucinate a projection (DT3).",
+      "expectations": [
+        "verdict == INSUFFICIENT_INPUT",
+        "mvi_check.missing lists target_system, system_current_state, projection_horizon",
+        "Example input template returned; no projection hallucinated"
+      ]
+    },
+    {
+      "id": "trigger-009-should-fire-decision-depth-timebands",
+      "prompt": "We're about to make our nightly data job a hard dependency of the customer dashboard. Walk the knock-on of the knock-on — what breaks in the first week versus what compounds over two years?",
+      "should_trigger": true,
+      "expected_mode": "decision",
+      "note": "v1.2 — exercises the depth cascade (knock-on of the knock-on) and the three time bands (first week vs two years). DECISION mode must produce a multi-order, multi-band cascade, not a flat list.",
+      "expectations": [
+        "Skill invokes DECISION mode (input_mode: decision)",
+        "Effects traced as an order-tagged cascade with max_order_reached >= 3 and a per-branch stop rule recorded (terminal + stop_reason + stop_detail)",
+        "Effects tagged across all three time bands (immediate / near-term / long-term); band_coverage present, every in-horizon band covered or carrying a non-null empty_justification",
+        "No flat-list output (DAP6 not tripped)"
+      ]
+    }
+  ],
+  "behavioural_tests_reference": "SYSTEM mode: see the ## Tests section in SKILL.md (7 acceptance tests, unchanged from v1.0 — the backward-compatibility floor). DECISION mode: see the ## Decision Mode section's Decision-Mode Tests DT1-DT10 (plus scope-refusal variants DT5b/DT5c) in SKILL.md. DT9 (depth cascade) + DT10 (time-band coverage) were added in v1.2. Both sets must pass before v1.2 ships."
+}

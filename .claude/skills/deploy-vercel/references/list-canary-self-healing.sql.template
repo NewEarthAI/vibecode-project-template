@@ -1,0 +1,193 @@
+-- ============================================================================
+-- LIST-CANARY SELF-HEALING TEMPLATE
+-- ============================================================================
+-- Drop into a new migration. Replaces the autovacuum gap that produces 27s+
+-- list-page timeouts when planner stats go stale on hot tables.
+--
+-- Originating incident (2026-04-25): hot list table had `last_autoanalyze = NULL`
+-- since creation. Autovacuum's defaults didn't fire because the modification
+-- threshold was tuned for OLTP write rates, not append-heavy ingest. Statement
+-- timeouts on the LIST query were the first user-visible signal.
+--
+-- WHAT TO REPLACE BEFORE APPLYING
+--   {{HOT_TABLES}}            : array of table names whose planner stats matter
+--                                most (the tables joined in your LIST query)
+--   {{LIST_QUERY_PROBE}}       : the actual LIST query shape, LIMIT 100,
+--                                ORDER BY <ordered_col> DESC. Must be the
+--                                user-facing LIST shape, not a synthetic.
+--   {{ETL_EVENTS_TABLE}}       : project's audit-log table (e.g. dd_etl_events,
+--                                bb_etl_events). Must have:
+--                                  id uuid pk, event_type text, event_data jsonb,
+--                                  created_at timestamptz default now()
+--   {{NOTIFICATION_QUEUE}}     : project's outbound-alert queue (Telegram/Slack/
+--                                email). Drop the alert INSERT entirely if not
+--                                wired up — canary still self-heals.
+--   {{CANARY_ALERT_TOPIC}}     : the routing key for the alert (e.g. 'escalation')
+--
+-- BEHAVIOR
+--   - Daily 02:30 UTC: full ANALYZE on hot tables, audit-logged
+--   - Hourly :17 UTC: timed LIST probe, severity classified, audit-logged
+--   - On red severity (>=5s): inline ANALYZE + Telegram alert. Self-heals
+--     within one hour without human intervention.
+--
+-- MAX TIME-TO-RECOVERY: 60 minutes (next hourly canary). If you need faster,
+-- shorten the canary interval to 15 min (every 15: '15,30,45,0 * * * *').
+-- ============================================================================
+
+-- 1. Daily explicit ANALYZE on hot tables ------------------------------------
+
+CREATE OR REPLACE FUNCTION public.analyze_list_tables()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  tbl text;
+  result jsonb := '{}'::jsonb;
+  start_ms timestamptz;
+  elapsed_ms numeric;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY[{{HOT_TABLES}}]  -- e.g. 'dd_property_enriched','dd_property_parsed'
+  LOOP
+    start_ms := clock_timestamp();
+    EXECUTE format('ANALYZE %I', tbl);
+    elapsed_ms := EXTRACT(EPOCH FROM (clock_timestamp() - start_ms)) * 1000;
+    result := result || jsonb_build_object(tbl, elapsed_ms);
+  END LOOP;
+
+  INSERT INTO {{ETL_EVENTS_TABLE}} (event_type, event_data)
+  VALUES ('LIST_TABLES_ANALYZED', result);
+
+  RETURN result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.analyze_list_tables() TO postgres, service_role;
+
+-- 2. Hourly canary with self-heal --------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.list_canary_check()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  start_ms timestamptz;
+  elapsed_ms numeric;
+  severity text;
+  rows_returned int;
+  result jsonb;
+BEGIN
+  -- Bound the probe so a sick query doesn't wedge the canary itself
+  PERFORM set_config('statement_timeout', '10000', true);  -- 10s ceiling
+  PERFORM set_config('lock_timeout', '5000', true);
+
+  start_ms := clock_timestamp();
+  -- {{LIST_QUERY_PROBE}}: Replace with the actual LIST query shape.
+  -- Example: SELECT count(*) FROM (SELECT id FROM your_view LIMIT 100) sub;
+  EXECUTE $probe$
+    SELECT count(*) FROM (
+      {{LIST_QUERY_PROBE}}
+    ) probe
+  $probe$ INTO rows_returned;
+  elapsed_ms := EXTRACT(EPOCH FROM (clock_timestamp() - start_ms)) * 1000;
+
+  severity := CASE
+    WHEN elapsed_ms < 1000 THEN 'green'
+    WHEN elapsed_ms < 5000 THEN 'yellow'
+    WHEN elapsed_ms < 8000 THEN 'orange'
+    ELSE 'red'
+  END;
+
+  result := jsonb_build_object(
+    'elapsed_ms', elapsed_ms,
+    'rows_returned', rows_returned,
+    'severity', severity,
+    'checked_at', now()
+  );
+
+  INSERT INTO {{ETL_EVENTS_TABLE}} (event_type, event_data)
+  VALUES ('LIST_CANARY_CHECK', result);
+
+  -- Self-heal on red — most red events are stale planner stats
+  IF severity = 'red' THEN
+    PERFORM public.analyze_list_tables();
+    result := result || jsonb_build_object('self_heal', 'analyze_executed');
+
+    -- Alert on red, even after self-heal — surface the recurrence pattern
+    INSERT INTO {{NOTIFICATION_QUEUE}} (topic, payload)
+    VALUES (
+      '{{CANARY_ALERT_TOPIC}}',
+      jsonb_build_object(
+        'kind', 'list_canary_red',
+        'elapsed_ms', elapsed_ms,
+        'self_healed', true,
+        'message', format('LIST canary RED — %s ms. ANALYZE auto-fired. Investigate if recurring.', elapsed_ms::int)
+      )
+    );
+  ELSIF severity = 'orange' THEN
+    INSERT INTO {{NOTIFICATION_QUEUE}} (topic, payload)
+    VALUES (
+      '{{CANARY_ALERT_TOPIC}}',
+      jsonb_build_object(
+        'kind', 'list_canary_orange',
+        'elapsed_ms', elapsed_ms,
+        'message', format('LIST canary ORANGE — %s ms (approaching timeout). Plan a fix.', elapsed_ms::int)
+      )
+    );
+  END IF;
+
+  RETURN result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.list_canary_check() TO postgres, service_role;
+
+-- 3. pg_cron schedules (idempotent) ------------------------------------------
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'daily-analyze-list-tables') THEN
+    PERFORM cron.unschedule('daily-analyze-list-tables');
+  END IF;
+  PERFORM cron.schedule(
+    'daily-analyze-list-tables',
+    '30 2 * * *',
+    $cron$ SELECT public.analyze_list_tables(); $cron$
+  );
+
+  IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'list-canary-hourly') THEN
+    PERFORM cron.unschedule('list-canary-hourly');
+  END IF;
+  PERFORM cron.schedule(
+    'list-canary-hourly',
+    '17 * * * *',
+    $cron$ SELECT public.list_canary_check(); $cron$
+  );
+END $$;
+
+-- 4. One-time bootstrap ANALYZE so the deploy itself starts on fresh stats ---
+
+SELECT public.analyze_list_tables();
+
+-- ============================================================================
+-- VERIFICATION QUERIES (run post-deploy)
+-- ============================================================================
+-- Confirm crons registered + active:
+--   SELECT jobid, jobname, schedule, active FROM cron.job
+--   WHERE jobname LIKE '%list-%';
+--
+-- Confirm canary log healthy:
+--   SELECT event_data->>'severity' AS sev, COUNT(*)
+--   FROM {{ETL_EVENTS_TABLE}}
+--   WHERE event_type = 'LIST_CANARY_CHECK'
+--     AND created_at > now() - interval '24 hours'
+--   GROUP BY 1;
+--
+-- Confirm ANALYZE actually ran on hot tables:
+--   SELECT relname, last_analyze, last_autoanalyze
+--   FROM pg_stat_user_tables
+--   WHERE relname IN ({{HOT_TABLES}});
+-- ============================================================================

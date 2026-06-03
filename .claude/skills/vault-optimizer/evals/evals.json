@@ -1,0 +1,8 @@
+[
+  {"input": "optimise my vault", "should_trigger": true, "expected_behavior": "Verify cwd is a vault, run role discovery, then the discoverability pass; produce a before/after report"},
+  {"input": "check if every note in my second brain is still reachable from the root", "should_trigger": true, "expected_behavior": "Run the discoverability pass — build the navigation graph, flag notes >3 hops or unreachable, propose index/routing fixes"},
+  {"input": "does my CLAUDE.md routing table still match what is actually in the folders", "should_trigger": true, "expected_behavior": "Run check D.1 routing-table truthfulness — verify each routing entry resolves and its description matches sampled folder contents"},
+  {"input": "find the contradictions between my notes", "should_trigger": false, "expected_behavior": "Route to /challenge — cross-file contradiction detection is not this skill's job; this skill audits structure only"},
+  {"input": "my CLAUDE.md is 240 lines, trim it", "should_trigger": false, "expected_behavior": "Route to refactor-claude-md — single-file CLAUDE.md refactor is delegated, not run natively"},
+  {"input": "run my overdue vault cadence commands", "should_trigger": false, "expected_behavior": "Route to vault-review — cadence orchestration of /drift /emerge /vault-sync is a separate skill"}
+]

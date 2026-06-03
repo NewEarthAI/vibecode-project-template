@@ -1,0 +1,68 @@
+{
+  "evals": [
+    {
+      "id": "eval-001",
+      "prompt": "The pipeline page is taking ages to load, can you fix it?",
+      "should_trigger": true,
+      "expectations": [
+        "Should run browser Performance API to measure request durations",
+        "Should run EXPLAIN ANALYZE on the slow queries",
+        "Should check pg_indexes before creating new indexes",
+        "Should NOT create indexes without first verifying they don't exist",
+        "Should produce a before/after measurement table"
+      ]
+    },
+    {
+      "id": "eval-002",
+      "prompt": "The dashboard shows a white flash every time I change a filter",
+      "should_trigger": true,
+      "expectations": [
+        "Should identify missing keepPreviousData as the likely cause",
+        "Should add placeholderData: keepPreviousData to the query",
+        "Should verify with a build check after the fix"
+      ]
+    },
+    {
+      "id": "eval-003",
+      "prompt": "We have 8 parallel Supabase requests on page load and it's slow",
+      "should_trigger": true,
+      "expectations": [
+        "Should recommend consolidating count queries into a single RPC",
+        "Should NOT recommend just adding caching without reducing request count",
+        "Should create a STABLE SQL function that returns all counts in one query"
+      ]
+    },
+    {
+      "id": "eval-004",
+      "prompt": "Can you optimize the CSS animations on the landing page?",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-005",
+      "prompt": "Run a Lighthouse audit on our site",
+      "should_trigger": false,
+      "expectations": []
+    },
+    {
+      "id": "eval-006",
+      "prompt": "The view has 270 columns but we only need 90 for the list. Should we use CTEs to replace the LATERAL subqueries?",
+      "should_trigger": true,
+      "expectations": [
+        "Should warn that CTEs are slower than LATERALs when LIMIT is involved",
+        "Should recommend keeping LATERAL strategy with fewer output columns",
+        "Should recommend a row-count validation between full and lightweight views"
+      ]
+    },
+    {
+      "id": "eval-007",
+      "prompt": "Our realtime subscription updates the cache optimistically but some fields show as undefined after an update",
+      "should_trigger": true,
+      "expectations": [
+        "Should identify that raw table payload lacks view-computed columns",
+        "Should recommend replacing setQueryData with invalidateQueries",
+        "Should check for stale closure bugs in the realtime handler"
+      ]
+    }
+  ]
+}
