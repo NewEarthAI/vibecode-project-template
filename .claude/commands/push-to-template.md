@@ -8,6 +8,19 @@ Copy TEMPLATE-MANAGED files from this project to the template repo, generalise p
 
 ## Steps
 
+### 0. Targets — this command syncs to ALL template repos
+
+Read the `repos` list from `.claude/template-source.md`. There are TWO targets:
+1. **Legacy** — `claude-code-project-template` (the original Claude Code template).
+2. **Public** — `vibecode-project-template` (the white-label copy shared with friends).
+
+**Run Steps 1–9 once for EACH target.** Throughout, `{local_path}` and `{repo}` mean
+*the current target's* values. The generalisation pass (Step 4) and the pi-parity sync
+(Step 8.1b) are identical for both — both receive fully white-labelled content, both
+keep their `.pi/` layer in lockstep. Report once at the end with a per-repo result line.
+If `template-source.md` lists only one repo, fall back to single-target and surface a
+note that the second target was not configured.
+
 ### 1. Read template source config
 
 - Read `.claude/template-source.md` to get `local_path` (where the template repo lives on disk) and `repo` (the GitHub URL — e.g., `https://github.com/NewEarthAI/vibecode-project-template`).
@@ -119,6 +132,42 @@ Update `last_sync` field in `.claude/template-source.md` in BOTH the project AND
 cd {local_path} && git add -A && git status --short
 ```
 Show the staged files. If anything looks wrong, HALT and surface.
+
+**Step 8.1b — Regenerate the pi parity layer (MANDATORY — before commit)**:
+
+The template must stay usable from BOTH Claude Code's `/setup` AND pi's `/setup`
+(`.pi/prompts/setup.md`). Any time a command, skill, or hook is pushed, refresh the
+`.pi/` layer in the target repo so pi never drifts behind Claude Code:
+
+```bash
+cd {local_path}
+# 1. Commands → pi prompts (convert shell-expansion + MCP tool-names). SKIP setup.md —
+#    its twin is hand-spliced with the pi-wiring section and must NOT be overwritten.
+mkdir -p .pi/prompts
+for f in .claude/commands/*.md; do
+  b=$(basename "$f"); [ "$b" = "setup.md" ] && continue
+  cp "$f" ".pi/prompts/$b"
+done
+for f in .pi/prompts/*.md; do
+  [ "$(basename "$f")" = "setup.md" ] && continue
+  sed -i '' -e 's/^!`\([^`]*\)`/Run: \1/' -e 's/mcp__\([a-zA-Z0-9-]*\)__/\1_/g' "$f"
+done
+git add .pi/prompts
+```
+
+- **If `.claude/commands/setup.md` changed in this push**: re-splice the pi twin —
+  keep `.pi/prompts/setup.md`'s "Step 7.5: pi Environment Wiring" section, replace the
+  surrounding interview/output content with the new `setup.md` (the twin = head of
+  `/setup` + the pi-wiring section + tail from the ROADMAP wizard onward).
+- **If a new SHELL hook was pushed** (`.claude/hooks/*.sh`) without a matching
+  `.pi/extensions/*.ts`: FLAG it — bespoke hooks need a TypeScript port (pi-migration
+  Phase 4). Hookify rules (`.claude/hookify.*.local.md`) need no port — `hookify-loader.ts`
+  reads them at runtime.
+- **New skills** need no action here — `pi-setup` links `.claude/skills/` → `.pi/skills/`
+  at install time.
+
+Run `git add .pi/prompts .pi/extensions .pi/settings.json` so the parity layer commits
+alongside the `.claude/` changes.
 
 **Step 8.2 — Commit with structured message**:
 ```bash

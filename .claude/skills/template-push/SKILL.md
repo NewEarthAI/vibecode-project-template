@@ -40,6 +40,11 @@ Extract:
 - `last_sync` — date of last push
 - **TEMPLATE-MANAGED Files table** — the canonical list of what gets pushed
 
+**Dual-repo**: `template-source.md` lists a `repos` array with TWO targets — the legacy
+`claude-code-project-template` and the public `vibecode-project-template`. Run Steps 2–7
+once per target; both receive identical white-labelled content AND an in-sync `.pi/`
+parity layer (Step 4b). If only one repo is configured, fall back to single-target.
+
 **If template-source.md doesn't exist** → error: "No template configured. Run `/adopt-autonomous-workflow` first."
 
 **If local_path doesn't exist or isn't a git repo** → error: "Template repo not cloned at `{path}`. Clone it first: `git clone {repo} {path}`"
@@ -146,6 +151,33 @@ For each approved file:
 2. Write the generalized content to the template repo path
 
 3. If file is NEW (not in template yet), also add it to template repo's file index
+
+---
+
+## Step 4b — Regenerate the pi parity layer (MANDATORY)
+
+The template runs under BOTH Claude Code and pi. After writing the `.claude/` files,
+refresh the target repo's `.pi/` layer so pi stays at parity:
+
+```bash
+cd {template_local_path}
+mkdir -p .pi/prompts
+for f in .claude/commands/*.md; do
+  b=$(basename "$f"); [ "$b" = "setup.md" ] && continue   # twin is hand-spliced — never overwrite
+  cp "$f" ".pi/prompts/$b"
+done
+for f in .pi/prompts/*.md; do
+  [ "$(basename "$f")" = "setup.md" ] && continue
+  sed -i '' -e 's/^!`\([^`]*\)`/Run: \1/' -e 's/mcp__\([a-zA-Z0-9-]*\)__/\1_/g' "$f"
+done
+git add .pi/prompts .pi/extensions .pi/settings.json
+```
+
+- If `setup.md` changed: re-splice `.pi/prompts/setup.md` (keep its "pi Environment
+  Wiring" section; refresh the interview/output halves from the new `setup.md`).
+- New shell hook without a matching `.pi/extensions/*.ts` → FLAG for a TypeScript port
+  (pi-migration Phase 4). Hookify rules need no port (`hookify-loader.ts` reads them live).
+- New skills need no action — `pi-setup` links them into `.pi/skills/` at install.
 
 ---
 

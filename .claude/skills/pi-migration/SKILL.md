@@ -37,6 +37,10 @@ parameters:
 
 > **Philosophy**: Migrate incrementally, verify at each phase, never break the Claude Code setup.
 > Both tools can coexist — pi reads from `.pi/`, Claude Code reads from `.claude/`.
+>
+> **This skill is NOT complete until the Definition of Done passes** (see the
+> "Definition of Done" section near the end). "Ported the files" is not done —
+> *verified parity* is done. Every migration ends by running that gate.
 
 ---
 
@@ -464,6 +468,40 @@ cat ~/.pi/agent/sessions/SESSION-*.md | head -20
 # Vault: session block with #auto-capture tag
 cat "/path/to/vault/Daily Notes/$(date +%Y-%m-%d).md" | tail -20
 ```
+
+---
+
+## Definition of Done (BINDING — the migration is NOT complete until every box is ticked)
+
+This skill has not finished its job until a pi session reproduces the Claude Code
+experience on this repo. "Ported the files" is NOT done. **Done is verified parity.**
+Run every check below; if ANY fails, the migration is INCOMPLETE — fix and re-verify,
+never report success on a half-migrated repo.
+
+**Coverage — every Claude Code artefact has a pi home:**
+- [ ] Every `.claude/skills/*` is in `.pi/skills/` (symlinked, or copied + tool-renamed if it calls MCP). Counts match.
+- [ ] Every `.claude/commands/*.md` is in `.pi/prompts/*.md` (shell-expansion + MCP tool-names converted). Counts match.
+- [ ] Every `.claude/agents/**` is in `.pi/agents/` with a `name:` in frontmatter.
+- [ ] Every shell hook + every `.claude/hookify.*.local.md` rule is covered — bespoke hooks ported to `.pi/extensions/` TypeScript; hookify rules auto-loaded by `hookify-loader.ts`.
+- [ ] Project files (`CLAUDE.md`, `DESTINATION.md`, `ROADMAP.md`, `specs/`, `docs/`) read by pi UNCHANGED — they are shared, never copied.
+
+**Behaviour — it actually works, proven live (per §7.1–7.3 and §8.6):**
+- [ ] Skills load (live count), prompts list, extensions list — all non-zero and matching the source counts.
+- [ ] One live MCP call succeeds (e.g. a real `SELECT`) via a pi-renamed tool.
+- [ ] A real edit + commit fires the lifecycle hooks — a session summary is written; the Obsidian daily-note is appended if a vault is configured.
+- [ ] At least one NON-Anthropic model answers (the entire reason to use pi — cheaper models).
+- [ ] `CLAUDE.md` auto-loads, prose/caveman + tool guards are active, and `autovibe` runs end-to-end on a trivial intent.
+
+**Credentials + safety:**
+- [ ] Credentials live in the macOS Keychain / pi MCP config — never in a tracked file.
+- [ ] Claude Code still works from `.claude/` untouched (both tools coexist; rollback = delete `.pi/`).
+
+**Sign-off (write it verbatim into `.pi/PI-MIGRATION-STATE.md`):**
+> "Migration verified {date}: {N} skills, {N} prompts, {N} extensions, {N} MCP servers; live MCP call, hook-fire, a non-Anthropic model, and autovibe all confirmed. Claude Code parity: ACHIEVED."
+
+**If you cannot write that statement truthfully, the migration is not done.** This
+is the binding gate — the `pi-setup` command and any "migration complete" claim
+both inherit it.
 
 ---
 
