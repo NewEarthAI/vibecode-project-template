@@ -165,6 +165,19 @@
     <p class="sub">Session hooks load your context at the start, capture decisions in the middle, and write a durable log at the end — so tomorrow's chat starts informed.</p>
   </section>
 
+  <!-- 8.5 — Intent-Actual-Gap mechanism -->
+  <section class="slide">
+    <div class="kicker">See what's actually there</div>
+    <h2>Every project drifts. Keep a live map of yours.</h2>
+    <div class="grid g2" style="gap:1.6vmin">
+      <div class="card"><div class="ico">🗺️</div><h3>A live map of your real system</h3><p>Four scrapers read your live database, your cloud automations, your code, and your in-repo configs — and write to a single JSON file per repo.</p></div>
+      <div class="card"><div class="ico">📊</div><h3><code>/topology health</code></h3><p>One verdict — FRESH / STALE / PARTIAL — plus per-source coverage and any anomalies flagged.</p></div>
+      <div class="card"><div class="ico">⚖️</div><h3><code>/topology reconcile</code></h3><p>Where the live system has drifted from the repo (e.g. a hand-edited workflow), ranked by impact, with one named fix per drift.</p></div>
+      <div class="card"><div class="ico">🚧</div><h3>Honest about what's not built yet</h3><p>Today: live-vs-repo drift. The third half — intended-vs-actual — is a named future step. Doctrines 04–06 explain the full design.</p></div>
+    </div>
+    <p class="sub">Read-only by default. Type <code>/topology status</code> any time to see the map.</p>
+  </section>
+
   <!-- 9 -->
   <section class="slide">
     <div class="kicker">When you're ready</div>
@@ -228,7 +241,7 @@
 
 <script>
   const slides=[...document.querySelectorAll('.slide')];
-  const labels=['Welcome','What it is','Safety','/setup','Tandem','Toolkit','Efficiency','Daily rhythm','Opt-in','Recap','Philosophy','Next steps'];
+  const labels=['Welcome','What it is','Safety','/setup','Tandem','Toolkit','Efficiency','Daily rhythm','Map','Opt-in','Recap','Philosophy','Next steps'];
   let i=0;
   function render(){
     slides.forEach((s,n)=>{s.classList.toggle('active',n===i);s.classList.toggle('prev',n<i)});

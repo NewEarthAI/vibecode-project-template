@@ -1,0 +1,11 @@
+{
+  "id": "inv-every-depends-on-resolves",
+  "kind": "derivation",
+  "source_file": "references/invariants/every-depends-on-resolves.json",
+  "source_commit": "m4-v1",
+  "assertion": "every depends_on edge target referenced by any node must exist as a node in the substrate (no dangling derivation reference)",
+  "left_view_filter": "[.nodes[].id]",
+  "right_view_filter": "[.nodes[] | .depends_on[]?]",
+  "cadence": "on-demand",
+  "source_of_truth_ref": "the node set is authoritative — a dangling depends_on target is a derivation breach (escalate: source-orphan masquerade)"
+}
