@@ -216,6 +216,20 @@ A "framing audit" checks you're answering the *right question* before you commit
 | `/verify-shipped` | Cross-checks that what you *think* shipped actually deployed (catches silent drift) |
 | `/e2e-test` | Self-healing end-to-end browser tests with database validation |
 
+### 🗺️ See what's actually there — a live map of your project
+
+Every project drifts. Configs get hand-edited in the cloud, code changes don't make it back to the repo, dashboards quietly tell different stories. The template ships a **live map** of your real system — four scrapers read your database, your cloud automations, your code, and your in-repo configs, and write to a single JSON file per repo. Two read tools sit on top.
+
+| Tool | What it does |
+|---|---|
+| `/topology status` | The map at a glance — counts, freshness per source, what's not yet wired |
+| `/topology health` | One verdict — FRESH / STALE / PARTIAL — plus per-source coverage and any anomalies |
+| `/topology reconcile` | Where the live system has drifted from the repo (e.g. a hand-edited workflow), ranked by impact, with one named action per drift (`revert` / `reconcile` / `approve_as_intentional` / `escalate`) |
+| `topology-substrate` skill | The shared map file (one JSON, per repo, gitignored) + the helpers the four scrapers write to |
+| Four emitters | `supabase-live-emitter` (live Postgres tables / RLS / RPCs), `n8n-cloud-emitter` (live workflows), `code-emitter` (TypeScript + edge functions), `repo-config-emitter` (in-repo n8n exports + `vercel.json` + package config) |
+
+> **Honest scope.** This ships the "actual" half (the live map) and the "drift" half (live-vs-repo). The third half — *intended-vs-actual* drift (intent capture) — is a named future step, not in the box yet. Doctrines 04–06 in `docs/operational-doctrine/` explain the full design. Run it now to see what you actually have; run it later for the proper drift catch.
+
 ### 💸 Spend AI budget wisely — token efficiency
 The template is built to make your AI accounts last far longer.
 
