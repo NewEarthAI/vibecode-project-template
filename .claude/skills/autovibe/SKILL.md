@@ -228,6 +228,7 @@ Same code path serves both. Only output serializer differs.
 | `/ship quick` | skill | Direct-path target |
 | `/ship pr` | skill | Planned-path target — full PR + CI + smoke |
 | `/ship hotfix` | skill | **NEVER auto-invoked** — exit 9 if conditions detected |
+| `dev-prod` | `../dev-prod/` | **Phase 5.5 — staging-first gate** (owns the entity-routing registry + the gate contract). autovibe INVOKES it before `/ship`; never reimplements the gate. See §Phase 5.5. |
 
 ---
 
@@ -249,6 +250,39 @@ Same code path serves both. Only output serializer differs.
 - When composing `/code-council` or `/code-forge`: verify the orchestrator has Read `.claude/rules/code-review-identity.md` per each command's Pre-flight block. If absent (e.g., command body modified without preserving the Pre-flight, or a degraded subprocess context), HALT before subagent dispatch and re-Read. The identity preamble + Self-Check Razors are non-skippable on every review pass. Composes with the BASELINE routing-table row + `hookify.code-review-identity-load.local.md` Agent-tool hook.
 - Use `AUTOVIBE_DRYRUN=1` for any new test scenario before live invocation
 - Run the planned-mode goal audit before drafting a plan — checkpoint at `modes/planned.md` step 2a audits the GOAL. Per `.claude/rules/framing-audit-mandate.md`; skipping it on load-bearing work is a contract violation. Plan-side framing review is now an operator self-check during ExitPlanMode (step 5) rather than a council-driven Reframer pass.
+
+---
+
+## Phase 5.5 — Staging-First Gate (before `/ship`)
+
+Between the post-`/code-council` step and `/ship`, an autonomous run passes the **staging-first
+gate** — so an autonomous agent does not reach production directly: the default ship target is
+staging, and production-direct is friction-positive (an explicit flag + a verified, externally-
+attributed log). **Requires the `dev-prod` skill** (which owns the routing registry + the gate
+contract) — do not reimplement the gate here; invoke `dev-prod`. Wiring:
+`.claude/skills/dev-prod/references/autovibe-gate-wiring.md`; registry:
+`.claude/skills/dev-prod/references/entity-routing.md`.
+
+The contract, in brief:
+
+1. **Resolve entity** from `profile_slug` / branch. Unresolved/ambiguous → **fail-closed**: halt,
+   write a continuation, never default to an entity.
+2. **Read the `STATUS:` token** (not prose) in the routing registry. Anything but exactly `wired`
+   (or a missing staging ref) → HALT. Never `/ship` to a stub.
+3. **Default ship target = staging.** `/ship` targets staging unless the override is satisfied.
+4. **Pre-promotion checklist** (dev-prod SKILL.md) must pass — incl. the hardcoded-prod-ref grep
+   and the staging-healthy precondition (a timeout is NOT a pass).
+5. **Production-direct override** requires BOTH: (a) `AUTOVIBE_PROD_DIRECT` affirmatively truthy
+   (`1/true/yes/enabled`; absent or `0/false/no/off/disabled` = staging-first), AND (b) an
+   externally-attributed, write-then-read-back-verified override record (a failed/timed-out write
+   halts the run — never "shipped anyway").
+
+**Until you wire a staging environment** (fill `entity-routing.md`), the `STATUS:` token reads
+`stub` and steps 1–4 HALT — so on a fresh template Phase 5.5 is a no-op gate that records the stub
+state. A project with a single environment can leave it stubbed and ship as today.
+
+**Coupling:** Phase 5.5 depends on the `dev-prod` skill — keep the two in sync; never one without
+the other.
 
 ---
 
@@ -409,14 +443,24 @@ If the 40% gate fires MUCH earlier (Phase 1 or Phase 4 mid-execute), write the s
 
 ---
 
-## Phase 4.8 — Autofire Continuation via /schedule (added 2026-05-08, Pillar D')
+## Phase 4.8 — Autofire Continuation via NewVibe SSH dispatch (added 2026-05-08, Pillar D')
 
-**Purpose**: closes the manual-paste gap. After Phase 4.7 writes a canonical MASTER continuation, Phase 4.8 schedules a fresh chat (via `Skill schedule`) ~5 minutes in the future that reads from the canonical file. Result: multi-session features no longer require manual chat-open + paste — the next session fires itself.
+> **OPT-IN — the dispatch transport is environment-specific.** Phase 4.8 closes the
+> manual-paste gap: after Phase 4.7 writes a canonical MASTER continuation, Phase 4.8
+> dispatches a fresh Claude session (~5 minutes out) that resumes from that file — so
+> multi-session features fire themselves with no manual chat-open + paste. The **gates**
+> below ship with this skill; the **transport** that actually spawns the next session is
+> the **NewVibe SSH dispatch** (an automation workflow → a secure SSH tunnel → a new Claude
+> session on your machine). Until you wire that transport, autofire is a silent no-op and
+> the next session is a normal manual paste — Phase 4.7's MASTER file still exists, so
+> nothing is lost. Wiring runbook (with `[ORG-SPECIFIC]` markers):
+> `.claude/skills/autovibe/references/newvibe-integration-guide.md`.
 
-**Architecture** (Builder/Verifier/Firer per `agency/memory/feedback_d-prime-family-elevated-2026-05-08.md`):
+**Architecture** (Builder / Verifier / Firer):
 - **Builder** = Phase 4.7 (writes canonical MASTER) — already shipped
-- **Verifier** = `scripts/verify-continuation.sh` — structural lint gate (this feature)
-- **Firer** = `Skill schedule` invocation, gated by verifier exit code (this feature)
+- **Verifier** = `scripts/verify-continuation.sh` — structural lint gate
+- **Firer** = `scripts/newvibe-dispatch-lib.sh` (SSH dispatch), gated by the verifier exit code
+  + the `scripts/newvibe-chain-guard.sh` depth guard (chain depth ≤ 5)
 
 ### When to fire — ALL conditions must hold
 
@@ -444,18 +488,15 @@ If ANY condition fails: skip Phase 4.8, append `.claude/phase47-log.jsonl` entry
    ```bash
    echo "$INTENT" | grep -qiE '(delete|drop table|destroy|rm -rf|force.push|--no-verify|truncate)' && skip
    ```
-5. **Compute scheduled time**: `now + 5 minutes` (gives current chat time to wrap, leaves margin for state to settle). Format as ISO 8601 UTC.
-6. **Invoke `Skill schedule`** with parameters:
-   - One-shot run (NOT recurring)
-   - When: the computed timestamp (~5 min in future)
-   - Prompt body (paste-ready): the hyper-micro-prompt from the canonical MASTER's tail section + the canonical file path link
-7. **Capture the routine identifier** returned by Skill schedule (e.g., `routine_xxx` or `cron_xxx`).
+5. **Chain-depth guard**: `bash .claude/skills/autovibe/scripts/newvibe-chain-guard.sh` — if the autofire chain is already ≥ 5 deep, skip with `skip_reason:"chain-depth"` (prevents a runaway self-firing loop).
+6. **Dispatch via NewVibe SSH** (`scripts/newvibe-dispatch-lib.sh`, wired per `references/newvibe-integration-guide.md`). The transport is: your automation workflow receives a trigger → opens the secure SSH tunnel to your machine → launches a fresh Claude session whose first message is the hyper-micro-prompt from the canonical MASTER's tail section + the canonical file path link. **If no transport is wired** (the `[ORG-SPECIFIC]` markers in the integration guide are unfilled), skip with `skip_reason:"transport-unwired"` and emit the manual-paste heartbeat — nothing is lost.
+7. **Capture the dispatch identifier** returned by the SSH dispatch (the workflow/run id).
 8. **Append `.claude/phase47-log.jsonl`**:
    ```json
-   {"ts":"<iso8601>","slug":"<slug>","status":"autofire-scheduled","routine_id":"<id>","scheduled_at":"<iso8601>","canonical_path":"<path>"}
+   {"ts":"<iso8601>","slug":"<slug>","status":"autofire-dispatched","dispatch_id":"<id>","canonical_path":"<path>"}
    ```
 9. **Emit heartbeat to chat**:
-   `🚀 Autofire scheduled: routine <id> fires at <iso> — fresh chat will resume from <canonical-path> with no manual paste.`
+   `🚀 Autofire dispatched: <id> — a fresh chat will SSH in and resume from <canonical-path> with no manual paste.`
 
 ### Kill switches (Reliability Engineer veto layer — defense in depth)
 
@@ -480,8 +521,8 @@ echo 'export AUTOVIBE_AUTOFIRE=0' >> ~/.zshrc   # persistent
 
 | Mode | Behaviour |
 |---|---|
-| `Skill schedule` not registered | Phase 4.8 logs `skill-unavailable`, no autofire — next chat = manual paste (Phase 4.7's MASTER still exists) |
-| `Skill schedule` returns error or times out | Phase 4.8 logs `schedule-error`, no autofire — manual fallback |
+| NewVibe SSH transport not wired | Phase 4.8 logs `transport-unwired`, no autofire — next chat = manual paste (Phase 4.7's MASTER still exists) |
+| SSH dispatch returns error or times out | Phase 4.8 logs `dispatch-error`, no autofire — manual fallback |
 | Verifier finds destructive keyword in continuation body | Refuses; logs `verifier-exit-6-destructive` |
 | Slug collision (same slug as existing MASTER) | Verifier exit 5; logs `verifier-exit-5-slug-collision` |
 | Filename pattern mismatch | Verifier exit 3; logs `verifier-exit-3-filename` (file doesn't match `AUTOVIBE-{ts}-{slug}-MASTER.md`) |
@@ -498,26 +539,24 @@ echo 'export AUTOVIBE_AUTOFIRE=0' >> ~/.zshrc   # persistent
 
 ### Decommission triggers
 
-Phase 4.8's `feedback_d-prime-family-elevated-2026-05-08.md` graduation gate AND failure-class triggers:
+**Graduation trigger**:
 
-**Graduation trigger (memo intent — closes the elevated-deferral gate)**:
-
-0. **≥3 consecutive successful end-to-end runs**: autovibe → write continuation → autofire fresh chat → fresh chat resumes work cleanly with NO human paste needed = Phase 4.8 graduates from "elevated-deferral" to "shipped-permanently". Update `agency/memory/feedback_d-prime-family-elevated-2026-05-08.md` status from `elevated` → `shipped`. After graduation, this rule moves out of in-flight memory.
+0. **≥3 consecutive successful end-to-end runs**: autovibe → write continuation → autofire fresh chat → fresh chat resumes work cleanly with NO human paste needed = Phase 4.8 is proven for your setup. Treat autofire as shipped-permanently rather than experimental.
 
 **Failure / upgrade triggers (any one fires)**:
 
 1. **Junk-continuation rate > 20%**: 3+ consecutive autofire chains produce continuations the fresh chat couldn't act on (semantic junk slipped past structural verifier). Upgrade verifier to a `claude --print` subprocess (similar to `code-forge`).
 2. **User permanently disables**: `AUTOVIBE_AUTOFIRE=0` (or any disable variant) in shell rc for >7 days = signal to remove or rework.
-3. **/schedule deprecated**: if Anthropic deprecates the schedule skill, swap firer for `CronCreate` deferred tool.
+3. **Transport changes**: if your SSH/automation transport changes (new tunnel, new workflow host), re-wire per `references/newvibe-integration-guide.md` — the gates are transport-agnostic, only the firer moves.
 
 ### Verification gates (run after first 3 autofire chains)
 
 The decommission trigger #1 requires measuring junk rate. After ≥3 autofire chains:
 
 ```bash
-# Count autofire-scheduled entries in past 7 days
-jq -c 'select(.status == "autofire-scheduled")' .claude/phase47-log.jsonl | wc -l
-# Manually inspect each scheduled fresh chat's first message for "couldn't act" signals
+# Count autofire-dispatched entries in past 7 days
+jq -c 'select(.status == "autofire-dispatched")' .claude/phase47-log.jsonl | wc -l
+# Manually inspect each dispatched fresh chat's first message for "couldn't act" signals
 ```
 
 If 0/3 OR 1/3 fresh chats reported confusion, V1 verifier is sufficient. If 2/3+, escalate to Claude-subprocess verifier.
