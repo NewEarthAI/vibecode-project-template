@@ -62,10 +62,10 @@ Before writing ANY file to the template repo, run the full generalisation pass. 
 | Project-specific | Template-generic |
 |---|---|
 | `a SaaS app` / `a SaaS app` / `the app-ai.com` | `{{project_name}}` (preserve casing) |
-| `your instance` / `HomePros` / `Edge Case` / `iSpeed2Lead` / `Trevor` / `Yuri` / `Chris` / `Justin` / `Mike Penez` | `{{partner_name}}` (entity-aware — preserve role context if needed for a precedent example) |
-| Supabase project refs (`rkjbdjxihppklvlbfywp`, `cqjkroyfbqaynxihfowq`, etc. — 20-char alphanumeric) | `{{supabase_project_ref}}` |
-| Vercel team slug `teamyour-orgas-projects` | `{{vercel_team_slug}}` |
-| Repo paths starting with `/Users/justin/` | `{{user_home}}/code/{{repo_stem}}/` for project-rooted; `~/.claude/` for global |
+| `your instance` / `PartnerCo` / `Edge Case` / `PartnerCo` / `a partner` / `a partner` / `a teammate` / `the operator` / `a contact` | `{{partner_name}}` (entity-aware — preserve role context if needed for a precedent example) |
+| Supabase project refs (`{{supabase_project_ref}}`, `{{supabase_project_ref}}`, etc. — 20-char alphanumeric) | `{{supabase_project_ref}}` |
+| Vercel team slug `your-team-slug` | `{{vercel_team_slug}}` |
+| Repo paths starting with `~/` | `{{user_home}}/code/{{repo_stem}}/` for project-rooted; `~/.claude/` for global |
 | Specific git SHAs cited in prose (e.g., `03f8cc7e`, `b2012ff9`) | `{{commit_sha}}` IF they're cited as illustrative; PRESERVE if the SHA is being cited as a verifiable precedent ("PR #173 SHA 12abc34 caught X"). Decision rule: keep when the SHA is forensic evidence; strip when it's just a recency marker. |
 
 **NSM-label generalisation**:
@@ -96,7 +96,7 @@ Before writing ANY file to the template repo, run the full generalisation pass. 
 **Verification gate (mandatory before write)**:
 After running all substitutions, grep the generalised file for any remaining project-specific tokens. If ANY hit, HALT and report which token survived. Example check:
 ```bash
-grep -nE '(a SaaS app|your instance|HomePros|Edge Case|iSpeed2Lead|Trevor|Yuri|Justin|rkjbdjxihppklvlbfywp|teamyour-orgas)' <generalised-file>
+grep -nE '(a SaaS app|your instance|PartnerCo|Edge Case|PartnerCo|a partner|a partner|the operator|{{supabase_project_ref}}|your-team-slug)' <generalised-file>
 ```
 Empty result = pass. Any hit = surface, ask user to disambiguate (keep as historical precedent vs strip).
 
