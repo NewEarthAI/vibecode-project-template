@@ -17,6 +17,12 @@ This command walks you through a structured interview to populate CLAUDE.md, con
 
 ### Step 0: Determine Depth & Setup Prerequisites
 
+**0.0 Offer the welcome deck (fresh projects):**
+If CLAUDE.md is still the unconfigured placeholder, tell the user they can open
+📊 `docs/welcome-deck.html` in any browser for a 12-slide tour of what they're
+about to set up (and why), then ask if they'd like to view it before continuing.
+Don't block — proceed as soon as they're ready.
+
 **0.1 Check for hookify plugin:**
 ```bash
 # Check if hookify plugin exists
@@ -799,7 +805,12 @@ Recommended next steps:
 3. Run /prime to test Claude's understanding
 4. Run /daily-plan to generate your first session plan
 5. Start building!
+6. Open docs/welcome-deck.html — the closing slides recap what you just built
 ```
+
+After the report, point the user to 📊 `docs/welcome-deck.html` once more: the
+final slides ("Here's what you've got", "Your next three steps") are a clean
+recap they can revisit or share.
 
 ---
 

@@ -73,6 +73,10 @@ Then:
 | 4 | Type **`/daily-plan`** | You get a ranked to-do list for your first session |
 | 5 | Start building | Just describe what you want, in plain English |
 
+> **Prefer a visual tour first?** Open 📊 the welcome deck — the file
+> `docs/welcome-deck.html` — in any browser for a 12-slide walkthrough (arrow
+> keys to move). `/setup` offers to show it automatically at the start and end.
+
 **Connecting your tools (optional, when you're ready):** if you want Claude to
 control a database, automations, GitHub, or a browser, there's a one-time helper
 script that asks for each key and saves it privately on your Mac. It's covered
@@ -90,6 +94,17 @@ use everything that doesn't need external tools.
 `/setup` is the heart of this template. It's a structured interview that turns a
 blank repo into a project Claude deeply understands. You answer questions in
 plain English; Claude writes the files. Here's the journey:
+
+```mermaid
+flowchart LR
+  A(["You run /setup"]) --> B["① Learns your project"]
+  B --> C["② Writes DESTINATION.md<br/>(what done looks like)"]
+  C --> D["③ Builds ROADMAP<br/>+ North Star metric"]
+  D --> E["④ Wires safety +<br/>token-saving guards"]
+  E --> F["⑤ Tunes /daily-plan"]
+  F --> G["⑥ Turns on<br/>autonomous shipping"]
+  G --> H(["A project Claude<br/>understands as well as you"])
+```
 
 **① It learns your project.** What problem you solve and for whom, what success
 looks like in 3–6 months, what you're deliberately *not* building, and your
@@ -145,6 +160,14 @@ These two files are a matched pair, and the template keeps them honest:
   third-party-observable test ("you'll know it's done when…"). It rarely changes.
 - 📄 **`ROADMAP.md`** — *how* you get there. Four lanes (Now / Next / Later /
   Horizon) plus the North Star metric. It changes every week.
+
+```mermaid
+flowchart LR
+  DEST["DESTINATION.md<br/>what done looks like<br/>(rarely changes)"] -->|points to| ROAD["ROADMAP.md<br/>Now / Next / Later<br/>(changes weekly)"]
+  ROAD --> LED["Goal ledger<br/>intent behind each task"]
+  LED --> PLAN["/daily-plan<br/>ranked by North Star"]
+  PLAN -->|every morning| YOU(["You: the highest-leverage<br/>next step"])
+```
 
 The roadmap's "done when" cell **points to** the destination rather than
 copying it — one source of truth, never two drifting versions. A built-in
@@ -311,6 +334,15 @@ During    →  describe work    Claude picks the right skills; hooks keep it saf
 Shipping  →  /ship            commit + PR, with pre-flight safety gates
             →  /verify-shipped confirm it actually deployed (no silent drift)
 End        →  (automatic)     a session summary + memory + second-brain sync are written for you
+```
+
+```mermaid
+flowchart LR
+  M(["Morning"]) --> P["/daily-plan<br/>ranked work list"]
+  P --> W["Build —<br/>describe it in plain English"]
+  W --> S["/ship<br/>commit + PR, safely"]
+  S --> V["/verify-shipped<br/>confirm it really deployed"]
+  V --> E(["Session summary +<br/>memory saved for you"])
 ```
 
 Behind the scenes, **session hooks** run at the start, middle, and end of every
