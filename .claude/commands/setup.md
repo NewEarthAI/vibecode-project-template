@@ -195,6 +195,48 @@ ASK user:
 
 ---
 
+### Step 7.4: Platform & Credential Discovery (set up the MCPs / credentials / CLIs the project actually needs)
+
+A new project may use Supabase, n8n, Make, WhatsApp, Redis, Playwright, GitHub, Telegram, a broker
+API, or none. **You cannot know the project's platforms in advance — ask.** This step (1) discovers
+which platforms the project uses, (2) sets up the MCP + credentials + CLI for every platform we
+SUPPORT that the project uses, (3) FLAGS platforms the project uses that we have NO out-of-box
+integration for, so the operator can build an equivalent, and (4) leaves platform-specific hooks
+dormant for platforms not in use.
+
+**7.4.1 — Ask which platforms the project uses** (AskUserQuestion, multiSelect):
+- Database: Supabase / Postgres / Firebase / none
+- Automation: n8n / Make.com / none
+- Comms: Telegram / WhatsApp / email / none
+- Browser automation: Playwright / Chrome DevTools / none
+- Cache/KV: Redis / none
+- Other (free text): e.g. a broker API / a payment processor
+
+**7.4.2 — For each in-use platform we SUPPORT** (Supabase, n8n, Playwright, Chrome, Redis, GitHub, Context7):
+- Collect the connection info and wire it to YOUR OWN instance:
+  - Supabase: project ref + API URL + keys → write the `.mcp.json` Supabase server entry referencing
+    keys via ENV VARS (NEVER commit a service-role key in plaintext). Note the `supabase` CLI for local dev.
+  - n8n: instance URL + API key → `.mcp.json` n8n entry (key via env).
+  - GitHub: confirm `gh auth status`; if not authed, guide `gh auth login`.
+  - Redis / Playwright / Chrome: add the relevant `.mcp.json` entry; any API key via env.
+- **Enable that platform's hooks + read-only `permissions.allow` patterns** (Step 7.6 — e.g. the
+  Supabase select-star/row-limit hooks, the n8n executions-full/essentials hooks). Leave hooks for
+  platforms NOT in use dormant.
+
+**7.4.3 — For each in-use platform we do NOT support out of the box** (e.g. Telegram, a broker API):
+- FLAG it plainly: "We ship no MCP/hook for {platform}. To get the same safety + token-efficiency we
+  have for Supabase/n8n, an equivalent must be built (a wrapper script, an API client, or a custom hook)."
+- Capture it as a NOW/NEXT item in `ROADMAP.md`.
+- NEVER pretend coverage exists. A used platform with no integration AND no flag is a silent gap.
+
+**7.4.4 — Secrets discipline.** Credentials are NEVER committed in plaintext. Use `.env` (gitignored),
+the OS keychain, or `.mcp.json` env-var references. Confirm `.mcp.json` and any `.env` are gitignored.
+
+**7.4.5 — Verify.** Run `/verify-hooks` Phase 1 (Environment Discovery): it reads `.mcp.json`, derives
+the platform flags, and confirms each in-use platform has its hooks + deny coverage.
+
+---
+
 ### Step 7.5: Hookify Architecture Configuration
 
 The template ships 13 hookify rules. Most work immediately with wildcard matchers. This step customizes them for the specific project.
@@ -549,12 +591,10 @@ A Claude session CANNOT self-provision this half. SURFACE it to the user — do
 not attempt to automate it:
 
 **(A) The n8n dispatch substrate + REPO_MAP**
-- **the agency repo**: the files already point at the shared `W-KI-SSH-EXECUTE`
-  n8n workflow. Add ONE line to its `Resolve Project Path` node's REPO_MAP
-  mapping this repo's slug → `{ repo path on the target Mac, target user }`.
-- **External adopter**: autofire needs your own n8n SSH-Execute workflow —
-  DIY/advanced in v1. `newvibe-integration-guide.md` §7 documents the fixed
-  dispatch contract. Skipping it leaves a fully working orchestration layer.
+- Autofire needs your own n8n SSH-Execute workflow that maps this repo's slug →
+  `{ repo path on the target Mac, target user }`. This is DIY/advanced in v1;
+  `newvibe-integration-guide.md` §7 documents the fixed dispatch contract.
+  Skipping it leaves a fully working orchestration layer (autofire is an opt-in extra).
 
 **(B) Per-machine credentials** — created on the target Mac that runs autofired
 sessions; mode `600`; NEVER committed or templated:
@@ -828,6 +868,55 @@ ASK these 5 questions only:
 
 WRITE minimal CLAUDE.md with answers.
 SKIP specs/ and docs/ generation.
+
+---
+
+## Setup Completion Gate (MANDATORY — run before the Report)
+
+`/setup` is a long wizard; a run that follows the operator's ad-hoc sub-requests can jump past an
+automated wiring step and still *look* finished. This gate is the backstop: it VERIFIES every
+mandatory automated artefact exists before reporting done. **`/setup` is NOT complete until this gate
+prints PASS.** It is idempotent. **No `eval`** — the `bash-guardian` / `sql-guardian` hooks this
+wizard installs BLOCK `eval`; use the plain form below.
+
+```bash
+cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fail=0
+ok(){ echo "✓ $1"; }
+no(){ echo "✗ $1  → $2"; fail=1; }
+
+# --- Content artefacts ---
+test -f CLAUDE.md  && ok "CLAUDE.md present"  || no "CLAUDE.md present"  "re-run Step 8 (generate CLAUDE.md)"
+test -f ROADMAP.md && ok "ROADMAP.md present" || no "ROADMAP.md present" "re-run Step 7.7 (ROADMAP wizard)"
+{ test -f DESTINATION.md || grep -rqi no_forever .claude/ 2>/dev/null; } \
+  && ok "DESTINATION.md present (or scope=no_forever)" || no "DESTINATION.md" "re-run Step 7.7.0 (/define-destination)"
+
+# --- Platform discovery (Step 7.4) ---
+test -f .claude/template-source.md && ok "template-source.md present" || no "template-source.md" "re-run Step 7.6.4"
+if [ -f .mcp.json ]; then
+  ok ".mcp.json present (platform MCPs configured)"
+else
+  echo "• .mcp.json absent — OK ONLY if this project uses no Supabase/n8n/etc. If it does, re-run Step 7.4 (Platform & Credential Discovery)."
+fi
+
+# --- Hooks + session wiring (Step 7.6) ---
+test -f .claude/settings.local.json && ok "settings.local.json present" || no "settings.local.json" "re-run Step 7.6 (hooks block at minimum)"
+grep -q session-summarizer .claude/settings.local.json 2>/dev/null && ok "Stop hooks registered" || no "Stop hooks registered" "re-run Step 7.6"
+{ test -d .claude/sessions && test -d .claude/daily-plans; } && ok "session dirs present" || no "session dirs" "mkdir -p .claude/sessions .claude/daily-plans"
+
+echo "----"
+if [ "$fail" -eq 0 ]; then
+  echo "✓ SETUP COMPLETION GATE: PASS"
+else
+  echo "✗ SETUP COMPLETION GATE: INCOMPLETE — fix every ✗ above, then re-run. Do NOT write the Report until this prints PASS."
+fi
+```
+
+After the gate prints PASS, run **`/verify-hooks`** — the 8-phase audit that confirms hook
+*enforcement* coverage, token efficiency, escape-hatch absence, and platform-specific hook coverage
+for the MCP servers this project actually uses. The gate checks the wiring EXISTS; `/verify-hooks`
+checks it is CORRECT. Setup is fully done only when the gate prints PASS and `/verify-hooks` reports
+no CRITICAL findings (or each is explicitly accepted).
 
 ---
 
