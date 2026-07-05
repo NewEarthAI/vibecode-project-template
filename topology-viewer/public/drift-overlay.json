@@ -1,0 +1,27 @@
+{
+  "version": "drift-overlay-v1",
+  "generatedAt": "2026-06-06T10:34:34Z",
+  "entity": "demo-xsystem",
+  "summary": "DRIFT",
+  "driftCount": 1,
+  "driftNodeIds": [
+    "table:public.deals"
+  ],
+  "blastRadiusNodeIds": [
+    "function:public.fn_score",
+    "view:public.v_deals"
+  ],
+  "blastRadiusPartial": false,
+  "blindSpotNodeIds": [],
+  "unverifiableNodeIds": [],
+  "actions": {
+    "table:public.deals": {
+      "named_action": "reconcile",
+      "impact_rank": 2,
+      "rank_completeness": "complete",
+      "reason": "unilateral_drift",
+      "provenance": "references/invariants/deals-table-structural.json@fff701",
+      "source_of_truth_ref": "repo migrations authoritative for table shape"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "inv-intent-conservation-rls",
+  "kind": "conservation",
+  "source_file": "references/invariants/intent-conservation-rls.json",
+  "source_commit": "m6-v1",
+  "left_source": "intent",
+  "reads_dimension": "supabase-live",
+  "right_view_kind": "rls_policy",
+  "left_view_filter": "[.records[] | select(.status==\"accepted\") | {id, wired_to, conditions}]",
+  "right_view_filter": "[.nodes[] | select(.kind==\"rls_policy\")]",
+  "assertion": "every accepted intent record's wired_to target resolves to a present rls_policy topology node AND that node has attributes.enabled==true — the promised security control is still actively wired. HONEST SCOPE (Gate 3 / Doctrine 06 §7.2 / A.6): proves the control is ACTIVE (the disabled-but-present silent-failure class), NOT that its USING/CHECK predicate logic is correct (a richer invariant requiring the supabase-live emitter to capture the policy expression — named, not claimed by v1).",
+  "cadence": "on-demand",
+  "source_of_truth_ref": "the conservation demonstrator — intent's wired_to (the promised RLS policy node id) vs the live topology rls_policy node + its attributes.enabled (Doctrine 06 §6.4.3 / §7.2). left_source:intent resolves the left_view from INTENT_SUBSTRATE_PATH (council A2/D7); existing versioning/derivation invariants OMIT left_source → topology default → byte-unchanged."
+}

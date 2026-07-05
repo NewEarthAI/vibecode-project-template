@@ -18,7 +18,7 @@ full tour, or suggest `/prime` for a quick read of whatever is already here.
 
 ## What this template is
 
-A white-label starter for any Claude Code project — ~99 skills, ~36 commands,
+A white-label starter for any Claude Code project — ~110 skills, ~37 commands,
 ~26 specialist agents, and ~60 safety/efficiency hooks, plus a council of AI
 advisors, autonomous shipping, second-brain memory, and first-principles
 framing. It carries **no** project-specific or client content; everything is

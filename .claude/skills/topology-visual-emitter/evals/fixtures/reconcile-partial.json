@@ -1,0 +1,46 @@
+{
+  "summary": "PARTIAL",
+  "conditions": ["inconclusive", "in_sync"],
+  "drift_count": 0,
+  "invariants": [
+    {
+      "id": "every-depends-on-resolves",
+      "kind": "derivation",
+      "source_file": "references/invariants/every-depends-on-resolves.json",
+      "source_commit": "fff602",
+      "timestamp": 1780000000,
+      "left_view": ".nodes[].depends_on[]",
+      "right_view": ".nodes[].id",
+      "assertion": "containment",
+      "verdict": "in_sync",
+      "drift_detail": null,
+      "inconclusive_reason": null,
+      "impact_rank": {"rank": 0, "rank_completeness": "complete", "missing_dimensions": [], "cycle_detected": false, "depth_truncated": false},
+      "affected_nodes": [],
+      "named_action": null,
+      "action_outcome": [],
+      "cadence": "on-demand",
+      "source_of_truth_ref": "the substrate edge set is authoritative"
+    },
+    {
+      "id": "commit-time-versioning",
+      "kind": "versioning",
+      "source_file": "references/invariants/commit-time-versioning.json",
+      "source_commit": "fff605",
+      "timestamp": 1780000000,
+      "left_view": ".nodes[].source_commit",
+      "right_view": ".nodes[].source_commit",
+      "assertion": "equality",
+      "verdict": "inconclusive",
+      "drift_detail": null,
+      "inconclusive_reason": "incomparable-provenance",
+      "impact_rank": {"rank": 0, "rank_completeness": "partial", "missing_dimensions": [], "cycle_detected": false, "depth_truncated": false},
+      "affected_nodes": ["workflow:repo:wf-gmail"],
+      "named_action": null,
+      "action_outcome": [],
+      "cadence": "on-demand",
+      "source_of_truth_ref": "git commit-time on both sides"
+    }
+  ],
+  "registry_health": {"live_invariant_count": 2, "no_op_invariant_count": 0, "liveness_ok": true}
+}

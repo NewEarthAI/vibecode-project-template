@@ -1,6 +1,6 @@
 # The Catalogue — every tool, tiered
 
-One page, three tiers. You do **not** need to learn 99 skills — Claude reaches
+One page, three tiers. You do **not** need to learn 110 skills — Claude reaches
 for the right one automatically. This page exists so you always know what's in
 the box, what matters on day one, and what's safely ignorable until you grow
 into it.
@@ -43,6 +43,7 @@ into it.
 | You use a database | `supabase-postgres-best-practices`, `postgresql-patterns`, `postgresql-code-review`, `supabase-database-hygiene`, `dev-prod` (staging-first discipline) |
 | You deploy a frontend | `/deploy-vercel`, `landing-page-mvp`, `site-speed-boost`, `lovable-to-vercel-migration` |
 | You build UI | `ui-design-system` (house design system), `/design-review`, `tailwind-shadcn-system`, `data-table-design`, `build-dashboard`, `kpi-dashboard-design` |
+| You want a system map | `/topology` — a live LOCAL map of your code + config + plans (and database/automations if you use them), with drift flags. No database needed; works on any stack. `/setup` builds the first pass. |
 | You run parallel chats | worktree discipline, collision-detection hooks |
 | You keep an Obsidian vault | `obsidian-second-brain`, `/vault-sync`, `/vault-review`, `/trace`, `/drift`, `/emerge`, `/graduate` (full recipe: `docs/OBSIDIAN-SETUP.md`) |
 | You work with a team | `collab` skill, `/build-with-agent-team` |

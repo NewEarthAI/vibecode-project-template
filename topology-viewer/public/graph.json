@@ -1,0 +1,619 @@
+{
+  "schema_version": "visual-v1",
+  "entity": "demo-xsystem",
+  "generated_at": "2026-06-06T10:34:34Z",
+  "source_last_updated": "2026-06-06T10:00:00Z",
+  "coverage": {
+    "emitters": {
+      "code": "covered",
+      "supabase-live": "covered",
+      "n8n-cloud": "declared-missing"
+    },
+    "missing_emitters": [
+      {
+        "name": "external-api-graph",
+        "reason": "M4+ — edge-function static analysis needed"
+      },
+      {
+        "name": "vercel-deploy-state",
+        "reason": "M4+ — Vercel API integration"
+      }
+    ]
+  },
+  "has_blind_spot_edges": true,
+  "nodes": [
+    {
+      "id": "table:public.deals",
+      "kind": "table",
+      "render_kind": "table",
+      "category": "data",
+      "label": "public.deals",
+      "emitter": "pg_depend",
+      "coverage": "covered",
+      "layer": "layer:data",
+      "source": "supabase/migrations/0001_deals.sql@aaa111",
+      "attributes": {
+        "columns": 12,
+        "row_estimate": 5400
+      }
+    },
+    {
+      "id": "table:public.profiles",
+      "kind": "table",
+      "render_kind": "table",
+      "category": "data",
+      "label": "public.profiles",
+      "emitter": "pg_depend",
+      "coverage": "covered",
+      "layer": "layer:data",
+      "source": "supabase/migrations/0002_profiles.sql@aaa112",
+      "attributes": {
+        "columns": 6,
+        "row_estimate": 1200
+      }
+    },
+    {
+      "id": "view:public.v_deals",
+      "kind": "view",
+      "render_kind": "schema",
+      "category": "data",
+      "label": "public.v_deals",
+      "emitter": "pg_depend",
+      "coverage": "covered",
+      "layer": "layer:data",
+      "source": "supabase/migrations/0003_v_deals.sql@aaa113",
+      "attributes": {
+        "is_materialized": false,
+        "definition_hash": "d1"
+      }
+    },
+    {
+      "id": "function:public.fn_score",
+      "kind": "function",
+      "render_kind": "function",
+      "category": "data",
+      "label": "public.fn_score",
+      "emitter": "pg_depend",
+      "coverage": "covered",
+      "layer": "layer:data",
+      "source": "supabase/migrations/0004_fn_score.sql@aaa114",
+      "attributes": {
+        "language": "plpgsql",
+        "volatility": "stable"
+      }
+    },
+    {
+      "id": "edge_function:notify",
+      "kind": "edge_function",
+      "render_kind": "service",
+      "category": "automation",
+      "label": "notify",
+      "emitter": "manual",
+      "coverage": "covered",
+      "layer": "layer:automation",
+      "source": "supabase/functions/notify/index.ts@bbb221",
+      "attributes": {
+        "runtime": "deno",
+        "deployed_commit": "bbb221"
+      }
+    },
+    {
+      "id": "workflow:repo:wf-sync",
+      "kind": "workflow",
+      "render_kind": "group",
+      "category": "automation",
+      "label": "wf-sync",
+      "emitter": "n8n_parser",
+      "coverage": "covered",
+      "layer": "layer:workflow:workflow:repo:wf-sync",
+      "source": "workflows/sync.json@ccc331",
+      "attributes": {
+        "active": true,
+        "trigger_type": "webhook",
+        "n8n_id": "WF9sync"
+      }
+    },
+    {
+      "id": "workflow_node:wf-sync:http1",
+      "kind": "workflow_node",
+      "render_kind": "code",
+      "category": "automation",
+      "label": "http1",
+      "emitter": "n8n_parser",
+      "coverage": "covered",
+      "layer": "layer:workflow:workflow:repo:wf-sync",
+      "source": "workflows/sync.json@ccc331",
+      "attributes": {
+        "node_type": "n8n-nodes-base.httpRequest",
+        "position": [
+          220,
+          120
+        ]
+      }
+    },
+    {
+      "id": "ts_module:src/lib/api.ts",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "api.ts",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/lib/api.ts@eee551",
+      "attributes": {
+        "is_entry": false,
+        "export_count": 4
+      }
+    },
+    {
+      "id": "ts_module:src/pages/Deals.tsx",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "Deals.tsx",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/pages/Deals.tsx@eee552",
+      "attributes": {
+        "is_entry": false,
+        "export_count": 1
+      }
+    },
+    {
+      "id": "ts_module:src/pages/Settings.tsx",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "Settings.tsx",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/pages/Settings.tsx@eee553",
+      "attributes": {
+        "is_entry": false,
+        "export_count": 1
+      }
+    },
+    {
+      "id": "ts_module:src/pages/Reports.tsx",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "Reports.tsx",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/pages/Reports.tsx@eee554",
+      "attributes": {
+        "is_entry": false,
+        "export_count": 1
+      }
+    },
+    {
+      "id": "ts_module:src/pages/Home.tsx",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "Home.tsx",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/pages/Home.tsx@eee555",
+      "attributes": {
+        "is_entry": true,
+        "export_count": 1
+      }
+    },
+    {
+      "id": "ts_module:src/pages/Login.tsx",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "Login.tsx",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/pages/Login.tsx@eee556",
+      "attributes": {
+        "is_entry": false,
+        "export_count": 1
+      }
+    },
+    {
+      "id": "ts_module:src/pages/About.tsx",
+      "kind": "ts_module",
+      "render_kind": "code",
+      "category": "code",
+      "label": "About.tsx",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:code",
+      "source": "src/pages/About.tsx@eee557",
+      "attributes": {
+        "is_entry": false,
+        "export_count": 1
+      }
+    },
+    {
+      "id": "external_endpoint:external-api:api.stripe.com/v1/charges",
+      "kind": "external_endpoint",
+      "render_kind": "external",
+      "category": "external",
+      "label": "charges",
+      "emitter": "external_api_parser",
+      "coverage": "covered",
+      "layer": "layer:external",
+      "source": "workflows/sync.json@ccc331",
+      "attributes": {
+        "url_host": "api.stripe.com",
+        "url_path_template": "/v1/charges",
+        "method": "POST",
+        "classification": "external-api"
+      }
+    },
+    {
+      "id": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "kind": "external_endpoint",
+      "render_kind": "external",
+      "category": "external",
+      "label": "chat",
+      "emitter": "external_api_parser",
+      "coverage": "covered",
+      "layer": "layer:external",
+      "source": "src/lib/ai.ts@eee560",
+      "attributes": {
+        "url_host": "api.openai.com",
+        "url_path_template": "/v1/chat",
+        "method": "POST",
+        "classification": "external-api"
+      }
+    },
+    {
+      "id": "external_endpoint:supabase-rest:unresolved-table",
+      "kind": "external_endpoint",
+      "render_kind": "external",
+      "category": "external",
+      "label": "unresolved-table",
+      "emitter": "external_api_parser",
+      "coverage": "covered",
+      "layer": "layer:external",
+      "source": "workflows/sync.json@ccc331",
+      "attributes": {
+        "url_host": "demo.supabase.co",
+        "url_path_template": "/rest/v1/{table}",
+        "method": "GET",
+        "classification": "supabase-rest"
+      }
+    },
+    {
+      "id": "external_endpoint:blind-spot:dynamic-1",
+      "kind": "external_endpoint",
+      "render_kind": "external",
+      "category": "external",
+      "label": "dynamic-1",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:external",
+      "source": "src/pages/Settings.tsx@eee553",
+      "attributes": {
+        "url_host": null,
+        "url_path_template": null,
+        "method": null,
+        "classification": "blind-spot"
+      }
+    },
+    {
+      "id": "external_endpoint:blind-spot:dynamic-2",
+      "kind": "external_endpoint",
+      "render_kind": "external",
+      "category": "external",
+      "label": "dynamic-2",
+      "emitter": "dependency_cruiser",
+      "coverage": "covered",
+      "layer": "layer:external",
+      "source": "src/pages/Deals.tsx@eee552",
+      "attributes": {
+        "url_host": null,
+        "url_path_template": null,
+        "method": null,
+        "classification": "blind-spot"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "view:public.v_deals",
+      "target": "table:public.deals",
+      "type": "depends_on",
+      "weight": 1,
+      "cross_system": false,
+      "confidence": null,
+      "attributes": null
+    },
+    {
+      "source": "function:public.fn_score",
+      "target": "table:public.deals",
+      "type": "depends_on",
+      "weight": 1,
+      "cross_system": false,
+      "confidence": null,
+      "attributes": null
+    },
+    {
+      "source": "workflow_node:wf-sync:http1",
+      "target": "workflow:repo:wf-sync",
+      "type": "contains",
+      "weight": 1,
+      "cross_system": false,
+      "confidence": null,
+      "attributes": null
+    },
+    {
+      "source": "ts_module:src/pages/Deals.tsx",
+      "target": "ts_module:src/lib/api.ts",
+      "type": "imports",
+      "weight": 1,
+      "cross_system": false,
+      "confidence": null,
+      "attributes": null
+    },
+    {
+      "source": "ts_module:src/pages/Deals.tsx",
+      "target": "table:public.deals",
+      "type": "reads_from",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-medium",
+      "attributes": {
+        "derivation": "supabase.from('deals').select()",
+        "confidence": "declared-medium"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Deals.tsx",
+      "target": "table:public.deals",
+      "type": "writes_to",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-medium",
+      "attributes": {
+        "derivation": "supabase.from('deals').insert()",
+        "confidence": "declared-medium"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Deals.tsx",
+      "target": "edge_function:notify",
+      "type": "invokes",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-high",
+      "attributes": {
+        "derivation": "supabase.functions.invoke('notify')",
+        "confidence": "declared-high"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Deals.tsx",
+      "target": "external_endpoint:blind-spot:dynamic-2",
+      "type": "reads_from",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "blind-spot",
+      "attributes": {
+        "derivation": "supabase.from(tableVar) — runtime-constructed",
+        "confidence": "blind-spot"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Settings.tsx",
+      "target": "external_endpoint:blind-spot:dynamic-1",
+      "type": "reads_from",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "blind-spot",
+      "attributes": {
+        "derivation": "fetch(`${base}/${path}`) — runtime URL",
+        "confidence": "blind-spot"
+      }
+    },
+    {
+      "source": "workflow_node:wf-sync:http1",
+      "target": "external_endpoint:external-api:api.stripe.com/v1/charges",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-high",
+      "attributes": {
+        "derivation": "HTTP node url=https://api.stripe.com/v1/charges",
+        "confidence": "declared-high"
+      }
+    },
+    {
+      "source": "workflow_node:wf-sync:http1",
+      "target": "external_endpoint:supabase-rest:unresolved-table",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-medium",
+      "attributes": {
+        "derivation": "HTTP node REST url with {table} expression",
+        "confidence": "declared-medium"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Deals.tsx",
+      "target": "table:public.profiles",
+      "type": "subscribes_to",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-medium",
+      "attributes": {
+        "derivation": "supabase.channel('profiles')",
+        "confidence": "declared-medium"
+      }
+    },
+    {
+      "source": "external_endpoint:external-api:api.stripe.com/v1/charges",
+      "target": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-high",
+      "attributes": {
+        "derivation": "chained external call",
+        "confidence": "declared-high"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Reports.tsx",
+      "target": "table:public.deals",
+      "type": "reads_from",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "blind-spot",
+      "attributes": null
+    },
+    {
+      "source": "ts_module:src/pages/Home.tsx",
+      "target": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-high",
+      "attributes": {
+        "derivation": "fetch('https://api.openai.com/v1/chat')",
+        "confidence": "declared-high"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/Login.tsx",
+      "target": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-high",
+      "attributes": {
+        "derivation": "fetch('https://api.openai.com/v1/chat')",
+        "confidence": "declared-high"
+      }
+    },
+    {
+      "source": "ts_module:src/pages/About.tsx",
+      "target": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "declared-high",
+      "attributes": {
+        "derivation": "fetch('https://api.openai.com/v1/chat')",
+        "confidence": "declared-high"
+      }
+    },
+    {
+      "source": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "target": "external_endpoint:supabase-rest:unresolved-table",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "blind-spot",
+      "attributes": null
+    },
+    {
+      "source": "ts_module:src/pages/Home.tsx",
+      "target": "external_endpoint:external-api:api.openai.com/v1/chat",
+      "type": "calls",
+      "weight": 1,
+      "cross_system": true,
+      "confidence": "blind-spot",
+      "attributes": {
+        "derivation": "fetch(`${runtimeBase}/chat`) — runtime base",
+        "confidence": "blind-spot"
+      }
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:automation",
+      "name": "Automation & Deploy",
+      "category": "automation",
+      "nodeIds": [
+        "edge_function:notify"
+      ]
+    },
+    {
+      "id": "layer:code",
+      "name": "Code",
+      "category": "code",
+      "nodeIds": [
+        "ts_module:src/lib/api.ts",
+        "ts_module:src/pages/Deals.tsx",
+        "ts_module:src/pages/Settings.tsx",
+        "ts_module:src/pages/Reports.tsx",
+        "ts_module:src/pages/Home.tsx",
+        "ts_module:src/pages/Login.tsx",
+        "ts_module:src/pages/About.tsx"
+      ]
+    },
+    {
+      "id": "layer:data",
+      "name": "Database",
+      "category": "data",
+      "nodeIds": [
+        "table:public.deals",
+        "table:public.profiles",
+        "view:public.v_deals",
+        "function:public.fn_score"
+      ]
+    },
+    {
+      "id": "layer:external",
+      "name": "External APIs",
+      "category": "external",
+      "nodeIds": [
+        "external_endpoint:external-api:api.stripe.com/v1/charges",
+        "external_endpoint:external-api:api.openai.com/v1/chat",
+        "external_endpoint:supabase-rest:unresolved-table",
+        "external_endpoint:blind-spot:dynamic-1",
+        "external_endpoint:blind-spot:dynamic-2"
+      ]
+    },
+    {
+      "id": "layer:workflow:workflow:repo:wf-sync",
+      "name": "wf-sync",
+      "category": "automation",
+      "nodeIds": [
+        "workflow:repo:wf-sync",
+        "workflow_node:wf-sync:http1"
+      ]
+    }
+  ],
+  "parent_map": {
+    "table:public.deals": [
+      "view:public.v_deals",
+      "function:public.fn_score"
+    ],
+    "workflow:repo:wf-sync": [
+      "workflow_node:wf-sync:http1"
+    ],
+    "ts_module:src/lib/api.ts": [
+      "ts_module:src/pages/Deals.tsx"
+    ]
+  },
+  "child_map": {
+    "view:public.v_deals": [
+      "table:public.deals"
+    ],
+    "function:public.fn_score": [
+      "table:public.deals"
+    ],
+    "workflow_node:wf-sync:http1": [
+      "workflow:repo:wf-sync"
+    ],
+    "ts_module:src/pages/Deals.tsx": [
+      "ts_module:src/lib/api.ts"
+    ]
+  }
+}

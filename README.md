@@ -214,8 +214,8 @@ ceremony.
 
 ## 5 · The full toolkit, grouped
 
-Around **99 skills**, **36 commands**, **26 specialist agents**, and **~60
-safety/efficiency hooks** (23 shell hooks + 40 hookify rules) ship in the box. You rarely call most of them by name —
+Around **110 skills**, **37 commands**, **26 specialist agents**, and **~60
+safety/efficiency hooks** (24 shell hooks + 40 hookify rules) ship in the box. You rarely call most of them by name —
 Claude reaches for the right one automatically. **Don't try to learn the list**
 — read 📄 `CATALOG.md` instead: it tiers everything into a small CORE you'll
 actually touch, a RECOMMENDED set for when a situation applies, and SPECIALIST
@@ -232,6 +232,16 @@ A "framing audit" checks you're answering the *right question* before you commit
 | `/diagnose-bottleneck` | Finds the one real constraint slowing a system down |
 | `/decide-under-uncertainty` | Structures an option-choice once the framing is sound |
 | `/audit-artefact-grounding` | Checks whether a skill/rule has quietly drifted from its purpose |
+
+### 🗺️ Your system, mapped — works on any stack
+A live map of your whole project, kept in a **single local file** (`.understand-anything/topology-graph.json`) — **no database required.** `/setup` builds the first pass from your code, config, and plans; if you also use a database or automations, those layers fill in too. As your project grows, a plan-time check quietly confirms each big build still fits what's really there.
+
+| Tool | What it does |
+|---|---|
+| `/topology` | A plain-English map of your system — code, config, intent, and (if present) database + automations |
+| `/topology reconcile` | Flags where what's actually been built has drifted from what you planned |
+| `topology-viewer/` | A clickable visual version of the map (a small local web app) |
+| Plan-time alignment check | Before any big build, a hook checks the plan against the real map — you type nothing |
 
 ### 🏛️ The Council — structured disagreement on demand
 | Tool | What it does |

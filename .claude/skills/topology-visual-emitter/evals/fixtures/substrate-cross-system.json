@@ -1,0 +1,69 @@
+{
+  "schema_version": "m3-v1",
+  "entity": "demo-xsystem",
+  "last_updated": "2026-06-06T10:00:00Z",
+  "emitters": {
+    "code":          {"last_emitted_at": "2026-06-06T09:00:00Z", "coverage": "covered"},
+    "supabase-live": {"last_emitted_at": "2026-06-06T09:00:00Z", "coverage": "covered"},
+    "n8n-cloud":     {"last_emitted_at": null, "coverage": "declared-missing"}
+  },
+  "missing_emitters": [
+    {"name": "external-api-graph", "reason": "M4+ — edge-function static analysis needed"},
+    {"name": "vercel-deploy-state", "reason": "M4+ — Vercel API integration"}
+  ],
+  "nodes": [
+    {"id": "table:public.deals", "kind": "table", "source_file": "supabase/migrations/0001_deals.sql", "source_commit": "aaa111", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": [], "depended_on_by": ["view:public.v_deals", "function:public.fn_score"], "attributes": {"columns": 12, "row_estimate": 5400}, "declared_intent_ref": null},
+    {"id": "table:public.profiles", "kind": "table", "source_file": "supabase/migrations/0002_profiles.sql", "source_commit": "aaa112", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": [], "depended_on_by": [], "attributes": {"columns": 6, "row_estimate": 1200}, "declared_intent_ref": null},
+    {"id": "view:public.v_deals", "kind": "view", "source_file": "supabase/migrations/0003_v_deals.sql", "source_commit": "aaa113", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": ["table:public.deals"], "depended_on_by": [], "attributes": {"is_materialized": false, "definition_hash": "d1"}, "declared_intent_ref": null},
+    {"id": "function:public.fn_score", "kind": "function", "source_file": "supabase/migrations/0004_fn_score.sql", "source_commit": "aaa114", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": ["table:public.deals"], "depended_on_by": [], "attributes": {"language": "plpgsql", "volatility": "stable"}, "declared_intent_ref": null},
+    {"id": "edge_function:notify", "kind": "edge_function", "source_file": "supabase/functions/notify/index.ts", "source_commit": "bbb221", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "manual", "manual_justification": "deploy state not yet introspected", "depends_on": [], "depended_on_by": [], "attributes": {"runtime": "deno", "deployed_commit": "bbb221"}, "declared_intent_ref": null},
+    {"id": "workflow:repo:wf-sync", "kind": "workflow", "source_file": "workflows/sync.json", "source_commit": "ccc331", "timestamp": "2026-06-06T09:00:00Z", "source_line": null, "emitter": "n8n_parser", "depends_on": [], "depended_on_by": ["workflow_node:wf-sync:http1"], "attributes": {"active": true, "trigger_type": "webhook", "n8n_id": "WF9sync"}, "declared_intent_ref": null},
+    {"id": "workflow_node:wf-sync:http1", "kind": "workflow_node", "source_file": "workflows/sync.json", "source_commit": "ccc331", "timestamp": "2026-06-06T09:00:00Z", "source_line": null, "emitter": "n8n_parser", "depends_on": ["workflow:repo:wf-sync"], "depended_on_by": [], "attributes": {"node_type": "n8n-nodes-base.httpRequest", "position": [220, 120]}, "declared_intent_ref": null},
+    {"id": "ts_module:src/lib/api.ts", "kind": "ts_module", "source_file": "src/lib/api.ts", "source_commit": "eee551", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": ["ts_module:src/pages/Deals.tsx"], "attributes": {"is_entry": false, "export_count": 4}, "declared_intent_ref": null},
+    {"id": "ts_module:src/pages/Deals.tsx", "kind": "ts_module", "source_file": "src/pages/Deals.tsx", "source_commit": "eee552", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": ["ts_module:src/lib/api.ts"], "depended_on_by": [], "attributes": {"is_entry": false, "export_count": 1}, "declared_intent_ref": null},
+    {"id": "ts_module:src/pages/Settings.tsx", "kind": "ts_module", "source_file": "src/pages/Settings.tsx", "source_commit": "eee553", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"is_entry": false, "export_count": 1}, "declared_intent_ref": null},
+    {"id": "ts_module:src/pages/Reports.tsx", "kind": "ts_module", "source_file": "src/pages/Reports.tsx", "source_commit": "eee554", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"is_entry": false, "export_count": 1}, "declared_intent_ref": null},
+    {"id": "ts_module:src/pages/Home.tsx", "kind": "ts_module", "source_file": "src/pages/Home.tsx", "source_commit": "eee555", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"is_entry": true, "export_count": 1}, "declared_intent_ref": null},
+    {"id": "ts_module:src/pages/Login.tsx", "kind": "ts_module", "source_file": "src/pages/Login.tsx", "source_commit": "eee556", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"is_entry": false, "export_count": 1}, "declared_intent_ref": null},
+    {"id": "ts_module:src/pages/About.tsx", "kind": "ts_module", "source_file": "src/pages/About.tsx", "source_commit": "eee557", "timestamp": "2026-06-06T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"is_entry": false, "export_count": 1}, "declared_intent_ref": null},
+    {"id": "external_endpoint:external-api:api.stripe.com/v1/charges", "kind": "external_endpoint", "source_file": "workflows/sync.json", "source_commit": "ccc331", "timestamp": "2026-06-06T09:00:00Z", "source_line": null, "emitter": "external_api_parser", "depends_on": [], "depended_on_by": [], "attributes": {"url_host": "api.stripe.com", "url_path_template": "/v1/charges", "method": "POST", "classification": "external-api"}, "declared_intent_ref": null},
+    {"id": "external_endpoint:external-api:api.openai.com/v1/chat", "kind": "external_endpoint", "source_file": "src/lib/ai.ts", "source_commit": "eee560", "timestamp": "2026-06-06T09:00:00Z", "source_line": null, "emitter": "external_api_parser", "depends_on": [], "depended_on_by": [], "attributes": {"url_host": "api.openai.com", "url_path_template": "/v1/chat", "method": "POST", "classification": "external-api"}, "declared_intent_ref": null},
+    {"id": "external_endpoint:supabase-rest:unresolved-table", "kind": "external_endpoint", "source_file": "workflows/sync.json", "source_commit": "ccc331", "timestamp": "2026-06-06T09:00:00Z", "source_line": null, "emitter": "external_api_parser", "depends_on": [], "depended_on_by": [], "attributes": {"url_host": "demo.supabase.co", "url_path_template": "/rest/v1/{table}", "method": "GET", "classification": "supabase-rest"}, "declared_intent_ref": null},
+    {"id": "external_endpoint:blind-spot:dynamic-1", "kind": "external_endpoint", "source_file": "src/pages/Settings.tsx", "source_commit": "eee553", "timestamp": "2026-06-06T09:00:00Z", "source_line": 42, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"url_host": null, "url_path_template": null, "method": null, "classification": "blind-spot"}, "declared_intent_ref": null},
+    {"id": "external_endpoint:blind-spot:dynamic-2", "kind": "external_endpoint", "source_file": "src/pages/Deals.tsx", "source_commit": "eee552", "timestamp": "2026-06-06T09:00:00Z", "source_line": 88, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"url_host": null, "url_path_template": null, "method": null, "classification": "blind-spot"}, "declared_intent_ref": null}
+  ],
+  "edges": [
+    {"source": "view:public.v_deals", "target": "table:public.deals", "type": "depends_on", "direction": "forward", "weight": 1, "attributes": null},
+    {"source": "function:public.fn_score", "target": "table:public.deals", "type": "depends_on", "direction": "forward", "weight": 1, "attributes": null},
+    {"source": "workflow_node:wf-sync:http1", "target": "workflow:repo:wf-sync", "type": "contains", "direction": "forward", "weight": 1, "attributes": null},
+    {"source": "ts_module:src/pages/Deals.tsx", "target": "ts_module:src/lib/api.ts", "type": "imports", "direction": "forward", "weight": 1, "attributes": null},
+
+    {"source": "ts_module:src/pages/Deals.tsx", "target": "table:public.deals", "type": "reads_from", "direction": "forward", "weight": 1, "attributes": {"derivation": "supabase.from('deals').select()", "confidence": "declared-medium"}},
+    {"source": "ts_module:src/pages/Deals.tsx", "target": "table:public.deals", "type": "writes_to", "direction": "forward", "weight": 1, "attributes": {"derivation": "supabase.from('deals').insert()", "confidence": "declared-medium"}},
+    {"source": "ts_module:src/pages/Deals.tsx", "target": "edge_function:notify", "type": "invokes", "direction": "forward", "weight": 1, "attributes": {"derivation": "supabase.functions.invoke('notify')", "confidence": "declared-high"}},
+    {"source": "ts_module:src/pages/Deals.tsx", "target": "external_endpoint:blind-spot:dynamic-2", "type": "reads_from", "direction": "forward", "weight": 1, "attributes": {"derivation": "supabase.from(tableVar) — runtime-constructed", "confidence": "blind-spot"}},
+    {"source": "ts_module:src/pages/Settings.tsx", "target": "external_endpoint:blind-spot:dynamic-1", "type": "reads_from", "direction": "forward", "weight": 1, "attributes": {"derivation": "fetch(`${base}/${path}`) — runtime URL", "confidence": "blind-spot"}},
+    {"source": "workflow_node:wf-sync:http1", "target": "external_endpoint:external-api:api.stripe.com/v1/charges", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "HTTP node url=https://api.stripe.com/v1/charges", "confidence": "declared-high"}},
+    {"source": "workflow_node:wf-sync:http1", "target": "external_endpoint:supabase-rest:unresolved-table", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "HTTP node REST url with {table} expression", "confidence": "declared-medium"}},
+    {"source": "ts_module:src/pages/Deals.tsx", "target": "table:public.profiles", "type": "subscribes_to", "direction": "forward", "weight": 1, "attributes": {"derivation": "supabase.channel('profiles')", "confidence": "declared-medium"}},
+    {"source": "external_endpoint:external-api:api.stripe.com/v1/charges", "target": "external_endpoint:external-api:api.openai.com/v1/chat", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "chained external call", "confidence": "declared-high"}},
+    {"source": "ts_module:src/pages/Reports.tsx", "target": "table:public.deals", "type": "reads_from", "direction": "forward", "weight": 1, "attributes": null},
+    {"source": "ts_module:src/pages/Home.tsx", "target": "external_endpoint:external-api:api.openai.com/v1/chat", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "fetch('https://api.openai.com/v1/chat')", "confidence": "declared-high"}},
+    {"source": "ts_module:src/pages/Login.tsx", "target": "external_endpoint:external-api:api.openai.com/v1/chat", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "fetch('https://api.openai.com/v1/chat')", "confidence": "declared-high"}},
+    {"source": "ts_module:src/pages/About.tsx", "target": "external_endpoint:external-api:api.openai.com/v1/chat", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "fetch('https://api.openai.com/v1/chat')", "confidence": "declared-high"}},
+
+    {"source": "external_endpoint:external-api:api.openai.com/v1/chat", "target": "external_endpoint:supabase-rest:unresolved-table", "type": "calls", "direction": "forward", "weight": 1, "attributes": null},
+    {"source": "ts_module:src/pages/Home.tsx", "target": "external_endpoint:external-api:api.openai.com/v1/chat", "type": "calls", "direction": "forward", "weight": 1, "attributes": {"derivation": "fetch(`${runtimeBase}/chat`) — runtime base", "confidence": "blind-spot"}}
+  ],
+  "parent_map": {
+    "table:public.deals": ["view:public.v_deals", "function:public.fn_score"],
+    "workflow:repo:wf-sync": ["workflow_node:wf-sync:http1"],
+    "ts_module:src/lib/api.ts": ["ts_module:src/pages/Deals.tsx"]
+  },
+  "child_map": {
+    "view:public.v_deals": ["table:public.deals"],
+    "function:public.fn_score": ["table:public.deals"],
+    "workflow_node:wf-sync:http1": ["workflow:repo:wf-sync"],
+    "ts_module:src/pages/Deals.tsx": ["ts_module:src/lib/api.ts"]
+  }
+}

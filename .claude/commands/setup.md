@@ -436,6 +436,11 @@ wildcard allow patterns for read-only operations. Common patterns:
         "hooks": [{ "type": "command", "command": "bash .claude/hooks/sql-guardian.sh" }]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/system-awareness-activation.sh", "timeout": 10 }]
+      }
+    ],
     "Stop": [
       {
         "matcher": "*",
@@ -472,7 +477,8 @@ chmod +x .claude/hooks/sql-guardian.sh \
          .claude/hooks/session-summarizer.sh \
          .claude/hooks/session-end-continuation-gate.sh \
          .claude/hooks/vault-capture.sh \
-         .claude/hooks/auto-sync-artifacts.sh
+         .claude/hooks/auto-sync-artifacts.sh \
+         .claude/hooks/system-awareness-activation.sh
 ```
 
 Note: `.claude/settings.local.json` is gitignored — it stays on your machine only.
@@ -859,11 +865,47 @@ You can now run competitive analysis at any time:
 
 ---
 
+**7.8.9 Build the first system map (topology) + turn on the alignment check.** Now that
+ROADMAP.md + DESTINATION.md exist, initialise the local system map and build its first pass from
+whatever is already in the repo. The map is a single gitignored JSON file
+(`.understand-anything/topology-graph.json`) — **no database required; it works on any stack.**
+
+```bash
+# Create the local map substrate (idempotent).
+bash .claude/skills/topology-substrate/scripts/substrate.sh init "$(basename "$PWD")"
+```
+
+Then build the first map from the repo using the **stack-agnostic** emitters (pure in-repo file
+reads — they work whether or not you use a database or automation platform):
+- **code layer** — run the `code-emitter` skill (maps your code's modules + dependencies)
+- **config layer** — run the `repo-config-emitter` skill (maps `package.json` / `vercel.json` / any in-repo workflow JSON)
+- **intent layer** — run the `intent-capture-emitter` skill (maps ROADMAP / DESTINATION / ADRs)
+
+(If the project ALSO uses Supabase or n8n, the `supabase-live-emitter` / `n8n-cloud-emitter` skills
+add those layers too — they simply stay dormant if you don't have those tools.)
+
+Finally, run the first alignment read so the operator sees the honest picture:
+
+```bash
+bash .claude/skills/system-awareness-gate/scripts/topology-align.sh
+```
+
+A brand-new repo with little code yet returns an honest "map is thin / from-scratch" surface — that
+is correct, not a failure; the map fills in as the project grows. From here on, the
+`system-awareness-activation.sh` hook (registered at Step 7.6.1) quietly checks any big plan against
+the real map — you type nothing. Doctrine: `.claude/rules/system-awareness-mandate.md`.
+
+---
+
 ### Step 8: Generate Outputs
 
 Based on collected answers:
 
-1. **WRITE** `CLAUDE.md` from template with all answers populated
+1. **WRITE** `CLAUDE.md` from template with all answers populated — and **PRUNE any
+   stack-specific sections the project doesn't use** (e.g. delete the n8n "Key Workflows"
+   section if there's no workflow-automation tool; generalise or drop the database
+   conventions if there's no database, or a non-Supabase one). A user on ANY stack — or
+   none — must end up with a CLAUDE.md that describes only the tools they actually use.
 2. **WRITE** `specs/00_VISION.md` with strategy
 3. **WRITE** `specs/01_DOMAIN_MODEL.md` with entities
 4. **WRITE** `docs/00_ARCHITECTURE.md` with system design
@@ -1017,6 +1059,7 @@ fi
 test -f .claude/settings.local.json && ok "settings.local.json present" || no "settings.local.json" "re-run Step 7.6 (hooks block at minimum)"
 grep -q session-summarizer .claude/settings.local.json 2>/dev/null && ok "Stop hooks registered" || no "Stop hooks registered" "re-run Step 7.6"
 grep -q session-end-continuation-gate .claude/settings.local.json 2>/dev/null && ok "Continuation gate registered" || no "Continuation gate registered" "re-run Step 7.6"
+grep -q system-awareness-activation .claude/settings.local.json 2>/dev/null && ok "System-awareness (topology) hook registered" || no "System-awareness hook registered" "re-run Step 7.6"
 { test -d .claude/sessions && test -d .claude/daily-plans; } && ok "session dirs present" || no "session dirs" "mkdir -p .claude/sessions .claude/daily-plans"
 
 echo "----"

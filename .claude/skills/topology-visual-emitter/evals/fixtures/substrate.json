@@ -1,0 +1,41 @@
+{
+  "schema_version": "m3-v1",
+  "entity": "demo",
+  "last_updated": "2026-06-03T10:00:00Z",
+  "emitters": {
+    "code":          {"last_emitted_at": "2026-06-03T09:00:00Z", "coverage": "covered"},
+    "supabase-live": {"last_emitted_at": "2026-06-03T09:00:00Z", "coverage": "covered"},
+    "n8n-cloud":     {"last_emitted_at": null, "coverage": "declared-missing"}
+  },
+  "missing_emitters": [
+    {"name": "vercel-deploy-state", "reason": "M4+ — Vercel API integration"}
+  ],
+  "nodes": [
+    {"id": "table:public.deals", "kind": "table", "source_file": "supabase/migrations/0001_deals.sql", "source_commit": "aaa111", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": [], "depended_on_by": ["view:public.v_deals", "function:public.fn_score", "rls_policy:deals_owner"], "attributes": {"columns": 12, "row_estimate": 5400}, "declared_intent_ref": null},
+    {"id": "view:public.v_deals", "kind": "view", "source_file": "supabase/migrations/0002_v_deals.sql", "source_commit": "aaa112", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": ["table:public.deals"], "depended_on_by": [], "attributes": {"is_materialized": false, "definition_hash": "d1"}, "declared_intent_ref": null},
+    {"id": "function:public.fn_score", "kind": "function", "source_file": "supabase/migrations/0003_fn_score.sql", "source_commit": "aaa113", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": ["table:public.deals"], "depended_on_by": [], "attributes": {"language": "plpgsql", "volatility": "stable"}, "declared_intent_ref": null},
+    {"id": "function:public.fn_old", "kind": "function", "source_file": "supabase/migrations/0004_fn_old.sql", "source_commit": "aaa114", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": [], "depended_on_by": [], "attributes": {"language": "sql", "volatility": "immutable"}, "declared_intent_ref": null},
+    {"id": "rls_policy:deals_owner", "kind": "rls_policy", "source_file": "supabase/migrations/0005_rls.sql", "source_commit": "aaa115", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "pg_depend", "depends_on": ["table:public.deals"], "depended_on_by": [], "attributes": {"enabled": true, "command": "SELECT", "role": "authenticated"}, "declared_intent_ref": null},
+    {"id": "edge_function:notify", "kind": "edge_function", "source_file": "supabase/functions/notify/index.ts", "source_commit": "bbb221", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "manual", "manual_justification": "deploy state not yet introspected (vercel-deploy-state emitter pending)", "depends_on": [], "depended_on_by": [], "attributes": {"runtime": "deno", "deployed_commit": "unknown"}, "declared_intent_ref": null},
+    {"id": "workflow:repo:wf-gmail", "kind": "workflow", "source_file": "workflows/gmail-comps.json", "source_commit": "ccc331+dirty", "timestamp": "2026-06-03T09:00:00Z", "source_line": null, "emitter": "n8n_parser", "depends_on": [], "depended_on_by": ["workflow_node:wf-gmail:node1"], "attributes": {"active": true, "trigger_type": "webhook", "n8n_id": "Gz8EKN9CWxIDcGXcoCmYq"}, "declared_intent_ref": null},
+    {"id": "workflow_node:wf-gmail:node1", "kind": "workflow_node", "source_file": "workflows/gmail-comps.json", "source_commit": "ccc331+dirty", "timestamp": "2026-06-03T09:00:00Z", "source_line": null, "emitter": "n8n_parser", "depends_on": ["workflow:repo:wf-gmail"], "depended_on_by": [], "attributes": {"node_type": "n8n-nodes-base.set", "position": [200, 100]}, "declared_intent_ref": null},
+    {"id": "config:vercel.json", "kind": "config", "source_file": "vercel.json", "source_commit": "ddd441", "timestamp": "2026-06-03T09:00:00Z", "source_line": null, "emitter": "manual", "manual_justification": "declared config file; no machine emitter derives edges from it in v1", "depends_on": [], "depended_on_by": [], "attributes": {"config_type": "vercel", "header_count": 2, "rewrite_count": 1, "redirect_count": 0}, "declared_intent_ref": null},
+    {"id": "ts_module:src/score.ts", "kind": "ts_module", "source_file": "src/score.ts", "source_commit": "eee551", "timestamp": "2026-06-03T09:00:00Z", "source_line": 1, "emitter": "dependency_cruiser", "depends_on": [], "depended_on_by": [], "attributes": {"is_entry": false, "export_count": 3}, "declared_intent_ref": null}
+  ],
+  "edges": [
+    {"source": "view:public.v_deals", "target": "table:public.deals", "type": "depends_on", "direction": "forward", "weight": 1},
+    {"source": "function:public.fn_score", "target": "table:public.deals", "type": "depends_on", "direction": "forward", "weight": 1},
+    {"source": "rls_policy:deals_owner", "target": "table:public.deals", "type": "depends_on", "direction": "forward", "weight": 1},
+    {"source": "workflow_node:wf-gmail:node1", "target": "workflow:repo:wf-gmail", "type": "contains", "direction": "forward", "weight": 1}
+  ],
+  "parent_map": {
+    "table:public.deals": ["view:public.v_deals", "function:public.fn_score", "rls_policy:deals_owner"],
+    "workflow:repo:wf-gmail": ["workflow_node:wf-gmail:node1"]
+  },
+  "child_map": {
+    "view:public.v_deals": ["table:public.deals"],
+    "function:public.fn_score": ["table:public.deals"],
+    "rls_policy:deals_owner": ["table:public.deals"],
+    "workflow_node:wf-gmail:node1": ["workflow:repo:wf-gmail"]
+  }
+}

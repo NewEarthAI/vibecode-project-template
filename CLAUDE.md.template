@@ -97,6 +97,8 @@ SELECT * FROM {{table}} WHERE {{field}} = '{{value}}';
 
 ## Key Workflows
 
+> _Only if you use a workflow-automation tool (n8n, Make, Zapier, …). If you don't, delete this whole section._
+
 | Workflow | ID | Trigger | Purpose |
 |----------|-----|---------|---------|----
 | {{Name_1}} | `{{ID}}` | {{Webhook/Cron}} | {{What it does}} |
@@ -139,7 +141,7 @@ n8n_executions(action="list", workflowId="{{ID}}", limit=5)
 - {{Linter}}: {{config}}
 - {{Formatter}}: {{config}}
 - Always include error handling
-- Always enable RLS on Supabase tables
+- If you use a database, secure it properly (e.g. enable Row-Level Security on Supabase/Postgres tables)
 
 ---
 
@@ -185,9 +187,9 @@ n8n_executions(action="list", workflowId="{{ID}}", limit=5)
 
 ---
 
-## Hookify Architecture (13 Rules — Auto-Loaded)
+## Hookify Architecture (Auto-Loaded)
 
-Token efficiency and safety are enforced by hooks, not manual skills. Patterns auto-inject when relevant tools are called.
+Token efficiency and safety are enforced by hooks, not manual skills. Patterns auto-inject when relevant tools are called. **Stack-specific rules (e.g. the Supabase and n8n ones below) only fire if you actually use those tools — they cost nothing otherwise, and you can delete their rows if you never will.**
 
 ### SessionStart (1 hook)
 | Hook | Purpose |

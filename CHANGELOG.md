@@ -12,20 +12,21 @@ builder rather than a maximal pile of tools. Nothing you rely on day-to-day
 changed; a layer of internal-workflow governance and heavyweight infrastructure
 that needed setup most people won't have was removed so the box stays clear.
 
-**BREAKING** — none for a normal project. If you had wired the (advanced,
-infra-heavy) system-map tools, see the note below.
+**BREAKING** — none.
 
-**REMOVED (curated out — needed infrastructure most projects don't have, or were
-internal governance rather than tools)**
-- The **system-map / topology** subsystem (`/topology`, its emitters, the viewer
-  app) — it needed a database substrate to be useful and read as an empty page
-  without one. Use `/understand` for a code map instead.
-- A layer of **multi-session governance rules** and every-session "mandate"
+**REMOVED (curated out — internal governance, not tools you'd use)**
+- A layer of **multi-session governance rules** and some every-session "mandate"
   banners that suited a large internal team's workflow more than a solo builder.
   The underlying *thinking tools* (first-principles, commensurability,
   feedback-loops, council) all stay — they're just offered, not forced.
 
 **NEW / IMPROVED**
+- **System map that works on any stack.** The `/topology` map + its plan-time
+  alignment check now store to a single local file — **no database needed** — so
+  they work whether you use Supabase, some other database, or none at all.
+  `/setup` builds the first pass automatically; the database/automation map layers
+  fill in only if you use those tools. Also fixed a latent crash in the alignment
+  hook (it broke on a fresh repo with no ROADMAP yet).
 - **Second brain that actually works end-to-end.** A standalone `knowledge_items`
   migration now ships, so the Obsidian → Supabase sync has a table to write to in
   **your** project. Full recipe in 📄 `docs/OBSIDIAN-SETUP.md`. Layer 1 (local
