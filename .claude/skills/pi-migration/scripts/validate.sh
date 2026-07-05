@@ -52,7 +52,7 @@ check "Has parameters" "grep -q 'parameters:' \"$SKILL_FILE\""
 # Parameterization checks
 echo ""
 echo "--- Parameterization ---"
-check "No hardcoded home paths" "! grep -q '/Users/NewEarthAI' \"$SKILL_FILE\""
+check "No hardcoded home paths" "! grep -qE '/Users/[A-Za-z0-9._-]+/' \"$SKILL_FILE\""
 check "Uses {{parameter}} syntax" "grep -q '{{' \"$SKILL_FILE\""
 check "Has anti-patterns section" "grep -q 'Anti-Pattern' \"$SKILL_FILE\""
 

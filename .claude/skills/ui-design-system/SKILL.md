@@ -1,26 +1,26 @@
 ---
 name: ui-design-system
 description: |
-  the agency's house UI/UX design system for React/Vite/Tailwind dashboards and web apps.
+  Your project's house UI/UX design system for React/Vite/Tailwind dashboards and web apps.
   Use this skill when: building any user-facing interface, creating new components, reviewing
   existing UI for quality, adding cards/drawers/KPI displays/badges/buttons, theming a client
   project, auditing a codebase for design consistency, or when the user says "build the UI",
   "design this page", "make this look premium", "review the design", "audit the UI", or
-  "does this look vibe-coded". Enforces the the agency signature: monochrome-first palette with
+  "does this look vibe-coded". Enforces the house signature: monochrome-first palette with
   strict semantic color discipline, warm off-white neutrals paired with cool silver metallic
   accents, DM Sans + JetBrains Mono typography, 300ms card hover curve with translate-y lift,
   rounded-xl maximum radius, hairline borders, two-layer shadows. Rejects AI-era cliches:
   rounded-2xl chunkiness, glassmorphism backdrop-blur, pastel status pills, decorative emoji,
   purple-on-white gradients, one-card-one-color decoration. Composes with frontend-design
   plugin for bold aesthetic direction and guided-tour skill for onboarding consistency.
-version: 1.5
+version: 1.6
 classification: encoded-preference
 user-invocable: true
-note: Human entry point for BUILDING in the the agency house style. Composes the L1/L2/L3 stack under the hood. Sibling entry point is /design-review (audit).
+note: Human entry point for BUILDING in the house style. Composes the L1/L2/L3 stack under the hood. Sibling entry point is /design-review (audit).
 created: 2026-04-10
-updated: 2026-04-26
+updated: 2026-06-24
 validated_on:
-  - Reverse-engineered from a logistics app fleet dashboard (React/Vite/Tailwind/shadcn-ui)
+  - Reverse-engineered from Nirvana fleet dashboard (React/Vite/Tailwind/shadcn-ui)
   - Hover curve + color discipline verified across 20+ components
   - Extended council unanimous approval 2026-04-10 (all 5 agents → Option C)
   - Progressive disclosure 4-level depth pattern captured 2026-04-10 (validated against Stripe, Linear, Vercel)
@@ -29,7 +29,7 @@ triggers:
   - "review the design" / "audit my UI" / "does this look vibe-coded"
   - "set up dark mode" / "theme setup" / "add dark mode toggle" / "dark mode toggle"
   - "build a card" / "build a KPI card" / "build a drawer" / "build a badge"
-  - "apply the agency aesthetic" / "use house style" / "the agency design"
+  - "apply the house aesthetic" / "use house style" / "house design"
   - "refine semantic colors" / "adjust silver signature" / "silver hover"
   - "silver button" / "silvery button" / "brushed silver CTA" / "premium primary action"
   - "silver edge button" / "shimmery silver border button" / "silver ring button" / "gradient border button" / "metallic edge CTA"
@@ -42,7 +42,7 @@ triggers:
   - "header scrolls away" / "lose orientation on scroll" / "can't find back" / "fixed top bar"
   - "migrate page to PageShell" / "unified page scaffold"
 do-not-trigger:
-  - "build a generic Tailwind component without the agency context" → use tailwind-shadcn-system
+  - "build a generic Tailwind component without house-style context" → use tailwind-shadcn-system
   - "extract brand colors from an existing client website via Playwright" → use brand-visual-identity
   - "general UI review with priority-weighted accessibility rules (contrast ratios, touch targets, CLS)" → use design-review
   - "holistic website audit (SEO, legal, security, E-E-A-T)" → use audit-website
@@ -82,15 +82,15 @@ allowed-tools:
   - Bash
 ---
 
-# the agency UI/UX Design Skill
+# House UI/UX Design Skill
 
 > **Philosophy**: Pre-AI-era craftsmanship. Premium by restraint. Color only where practically valuable. The user should feel they're using something built by a senior developer in 2019, not something vibe-coded in 2025.
 
 ## Mandatory Layer Contract — READ BEFORE GENERATING ANY OUTPUT
 
-This skill is the **L3 house-tokens layer** of the the agency Design Suite v2 three-layer stack. It does NOT generate output in isolation. Before producing any code, mockup, audit, or recommendation, you MUST read the upstream contract files IN FULL:
+This skill is the **L3 house-tokens layer** of the Design Suite v2 three-layer stack. It does NOT generate output in isolation. Before producing any code, mockup, audit, or recommendation, you MUST read the upstream contract files IN FULL:
 
-1. **`PRODUCT.md`** at the repo root — the the agency identity contract (register, brand tokens, audience, tone).
+1. **`PRODUCT.md`** at the repo root — your project's identity contract (register, brand tokens, audience, tone).
 2. **`DESIGN.md`** at the repo root — the visual system contract (colour palette, typography defaults + escalation paths, elevation, motion, variance ceilings per surface type).
 3. **`.claude/skills/design-taste-frontend/SKILL.md`** — the **L2 anti-slop overlay** (DESIGN_VARIANCE / MOTION_INTENSITY / VISUAL_DENSITY dial baselines, ban-list of LLM defaults).
 
@@ -103,7 +103,7 @@ ERROR (ui-design-system): L1/L2 contract files missing.
 Expected at repo root: PRODUCT.md, DESIGN.md
 Expected skill:        .claude/skills/design-taste-frontend/SKILL.md
 
-Phase 3 of the the agency Design Suite v2 build has not completed.
+Phase 3 of the Design Suite v2 build has not completed.
 Refusing to generate output until all three contract files exist.
 
 Reference: continuations/NEWEARTH-DESIGN-SUITE-V2-MASTER-CONTINUATION-2026-05-13.md §15 amendment A1.
@@ -132,9 +132,10 @@ Activate when any of the following is happening:
 | **Hairline borders** | 1px `#EAEAEA` or silver gradient. Never chunky. Never glowing. |
 | **Precision radius scale** | Cap at `rounded-xl` (12px). `rounded-full` allowed for pills/avatars only. `rounded-2xl` and above are banned. |
 | **Two-layer shadows (light) / inset highlights (dark)** | Depth through restraint, not blur or glow. |
-| **300ms hover curve** | `transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5` is the signature. Never deviate. |
+| **300ms hover curve** | The signature card hover: 300ms lift + shadow + silver ring. Animate explicit GPU props (`transform`, `box-shadow`, `outline-color`) — never `transition: all`. |
+| **Motion is earned** | Like colour. Motion only when it communicates state change, guides attention, or gives feedback. Default to none; one purposeful move, never a chorus. Tokenised vocabulary + whitelist in [references/motion-approved-recipes.md](references/motion-approved-recipes.md). |
 | **Data typography** | JetBrains Mono for anything numeric. DM Sans for everything else. Tabular-nums on KPIs. |
-| **Silver as signature** | the agency fingerprint — hairline metallic borders on premium cards + universal silver hover ring. |
+| **Silver as signature** | The house fingerprint — hairline metallic borders on premium cards + universal silver hover ring. |
 | **Dark mode is required** | Every project ships with both light and dark modes from day one. No exceptions. Dark uses warm ink (`#0D0D0E`), brighter silver, inset highlights instead of drop shadows. See [references/dark-mode.md](references/dark-mode.md). |
 
 ## Theme Variants
@@ -187,7 +188,7 @@ This skill **composes with**, never duplicates, two others:
 1. Collect from user: primary_color, primary_color_foreground, brand logo
 2. Copy assets/tokens.css into project's src/styles/ or src/index.css
 3. Replace {{primary_color}} and {{primary_color_foreground}} with client values
-4. Do NOT change neutrals, semantic colors, or silver values — those are the agency house
+4. Do NOT change neutrals, semantic colors, or silver values — those are house
 5. Install DM Sans + JetBrains Mono via Google Fonts or fontsource
 6. Run audit scripts to verify baseline compliance
 ```
@@ -199,13 +200,16 @@ This skill **composes with**, never duplicates, two others:
 | [references/design-tokens.md](references/design-tokens.md) | Before writing any component — frozen values for colors, spacing, shadows, curves, type |
 | [references/component-recipes.md](references/component-recipes.md) | When building Card, Drawer, Badge, Button, KPI, Table patterns |
 | [references/color-discipline.md](references/color-discipline.md) | When tempted to add color — checks the semantic justification |
-| [references/silver-signature.md](references/silver-signature.md) | When applying the the agency metallic accent system |
+| [references/silver-signature.md](references/silver-signature.md) | When applying the house metallic accent system |
 | [references/dark-mode.md](references/dark-mode.md) | When building dark mode surfaces or setting up the theme toggle — required for every project |
 | [references/atelier-dark-preset.md](references/atelier-dark-preset.md) | When the project warrants the editorial preset (agency, proposals, hero pages) — opt-in only |
 | [references/anti-vibe-coded.md](references/anti-vibe-coded.md) | During review — the NEVER list with concrete counter-examples |
 | [references/progressive-disclosure.md](references/progressive-disclosure.md) | When designing data-dense drawers, drill-down flows, or evidence-reveal patterns |
 | [references/page-shell.md](references/page-shell.md) | When building or migrating any page scaffold — unified back button, sticky collapsing app bar, always-visible primary actions. Replaces ad-hoc "Back to X" buttons and scroll-away headers. |
 | [references/composition-map.md](references/composition-map.md) | When integrating with guided-tour, frontend-design plugin, or shadcn-ui base |
+| [references/motion-approved-recipes.md](references/motion-approved-recipes.md) | When adding ANY motion — the earned-gate + the whitelist of approved recipes (cross-links landing-page-mvp for cinematic scroll pages) |
+| [references/restraint-preflight.md](references/restraint-preflight.md) | Before shipping a page/surface — mechanically-counted restraint checks + required-state matrix + anti-AI-tell copy checks |
+| [references/exemplars.md](references/exemplars.md) | When unsure if a surface is right — right vs too-much vs too-little for each rule |
 
 ## Scripts (Automated Enforcement)
 
@@ -214,6 +218,7 @@ This skill **composes with**, never duplicates, two others:
 | [scripts/audit-forbidden-patterns.sh](scripts/audit-forbidden-patterns.sh) | Fails on `rounded-2xl+`, `backdrop-blur`, emoji, `bg-white/X`, `Inter`/`Roboto` in type stack | Any project root |
 | [scripts/audit-colors.sh](scripts/audit-colors.sh) | Flags unsemantic color usage — every `bg-red-*` / `text-green-*` etc. must be near a state keyword | Any project root |
 | [scripts/audit-hover-consistency.sh](scripts/audit-hover-consistency.sh) | Verifies Card components use the signature hover curve, not bespoke variants | Any project root |
+| [scripts/audit-restraint.sh](scripts/audit-restraint.sh) | WARN-tier: em-dash in UI copy, Space Grotesk, fake-precise numbers, marquee count, layout-prop transitions, motion-without-reduced-motion. `--self-test` proves the byte-safe checks fire. | Any project root (advisory, exit 0) |
 
 ## Assets (Drop-in Starters)
 
@@ -227,14 +232,15 @@ This skill **composes with**, never duplicates, two others:
 | [assets/component-templates/Button.tsx](assets/component-templates/Button.tsx) | Default brand-color button + three opt-in silver tiers: `variant="silver"` (Mode E — brushed fill, max 1/viewport), `variant="silverEdge"` (Mode G — 1px gradient ring on neutral fill, max 2/viewport, the static answer to "shimmery silver button"), `variant="silverOutline"` (solid silver line companion). All reserved for premium contexts (proposals, landing heroes, report covers, brand-anchor surfaces). See [references/silver-signature.md](references/silver-signature.md) Modes E, F, G. |
 | [assets/component-templates/PageHeader.tsx](assets/component-templates/PageHeader.tsx) | Page-level header with eyebrow + title + subtitle + actions. Opt-in `variant="silver"` adds a 2px brushed silver bottom-edge stripe; opt-in `silverTitle` renders the title with a silver text gradient. Reserved for the project's brand-anchor page. See Mode F. |
 
-## The Six Hard Rules (Cannot Be Overridden)
+## The Seven Hard Rules (Cannot Be Overridden)
 
 1. **No `rounded-2xl` or `rounded-3xl`** — anywhere, ever. Cap at `rounded-xl` (12px). Atelier Dark preset uses `2px` — tighter, never looser.
 2. **No `backdrop-blur-*` on content surfaces** — kills glassmorphism at the root. Only allowed on guided-tour's overlay (owned by that skill).
 3. **No emoji in technical docs, commit messages, UI copy, or component children.** Icons from lucide-react only, one-per-context, never decorative.
 4. **No unsemantic color** — any `bg-red-*`, `bg-green-*`, `bg-amber-*`, `bg-blue-*` on a Card or container must map to a documented state (severity / confidence / variance / compliance). Audit script enforces.
-5. **No `Inter` / `Roboto` / `Arial` / `system-ui` as primary typeface** — DM Sans is the the agency default. Client-specific overrides must be a licensed premium typeface, never a system font. Atelier Dark preset uses PP Editorial New + Söhne + Berkeley Mono (or their free equivalents).
+5. **No `Inter` / `Roboto` / `Arial` / `system-ui` as primary typeface** — DM Sans is the house default. Client-specific overrides must be a licensed premium typeface, never a system font. Atelier Dark preset uses PP Editorial New + Söhne + Berkeley Mono (or their free equivalents).
 6. **Dark mode ships with every project** — no project launches without both modes tested and working. Never `#000` for background, never `#FFF` for text. Use `#0D0D0E` and `#FAFAFA` respectively.
+7. **Motion is earned + reduced-motion is mandatory** — every animation (a) clears the earned-gate (state change / attention / feedback), (b) animates `transform`/`opacity` ONLY (never layout props, never `transition: all`), (c) ships a `prefers-reduced-motion: reduce` branch, and (d) carries a `/* motion-earned: <reason> */` comment. Recipes not on the [motion whitelist](references/motion-approved-recipes.md) are rejected by default. Overshoot/elastic/bounce/infinite motion is banned (one `back.out(1.4)` signature moment is the only exception).
 
 ## Anti-Patterns (Summary — see anti-vibe-coded.md for full list)
 
@@ -278,4 +284,14 @@ This skill **composes with**, never duplicates, two others:
 
 ---
 
-*Skill version 1.0 — the agency house design system. Push to template via `/template-push` when validated.*
+## Rejected Aesthetics — Do NOT Absorb (locked appendix)
+
+These design directions are mined-and-rejected. They contradict the restraint house; future sessions must not re-absorb their *look* (their *technique* may transfer only where it serves restraint — e.g. a hairline-grid borrowed from brutalism). Recorded so this is never re-litigated (council 2026-06-24).
+
+**Rejected**: glassmorphism / `backdrop-blur`, claymorphism, neumorphism, gradient / cosmic / aurora mesh, colorful / vibrant / energetic multi-hue, doodle / sketch, brutalism look (CRT scanlines, halftone, hazard-red, 90°-only, uppercase-everything, glow), fantasy / retro / game themes, skeuomorphism, Material-3 dynamic-seed multi-hue palettes, M3 "expressive" bouncy/morphing motion + 28–48px radii, sparkles / confetti / celebration motion, custom cursors, maximalist-chaos, elastic/bounce/overshoot as a default, infinite loops / decorative marquees, and "premium/luxury/sleek" relabelled-default scaffolds (generic blue + Inter body — premium in name only).
+
+The discipline: **absorb craft, structure, and modern standards; reject aesthetic direction that fights the house.**
+
+---
+
+*Skill version 1.6 — House design system. Motion vocabulary + restraint pre-flight + 3 anti-AI-tell rules + token-tier model added 2026-06-24 (7-agent council). Push to template via `/template-push` when validated.*

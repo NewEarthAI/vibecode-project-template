@@ -119,6 +119,7 @@ _try_acquire_fresh() {
         branch: $branch,
         artifacts: {
           plan_path: null,
+          council_path: null,
           pr_number: null,
           merged_sha: null,
           rollback_cmd: null

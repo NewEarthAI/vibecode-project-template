@@ -5,5 +5,8 @@
   {"input": "fix design issues on this page", "should_trigger": true, "expected_behavior": "Review + fix + verify loop"},
   {"input": "build a component with shadcn", "should_trigger": false, "expected_behavior": "Route to tailwind-shadcn-system"},
   {"input": "audit website for SEO and security", "should_trigger": false, "expected_behavior": "Route to audit-website"},
-  {"input": "build a landing page", "should_trigger": false, "expected_behavior": "Route to landing-page-mvp"}
+  {"input": "build a landing page", "should_trigger": false, "expected_behavior": "Route to landing-page-mvp"},
+  {"input": "review the performance of this page", "should_trigger": true, "expected_behavior": "Grades INP (<200ms), LCP, CLS — NOT FID (retired 2024-03)"},
+  {"input": "is this animation accessible", "should_trigger": true, "expected_behavior": "Motion-review rubric: flags missing prefers-reduced-motion as CRITICAL, layout-prop animation as IMPORTANT"},
+  {"input": "make this page award-grade", "should_trigger": true, "expected_behavior": "Opens with intentionality>intensity framing + Awwwards scoring lens (Design40/Usability30/Creativity20/Content10); never recommends glassmorphism/gradient/bounce"}
 ]

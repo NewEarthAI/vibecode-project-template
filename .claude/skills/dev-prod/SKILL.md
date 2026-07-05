@@ -10,13 +10,15 @@ description: |
   accordingly until a hardening hook lands.
   Do NOT use for: Vercel deploy mechanics (use deploy-vercel), VPS disk/container ops
   (use n8nspace / digitalocean-infra), or generic git shipping (use /ship).
-version: 1.0
+version: 1.1
 classification: encoded-preference
 created: 2026-06-02
-updated: 2026-06-02
+updated: 2026-06-24
 validated_on:
   - "Promote a Supabase schema change through staging before production"
   - "Block an autonomous /autovibe run from reaching production without a logged override"
+  - "Make a drifted migration history rebuildable from code via a single trustworthy baseline (proven on a real prod baseline, 2026-06-24)"
+  - "Refuse to baseline while migrations are actively shipping (stale-on-arrival guard)"
 allowed-tools: Read, Bash, Grep, Glob, mcp__supabase-{{project}}__execute_sql
 ---
 
@@ -39,7 +41,7 @@ allowed-tools: Read, Bash, Grep, Glob, mcp__supabase-{{project}}__execute_sql
 
 ## What this skill is
 
-Two jobs:
+Three jobs:
 
 1. **Route + promote + rollback** — given a change for an entity, route it to that entity's
    staging surface first, validate, then promote to production via the project's proven
@@ -48,6 +50,11 @@ Two jobs:
    `/ship` (autovibe SKILL.md §Phase 5.5), so an autonomous run cannot reach production
    directly. Production-direct requires an explicit, externally-attributed, verified logged
    override. This is the structural precondition for autonomous (agent-driven) operation.
+3. **Make a safe baseline** — turn a drifted, untrustworthy migration history into ONE clean
+   baseline that rebuilds from code, so a throwaway copy can be stood up to prove changes
+   against (the precondition for staging / Branching). System-agnostic PATTERN +
+   per-DB-system adapters. See `references/make-safe-baseline.md`. This is a one-time-per-DB
+   op with two non-negotiable safeguards (freeze-during-baseline; rescan-path-readers-before-archive).
 
 ## The pattern (per-entity, typically two layers)
 
@@ -74,6 +81,9 @@ template — fill them in as each entity is separated and proven).
    - "promote to production"          → run the PROMOTION procedure below.
    - "rollback" / "rollback drill"    → run the ROLLBACK procedure below.
    - "is this safe to ship to prod"   → run the PRE-PROMOTION CHECKLIST below.
+   - "make a baseline" / "squash migration history" / "make the DB rebuildable from code"
+                                       → run the MAKE-SAFE-BASELINE recipe (references/make-safe-baseline.md).
+                                         First resolve the DB system's adapter — STATUS must be `wired`.
 4. Production write of any kind → confirm explicitly (destructive-action discipline).
 ```
 
@@ -132,7 +142,47 @@ Answer with evidence, not vibes:
   Enumerate every hit. ANY hardcoded prod ref reachable during the staging run = gate **FAIL**
   until parameterised. Sampling one PR is a classic false-pass.
 
+- **Shadow-backtest for live-RPC replacements.** If the change includes a `CREATE OR REPLACE
+  FUNCTION` on a LIVE function, run the test-copy before/after backtest on real data FIRST —
+  zero risk to the live engine — per `.claude/rules/rpc-replacement-safety.md` (Shadow-Backtest
+  on Real Data). A behaviour-changing RPC replacement with no clean shadow-backtest diff = gate **FAIL**.
+
 Any "no" → not safe yet. Name the gap.
+
+## Procedure — make a safe baseline (the prove-before-touch precondition)
+
+A database whose migration history is drifted and partly hand-applied cannot be rebuilt cleanly
+from code — so you cannot stand up a throwaway copy to prove a change against. This procedure makes
+the history trustworthy: capture the live structure as one baseline, make it replay-safe, reconcile
+the bookkeeping, prove a throwaway copy rebuilds healthy. Then every later change is provable.
+
+The recipe is a **system-agnostic PATTERN** (`references/make-safe-baseline.md`) with **per-DB-system
+adapters** (`references/db-adapters/<system>.md`). Resolve the adapter first:
+
+```
+1. Identify the DB system (Postgres/Supabase, MySQL, Mongo, …).
+2. Read references/db-adapters/<system>.md — the STATUS: token.
+   - STATUS: wired → proceed with that adapter's concrete tooling.
+   - STATUS: stub  → STOP. Tell the operator the system is not wired; do NOT invent a recipe.
+                     (A guessed recipe risks a real client DB.)
+3. Run the 7-step recipe (references/make-safe-baseline.md). For Postgres/Supabase the brittle
+   edits + the freeze-check + the path-rescan are automated:
+       scripts/make-safe-baseline-postgres.sh {harden|path-rescan|freeze-check|--self-test}
+4. Honour the two hard safeguards (they are STEPS, not advice):
+   - Step 0 FREEZE: refuse to baseline while migrations are shipping (stale-on-arrival).
+   - Step 5 RESCAN: re-point code/tests that read migration files by path BEFORE archiving.
+5. The credentialed snapshot (step 1) and the ledger reconcile (step 6) are production writes →
+   explicit operator nod at the moment (plan approval is NOT a blanket prod nod).
+6. Completion gate = a throwaway copy rebuilt from the baseline reads HEALTHY (step 7).
+```
+
+### Topology-map tie-in (drift signal / gate trigger)
+
+Step 0b reads the DB system's shape from the topology map (the `topology-substrate` family) as the
+drift signal that SHOULD trigger this safety gate before a baseline or a prod ship. The agency-repo
+topology map is out of a client repo's tree, so this is a **documented integration point with honest
+degradation**: if no map is reachable, say so plainly and proceed with the gap stated — NEVER launder
+an absent map into an "aligned" green light (per the system-awareness honest-degradation matrix).
 
 ## The /autovibe hard staging-first gate
 
@@ -157,11 +207,20 @@ contract; the wiring lives in `references/autovibe-gate-wiring.md`. Summary:
 | Sampling one PR to declare separation proven | The hardcoded-edge-function false-pass | Grep exhaustively for hardcoded prod refs before trusting a pass |
 | Estimating rollback time | "Under target" must be observed | Drill it; log wall-clock start/finish |
 | Reading stub-vs-wired off prose | A careless edit flips meaning silently | Read the machine `STATUS:` token; anything but `wired` = stub |
+| Baselining while a parallel session ships migrations | Stale-on-arrival — bakes drift into the baseline; throwaway copies rebuild a not-quite-prod DB | Step-0 freeze: refuse until the ledger is stable across the window |
+| Archiving old migration files, then running the test suite | Path-reading tests break red after the fact | Step-5 rescan + re-point path-readers BEFORE archiving |
+| Building a multi-DB adapter abstraction before a client runs on that system | Ships untested, operate-negative steps under a "bulletproof" label | Stub the adapter; wire it when a real client lands on the system |
+| Declaring the baseline done after the reconcile | The reconcile is bookkeeping, not proof | Step-7: prove a throwaway copy rebuilds HEALTHY |
 
 ## References
 
 - `references/entity-routing.md` — the per-entity registry (stub rows on a fresh template)
 - `references/autovibe-gate-wiring.md` — the gate contract + autovibe wiring
 - `references/staging-wake.md` — waking an auto-paused Supabase staging project
+- `references/make-safe-baseline.md` — the system-agnostic baseline PATTERN (7 steps + the two hard lessons)
+- `references/db-adapters/_PATTERN.md` — the adapter contract (what every `<system>.md` must answer)
+- `references/db-adapters/postgres-supabase.md` — WIRED Postgres/Supabase recipe + live-fact gotchas
+- `references/db-adapters/{mysql,mongo}.md` — STUB adapters (not yet wired; no client on those systems)
+- `scripts/make-safe-baseline-postgres.sh` — automates the brittle Postgres edits + step-0/3/5 guards (`--self-test`)
 - `autovibe/SKILL.md` §Phase 5.5 — the orchestrator this gate slots into
 - the project's dev/prod DESTINATION / policy / staging-promotion runbook (project-specific)

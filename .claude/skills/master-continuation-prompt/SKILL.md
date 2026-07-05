@@ -226,6 +226,15 @@ This is a named, non-skippable step for load-bearing handoffs; skip ONLY for tri
   record a clean verdict for an audit that did not complete.
 - Cite the primitive; never copy its procedure. See `.claude/rules/framing-audit-mandate.md`
   for the full trigger table and the five primitives.
+- **Destination pointer (generative complement).** The framing audit above is *diagnostic*
+  (is the frame sound?); this is its *generative* companion (does the arc have a written
+  definition of done?). If a `DESTINATION.md` exists at the repo root, cite its end-state
+  (Element 1) + binary success test (Element 2) **by pointer** in Section 1 — a one-line echo,
+  NEVER a copy of the file. This carries the arc's success target into a cold-read / autofired
+  session so it inherits what "done" means. If `DESTINATION.md` is ABSENT, degrade gracefully:
+  state "Destination: none written for this arc" in Section 1 — never crash, never fabricate a
+  target. Cite `.claude/rules/framing-audit-mandate.md` (generative-complement section); the
+  destination is authored by `/define-destination`, not by this skill.
 
 ---
 
@@ -410,6 +419,13 @@ One PR per phase. Live-smoke after every deploy. Run the project's code-review g
 
 ### The Vision
 {{Why this work exists. Client value. Business problem being solved.}}
+
+### Destination (success target)
+{{If a DESTINATION.md exists at the repo root, cite its end-state + binary success test BY
+POINTER (one-line echo, never a copy) so this cold-read / autofired session inherits the arc's
+definition of done. E.g.: "Destination (see `DESTINATION.md`): <end-state one-liner> — pass
+test: <binary test one-liner>". If absent, write: "Destination: none written for this arc (no
+DESTINATION.md) — consider `/define-destination`." Per Step 1D.5.}}
 
 ### Why This Is Priority
 {{Urgency drivers. What happens if delayed. Who is affected.}}
@@ -663,7 +679,9 @@ Before presenting to the user, validate the continuation prompt against these cr
 [ ] RPC signatures verified (parameters confirmed via database, not from memory)
 [ ] No stale data (all numbers come from current queries, not prior sessions)
 [ ] Framing-audit verdict recorded (Step 1D.5) for load-bearing handoffs — in Section 1 or Section 4
+[ ] Destination pointer recorded (Step 1D.5) — if `DESTINATION.md` exists at repo root, its end-state + binary test are cited BY POINTER in Section 1 (one-line echo, not a copy); if absent, Section 1 states "Destination: none written for this arc"
 [ ] HOW TO USE block carries the Step 0 single-folder setup with CONCRETE commands (git fetch + git switch -c {branch} origin/main IN the one folder + optional stash-first note for dirty WIP + git log -3 sanity check). Generic "set up a branch" without commands FAILS this gate — the cold-open chat must reach §14 State Verification with zero questions back. The block MUST NOT instruct `git worktree add` (single-folder is the default per `worktree-discipline.md`; a worktree is the rare parallel-work exception only). Placeholders ({{branch_name}}, {{predecessor_commit_sha}}, {{predecessor_commit_title}}, {{repo_root_path}}) MUST be substituted with concrete values for the specific handoff. (Anti-pattern: emitting the template verbatim with placeholders unresolved, OR mandating a worktree.)
+[ ] Paste-ready MICRO prompt printed in chat (Step 4.5) — fenced, copyable, carries the committed continuation file reference + the "stay in your own isolated checkout" instruction + the ORIGIN line (live `git branch --show-current` + `git rev-parse --show-toplevel` of the generating session, never guessed). Missing micro prompt OR an un-substituted ORIGIN placeholder FAILS this gate.
 ```
 
 ### Should Pass (Quality Markers)
@@ -715,6 +733,53 @@ The new session should:
 
 Open the file to review?
 ```
+
+---
+
+## Step 4.5 — ALWAYS Emit a Paste-Ready Micro Prompt (MANDATORY)
+
+Every `/Master-Continuation-Prompt` run MUST end by printing — **in the chat, in a fenced block the operator can copy in one action** — a short MICRO prompt to paste into a NEW chat. This is non-negotiable and runs on every invocation, regardless of continuation type. The full continuation file is the briefing; this micro prompt is the *trigger* that points a fresh chat at it without the operator hand-writing anything.
+
+The micro prompt has exactly three load-bearing jobs:
+
+1. **Carry the file reference** — the committed path to the continuation file (so the new chat reads the full context).
+2. **Tell the new chat to stay in its OWN isolated checkout** — never share a working tree with the session that generated the prompt.
+3. **Name the worktree/branch this prompt came from** — so the new chat knows what is held and does not collide with it.
+
+### Capture the origin at generation time (REQUIRED — do this before printing the block)
+
+Run these in the generating session's working directory and substitute the results verbatim into the template:
+
+```bash
+ORIGIN_BRANCH=$(git branch --show-current)
+ORIGIN_PATH=$(git rev-parse --show-toplevel)
+```
+
+Never hard-code or guess these — they are the live identity of the session emitting the hand-off. If `ORIGIN_BRANCH` is empty (detached HEAD), substitute the short SHA from `git rev-parse --short HEAD` and say "(detached HEAD)".
+
+### The micro-prompt template (print this, filled in)
+
+```
+[PASTE INTO A NEW CHAT]
+
+Continue: {{Title}}. Read 📄 continuations/{{filename}} — it is the full context + plan; do not re-research what it already documents.
+
+Work in your OWN isolated checkout — do NOT share a working tree with the session that generated this:
+- If the one canonical folder ({{repo_root_path}}) is FREE → take a fresh feature branch in it: git switch -c {{suggested_branch}} origin/main
+- If it is HELD by another session (see the origin line below, or any parallel chat) → use your OWN sanctioned worktree off origin/main:
+    ALLOW_PARALLEL_WORKTREE=1 git worktree add ~/code/{{repo_stem}}-{{slug}} origin/main
+  …and remove it when done (git worktree remove <path> && git worktree prune).
+
+⚠️ ORIGIN: this prompt was generated from branch `{{ORIGIN_BRANCH}}` in {{ORIGIN_PATH}}. Do NOT switch onto that branch and do NOT touch that working tree — it belongs to the generating session. Pick a different branch name and a different folder/worktree.
+
+First action: {{continuation_first_action}} (then run the continuation's §14 State Verification before any code).
+```
+
+### Rules for the micro prompt
+- It is printed to chat for the operator to copy — it is NOT written to a file (the *continuation* is the file; this is the paste-trigger). If the continuation type ALSO warrants a committed micro file (multi-session programmes often do), that is a separate artefact under `continuations/…-MICRO-…md`; this step's job is the in-chat paste block, always.
+- `{{slug}}` and `{{suggested_branch}}` derive from the scope (kebab-case); keep them distinct from `{{ORIGIN_BRANCH}}` so the new chat cannot accidentally reuse the origin's branch.
+- Single-folder is still the default (see `.claude/rules/worktree-discipline.md`): the feature-branch-in-the-one-folder path is listed FIRST; the sanctioned worktree is the contended-folder exception. This step does NOT mandate a worktree for every chat — it tells the new chat to stay ISOLATED from the origin, by whichever of the two paths fits the folder's state.
+- Keep it short — a screenful. The full detail lives in the continuation file; this block only needs the file reference + the isolation instruction + the origin line.
 
 ---
 
@@ -920,10 +985,10 @@ SESSION END
 
 This skill is designed to be **project-agnostic**. When used in different projects:
 
-| Project Element | This Project (a logistics app) | Generic Equivalent |
+| Project Element | This Project (Nirvana) | Generic Equivalent |
 |----------------|----------------------|-------------------|
-| Database tool | `mcp__supabase-yourproject__execute_sql` | `{{db_tool}}` — any database MCP or CLI |
-| Workflow tool | `mcp__n8n-yourinstance__*` | `{{workflow_tool}}` — any automation platform |
+| Database tool | `mcp__supabase-nirvana__execute_sql` | `{{db_tool}}` — any database MCP or CLI |
+| Workflow tool | `mcp__n8n-mcp-yourinstance__*` | `{{workflow_tool}}` — any automation platform |
 | Frontend | Lovable.dev (React/Vite) | `{{frontend_framework}}` — any frontend |
 | Backend | Supabase Edge Functions | `{{backend_platform}}` — any backend |
 | Messaging | Wassenger (WhatsApp) | `{{messaging_platform}}` — any comms channel |

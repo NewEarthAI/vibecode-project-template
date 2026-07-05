@@ -6,7 +6,7 @@
 
 ```bash
 # Fresh worktree off main, no uncommitted changes
-cd ~/code/the app-autovibe
+cd ~/code/buybox-autovibe
 git status --porcelain  # should be empty
 ```
 
@@ -27,7 +27,7 @@ git status --porcelain  # should be empty
 | `triage.sh "add a Supabase migration..."` | stdout `plan`, stderr "intent mentions database migration or RLS" |
 | Mode dispatch | `modes/planned.md` |
 | Conversation enters plan mode | EnterPlanMode invoked |
-| `superpowers:writing-plans` | Plan written to `/Users/justin/.claude/plans/<slug>.md` |
+| `superpowers:writing-plans` | Plan written to `~/.claude/plans/<slug>.md` |
 | `/council --extended` | Council session at `council/sessions/<date>-<slug>.md` |
 | `/amend-plan` | Plan updated with council verdicts |
 | ExitPlanMode | Auto-accept (cascade authorization) |

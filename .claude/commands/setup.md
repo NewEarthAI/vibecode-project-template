@@ -23,6 +23,67 @@ If CLAUDE.md is still the unconfigured placeholder, tell the user they can open
 about to set up (and why), then ask if they'd like to view it before continuing.
 Don't block — proceed as soon as they're ready.
 
+**0.0.2 Check if running in pi:**
+
+Detect whether this is a pi session or Claude Code session:
+
+```bash
+# Check for pi indicators
+if [ -d ".pi" ] || [ -d "$HOME/.pi/agent" ] || command -v pi &>/dev/null; then
+  echo "PI_DETECTED=true"
+else
+  echo "PI_DETECTED=false"
+fi
+```
+
+IF `PI_DETECTED=true` AND `.pi/` directory does NOT exist yet:
+  - INFORM user: "You're running in pi but this repo hasn't been migrated yet. The pi-migration skill will set up everything you need — MCP servers, skills, hooks, extensions, prompts, and models."
+  - ASK: "Run /pi-migration now to set up pi for this repo? (Y/n)"
+  - IF yes: Run the pi-migration skill (`.claude/skills/pi-migration/SKILL.md`), then CONTINUE with setup below
+  - IF no: CONTINUE with setup below (pi-specific features will be skipped)
+
+IF `PI_DETECTED=true` AND `.pi/` directory EXISTS:
+  - INFORM user: "pi is already set up for this repo. Continuing with project setup..."
+  - CONTINUE with setup below
+
+IF `PI_DETECTED=false`:
+  - CONTINUE with Claude Code setup below
+
+**0.0.5 Establish independent version control (AUTOMATIC — no prompt):**
+
+This is the FIRST safety guarantee of setup: the user's new project must be its own
+independent git repo that can NEVER accidentally push back to the template. A downloaded
+copy has no git history at all; a directly-cloned copy still has an `origin` pointing at
+the template. Both cases are handled automatically and idempotently:
+
+```bash
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  # Downloaded copy — no git at all. Create a fresh, independent history.
+  git init -q
+  git add -A
+  git commit -q -m "Initial commit — project scaffolded from the Vibe Coding template"
+  echo "GIT_STATE=initialised_fresh"
+else
+  origin=$(git remote get-url origin 2>/dev/null || echo "")
+  case "$origin" in
+    *vibecode-project-template*|*claude-code-project-template*)
+      # Cloned the template directly — origin still points upstream.
+      # Detach it so the user's work never tracks back to the template.
+      git remote remove origin
+      echo "GIT_STATE=detached_template_origin"
+      ;;
+    "")  echo "GIT_STATE=git_present_no_remote" ;;
+    *)   echo "GIT_STATE=git_present_custom_remote" ;;
+  esac
+fi
+```
+
+INFORM the user, matched to the state:
+- `initialised_fresh` → "Version-tracking set up — your project now has its own private change-history, connected to nothing. Your work can never touch the template."
+- `detached_template_origin` → "You cloned the template directly, so its address was still attached. I've detached it — your project is now independent and can't push back to the template. Connect a brand-new repo of your own later if you want an online backup."
+- `git_present_no_remote` → already independent; nothing to do.
+- `git_present_custom_remote` → already points at the user's own repo; leave as-is.
+
 **0.1 Check for hookify plugin:**
 ```bash
 # Check if hookify plugin exists
@@ -378,7 +439,12 @@ wildcard allow patterns for read-only operations. Common patterns:
     "Stop": [
       {
         "matcher": "*",
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/session-summarizer.sh" }]
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/session-summarizer.sh" },
+          { "type": "command", "command": "bash .claude/hooks/session-end-continuation-gate.sh" },
+          { "type": "command", "command": "bash .claude/hooks/vault-capture.sh" },
+          { "type": "command", "command": "bash .claude/hooks/auto-sync-artifacts.sh" }
+        ]
       }
     ]
   }
@@ -402,7 +468,11 @@ These should NOT be added to the allow list — they require human confirmation:
 **Step E — Make hook scripts executable + verify:**
 
 ```bash
-chmod +x .claude/hooks/sql-guardian.sh .claude/hooks/session-summarizer.sh
+chmod +x .claude/hooks/sql-guardian.sh \
+         .claude/hooks/session-summarizer.sh \
+         .claude/hooks/session-end-continuation-gate.sh \
+         .claude/hooks/vault-capture.sh \
+         .claude/hooks/auto-sync-artifacts.sh
 ```
 
 Note: `.claude/settings.local.json` is gitignored — it stays on your machine only.
@@ -815,6 +885,47 @@ IF corrections needed:
 
 ---
 
+### Step 9.5: Set up the "map of your project" tool (understand-anything)
+
+This step gives the operator a friendly tool that reads their code and turns it into a clickable
+map — plus a guided tour and a plain-English explainer that answers "how does this bit work?". It's
+useful right now to get your bearings, and just as useful all through the project — any time you, or
+someone new joining, needs to find their way around. (Built by Lum1104; runs with `/understand`.)
+
+**9.5.1 — Is the tool installed already?**
+```bash
+# Is the understand-anything plugin present? (same check style as the Step 0.1 hookify check)
+ls ~/.claude/plugins/marketplaces/understand-anything/ 2>/dev/null
+```
+
+IF NOT found:
+  - SAY to the user, in plain words: "I can add a tool that reads your project and turns it into a
+    friendly, clickable map — with a guided tour and a plain-English explainer that answers 'how does
+    this part work?'. Handy now to get your bearings, and handy later any time you need to find your
+    way around. Want me to set it up? (Y/n)"
+  - IF yes: guide the user to run these two commands (this adds the tool to their Claude Code):
+    - `/plugin marketplace add Lum1104/Understand-Anything`
+    - `/plugin install understand-anything@understand-anything`
+  - IF no: note it under Step 10's next steps so they can add it whenever they like.
+
+**9.5.2 — When to run it (depends on whether there's anything to map yet):**
+
+The tool works by reading code/systems that already exist, so the timing depends on what the operator
+is starting with:
+
+- **IF they're bringing in something they already have** (an existing project, code, or systems they
+  want to connect) — this is where it's most valuable straight away: OFFER to run `/understand` now,
+  pointed at whatever they already have, to build the first map. Then show them where to look:
+  - `/understand-dashboard` — the visual, clickable map
+  - `/understand-explain` — plain-English deep dives on any part
+  - `/understand-onboard` — an auto-written "getting started" guide
+  - `/understand-domain` — the business-side view (what the project does, in plain terms)
+- **IF they're starting from scratch** (nothing built yet — common for a first project): tell them to
+  run `/understand` **once they've written their first bit of code**. Until something exists, there's
+  nothing to map, so running it now would just give an empty page. Pop it in Step 10's next steps.
+
+---
+
 ### Step 10: Next Steps
 
 REPORT to user:
@@ -844,7 +955,10 @@ Recommended next steps:
 2. Configure .mcp.json with your credentials
 3. Run /prime to test Claude's understanding
 4. Run /daily-plan to generate your first session plan
-5. Start building!
+5. Get a map of your project: run /understand on anything you already have (existing code or
+   systems you're connecting) for a clickable map + guided tour + plain-English explainer. Starting
+   from scratch? Run it once you've written your first bit of code.
+6. Start building!
 6. Open docs/welcome-deck.html — the closing slides recap what you just built
 ```
 
@@ -902,6 +1016,7 @@ fi
 # --- Hooks + session wiring (Step 7.6) ---
 test -f .claude/settings.local.json && ok "settings.local.json present" || no "settings.local.json" "re-run Step 7.6 (hooks block at minimum)"
 grep -q session-summarizer .claude/settings.local.json 2>/dev/null && ok "Stop hooks registered" || no "Stop hooks registered" "re-run Step 7.6"
+grep -q session-end-continuation-gate .claude/settings.local.json 2>/dev/null && ok "Continuation gate registered" || no "Continuation gate registered" "re-run Step 7.6"
 { test -d .claude/sessions && test -d .claude/daily-plans; } && ok "session dirs present" || no "session dirs" "mkdir -p .claude/sessions .claude/daily-plans"
 
 echo "----"

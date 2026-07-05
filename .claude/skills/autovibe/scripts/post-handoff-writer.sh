@@ -87,65 +87,6 @@ ts_to_filename() {
 }
 
 # ---------------------------------------------------------------------------
-# Daily-log append (Tier 1 #4c bridge — agency/memory/log.md)
-# ---------------------------------------------------------------------------
-# After write_continuation has resolved its session state, this helper
-# appends a one-line bullet to agency/memory/log.md so the SessionStart
-# hook (when extended per Tier 1 #4b) can inject "what shipped recently"
-# into fresh chats.
-#
-# CONTRACT
-# - Idempotent: re-running the same session does NOT duplicate entries.
-# - Skip-silent: if log.md does not exist, return 0 with no stderr noise.
-# - Bounded: bullets are capped at 120 chars to keep the log lean.
-# - Atomic-ish: heading and bullet appended in distinct >> writes, so a
-#   partial failure leaves a recoverable state (heading without bullet,
-#   never bullet without heading).
-# - Always exits 0 — autovibe Phase 4 must never block on log mutations.
-
-append_daily_log() {
-  local session_ts="$1"
-  local intent="$2"
-  local commit_sha="$3"
-  local pr_number="$4"
-
-  local log_file="${REPO_ROOT}/agency/memory/log.md"
-  [ ! -f "$log_file" ] && return 0  # silently skip if log doesn't exist
-
-  local today
-  today=$(date -u +%Y-%m-%d)
-
-  # Build the bullet — capped at 120 chars to keep the log lean.
-  local intent_short
-  intent_short=$(printf '%s' "${intent:-autovibe-session}" | head -c 80)
-  local bullet
-  if [ -n "$pr_number" ] && [ -n "$commit_sha" ]; then
-    bullet=$(printf -- '- autovibe %s — %s (PR #%s, %s)' \
-      "${session_ts:-?}" "$intent_short" "$pr_number" "${commit_sha:0:8}")
-  else
-    bullet=$(printf -- '- autovibe %s — %s' "${session_ts:-?}" "$intent_short")
-  fi
-  bullet=$(printf '%s' "$bullet" | head -c 120)
-
-  # Idempotency: skip if this exact bullet is already in the log.
-  # The leading `--` is required because $bullet begins with "-" (POSIX
-  # end-of-options marker — both GNU and BSD grep need it to avoid
-  # treating the bullet's leading dash as an option flag).
-  if grep -qF -- "$bullet" "$log_file" 2>/dev/null; then
-    return 0
-  fi
-
-  # Append today's heading if not yet present.
-  if ! grep -qE -- "^## \[${today}\]" "$log_file" 2>/dev/null; then
-    printf '\n## [%s]\n\n' "$today" >> "$log_file"
-  fi
-
-  # Append the bullet.
-  printf '%s\n' "$bullet" >> "$log_file"
-  return 0
-}
-
-# ---------------------------------------------------------------------------
 # Continuation skeleton builder
 # ---------------------------------------------------------------------------
 
@@ -187,7 +128,7 @@ gh pr view ${pr_number:-<N>} --json state,mergeCommit,statusCheckRollup
 # 2. Verify the cited commit landed on main
 git log --oneline origin/main | grep ${commit_sha:-<sha>}
 
-# 3. Confirm canary green (if the repo has a pipeline canary check)
+# 3. Confirm canary green (your project specific)
 # Run any pipeline canary check the repo has
 \`\`\`
 
@@ -255,9 +196,9 @@ Next chat: if continuing the SAME work scope, invoke the same skills explicitly
 to maintain composition. If continuing a NEW scope, the skills auto-fire per
 \`.claude/skills/autovibe/modes/planned.md\` triggers.
 
-NewClaw dispatch composition (the agency-internal): if
-\`agency/orchestration/newclaw-pocock-skill-dispatch.md\` exists, it carries the
-session_type → skill map used when the NewClaw kernel dispatches coding sessions.
+NewClaw dispatch composition: see
+\`agency/orchestration/newclaw-pocock-skill-dispatch.md\` for the
+session_type → skill map (used when NewClaw kernel dispatches coding sessions).
 
 ## Generator notes
 
@@ -283,12 +224,6 @@ write_continuation() {
   pr_number=$(read_json_field "$SHIP_STATE" '.pr_number')
   elapsed=$(read_json_field "$AV_STATE" '.elapsed')
   ship_signal="${SHIP_SIGNAL:-clean}"
-
-  # Tier 1 #4c bridge — log a daily entry regardless of whether the DRAFT
-  # skeleton or MASTER continuation is written below. Runs before the
-  # existence checks so idempotent re-runs still log (the helper has its
-  # own bullet-uniqueness gate).
-  append_daily_log "$session_ts" "$intent" "$commit_sha" "$pr_number"
 
   if [ ! -d "$CONTINUATIONS_DIR" ]; then
     echo "Continuation skipped: continuations/ dir does not exist at ${CONTINUATIONS_DIR}" >&2
@@ -490,57 +425,6 @@ EOF
     check "T10 truncated MASTER triggers DRAFT recovery fallback (got: $out_t10)" false
   fi
   rm -f "$master_path"
-
-  # T11 (Tier 1 #4c) — append_daily_log creates today's heading + bullet
-  rm -rf "$tmpdir/.claude" "$tmpdir/continuations" "$tmpdir/agency"
-  mkdir -p "$tmpdir/.claude" "$tmpdir/continuations" "$tmpdir/agency/memory"
-  : > "$tmpdir/agency/memory/log.md"
-  cat >"$tmpdir/.claude/autovibe-state.json" <<'EOF'
-{
-  "started_at": "2026-05-10T19:00:00Z",
-  "intent": "Phase 1 vault context rollout",
-  "elapsed": "PT10M"
-}
-EOF
-  cat >"$tmpdir/.claude/ship-state.json" <<'EOF'
-{
-  "commit_sha": "deadbeef00000000",
-  "pr_number": "999"
-}
-EOF
-  CLAUDE_PROJECT_DIR="$tmpdir" SHIP_SIGNAL="clean" \
-    write_continuation >/dev/null 2>&1
-  today_iso=$(date -u +%Y-%m-%d)
-  if grep -qE "^## \[${today_iso}\]" "$tmpdir/agency/memory/log.md" && \
-     grep -qF "PR #999" "$tmpdir/agency/memory/log.md"; then
-    check "T11 daily log gets today's heading + bullet (Tier 1 #4c)" true
-  else
-    check "T11 daily log gets today's heading + bullet (log content: $(cat "$tmpdir/agency/memory/log.md" | tr '\n' '|'))" false
-  fi
-
-  # T12 (Tier 1 #4c) — idempotent re-run does NOT duplicate bullet
-  CLAUDE_PROJECT_DIR="$tmpdir" SHIP_SIGNAL="clean" \
-    write_continuation >/dev/null 2>&1
-  local bullet_count
-  bullet_count=$(grep -cF "PR #999" "$tmpdir/agency/memory/log.md" 2>/dev/null || echo 0)
-  bullet_count=$(printf '%s' "$bullet_count" | tr -dc '0-9' | head -c 3)
-  bullet_count=${bullet_count:-0}
-  if [ "$bullet_count" = "1" ]; then
-    check "T12 daily log idempotent — re-run does not duplicate bullet" true
-  else
-    check "T12 daily log idempotent (count=$bullet_count, expected 1)" false
-  fi
-
-  # T13 (Tier 1 #4c) — missing log.md: silent skip, no error
-  rm -f "$tmpdir/agency/memory/log.md"
-  local out_t13
-  out_t13=$(CLAUDE_PROJECT_DIR="$tmpdir" SHIP_SIGNAL="clean" \
-    write_continuation 2>&1)
-  if [ ! -f "$tmpdir/agency/memory/log.md" ] && [[ "$out_t13" != *"error"* ]] && [[ "$out_t13" != *"No such file"* ]]; then
-    check "T13 missing log.md — silent skip, no error" true
-  else
-    check "T13 missing log.md — silent skip (got: $out_t13)" false
-  fi
 
   echo "==============================="
   if [ "$fail" -eq 0 ]; then

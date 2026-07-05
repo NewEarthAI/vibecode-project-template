@@ -1,11 +1,11 @@
 #!/bin/bash
-# Landing Page MVP — Quality Gate v2.2
+# Landing Page MVP — Quality Gate v2.3
 # Run after: npm run build
 # Exit 0 on pass, exit 1 on failure
 
 PASS=0; WARN=0; FAIL=0
 
-echo "━━━ LANDING PAGE MVP — QUALITY GATE v2.2 ━━━"
+echo "━━━ LANDING PAGE MVP — QUALITY GATE v2.3 ━━━"
 echo ""
 
 # ── GATE 1: Dependency Verification ──────────────────────
@@ -66,6 +66,17 @@ else
   ((WARN++))
 fi
 
+# Check for prefers-reduced-motion guard (a11y mandate — GSAP Rule 6)
+MOTION_PRESENT=$(grep -rn 'gsap\.\(to\|from\|fromTo\|timeline\)\|ScrollTrigger' src/ --include="*.jsx" --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+REDUCED_MOTION=$(grep -rn 'prefers-reduced-motion\|reduce:' src/ --include="*.jsx" --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+if [ "${MOTION_PRESENT:-0}" -eq 0 ] || [ "${REDUCED_MOTION:-0}" -gt 0 ]; then
+  echo "  PASS: prefers-reduced-motion guard present (or no motion to guard)"
+  ((PASS++))
+else
+  echo "  WARN: motion present but no prefers-reduced-motion branch (GSAP Rule 6 — a11y mandate)"
+  ((WARN++))
+fi
+
 # ── GATE 4: Accessibility ────────────────────────────────
 echo ""
 echo "── Gate 4: Accessibility ──"
@@ -118,6 +129,17 @@ if [ "$INLINE_COUNT" -le 2 ]; then
   ((PASS++))
 else
   echo "  WARN: $INLINE_COUNT inline style(s) — prefer Tailwind classes"
+  ((WARN++))
+fi
+
+# Em-dash in UI copy — #1 AI-tell (anti-vibe-coded #23). Byte-safe pattern (U+2014),
+# fires under the C locale a non-interactive shell inherits. ne-allow lines exempt.
+EMDASH_COUNT=$(grep -rn $'\xe2\x80\x94' src/ --include="*.jsx" --include="*.tsx" 2>/dev/null | grep -v 'ne-allow' | wc -l | tr -d ' ')
+if [ "${EMDASH_COUNT:-0}" -eq 0 ]; then
+  echo "  PASS: No em-dash in UI copy (the #1 AI-tell)"
+  ((PASS++))
+else
+  echo "  WARN: $EMDASH_COUNT em-dash(es) in copy — restructure or mark // ne-allow: em-dash"
   ((WARN++))
 fi
 

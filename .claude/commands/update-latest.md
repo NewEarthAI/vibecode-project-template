@@ -39,7 +39,9 @@ If no template-source.md → treat `last_sync` as "never" (apply all entries).
 
 ## Step 3: Show "What's New" summary
 
-Parse CHANGELOG entries newer than `last_sync`. Display:
+Parse CHANGELOG entries newer than `last_sync`. **Surface any `BREAKING` entries
+FIRST, in their own clearly-labelled block, and get an explicit OK before applying
+anything** — an update must never silently break a working setup. Then display:
 
 ```
 ╔══════════════════════════════════════════════════════╗
@@ -109,6 +111,40 @@ Template has: +8 lines (added DROP SCHEMA block)
 
 After applying files, run setup steps for newly installed components.
 
+### Obsidian autopilot bootstrap (ALWAYS runs after every /update-latest)
+
+**5-PRE. Run bootstrap-obsidian.sh:**
+
+Whenever the SessionStart aggregator hook OR the obsidian example config is in
+the applied set (or already present in the project), invoke the bootstrap
+script. It is idempotent — running it on an already-configured repo is a no-op
+beyond a heartbeat report. Running it on a fresh repo creates the per-machine
+config with the auto-detected repo slug, verifies the Keychain entry, and
+smoke-tests the SessionStart vault block.
+
+```bash
+if [ -x .claude/scripts/bootstrap-obsidian.sh ]; then
+  bash .claude/scripts/bootstrap-obsidian.sh
+fi
+```
+
+The script handles every step a new repo needs for obsidian autopilot parity
+with the reference setup:
+- Creates `.claude/obsidian-second-brain.local.md` if missing, with the three
+  shared values pre-filled and the per-repo scope slug auto-detected
+  from the folder name (e.g. `my-app` → `vault_scope_slug: "my-app"`).
+- Adds `vault_scope_slug` to an existing config that doesn't have one (so
+  upgrading from an older template version is one /update-latest away).
+- Verifies the macOS Keychain entry exists (shared across
+  all your machines). If absent, prints the exact command to provision it and
+  exits non-zero so the operator sees it.
+- Smoke-tests the SessionStart vault block and prints the first row, so the
+  operator confirms with their own eyes that the vault loop is live.
+
+After this runs cleanly, the repo is FULLY obsidian-connected on the read
+side. The write side (Stop chain: session-summarizer → vault-capture →
+auto-sync-artifacts) is wired in step 5b below if those hooks were applied.
+
 ### If any shell hooks were added (sql-guardian.sh, session-summarizer.sh):
 
 **5a. Make executable:**
@@ -172,7 +208,7 @@ For each MCP server in `.mcp.json`, add read-only patterns:
 - GitHub: `mcp__github__*` (all operations)
 - Redis: `mcp__redis-*__*` (all operations)
 - Context7: `mcp__Context7__*` (all operations)
-- Wassenger: only `get_*`, `search_*`, `analyze_*`, `list_*` (NOT send/manage)
+- WhatsApp provider (if wired): only `get_*`, `search_*`, `analyze_*`, `list_*` (NOT send/manage)
 - Airtable: only `list_*`, `get_*`, `search_*`
 - Playwright/Chrome DevTools: all operations
 - Make: all operations
@@ -251,6 +287,49 @@ chmod +x .claude/hooks/*.sh 2>/dev/null
 Surface to user: "Auto-wired {{N}} new hookify rule matcher(s) in your settings: {{list of (event, matcher) pairs}}. The hookify-context-injector.sh script will now fire on those tool events."
 
 If the matcher was already registered with the same script, do NOTHING and inform: "Matcher {{matcher}} for event {{event}} was already wired — no change."
+
+### If the system-awareness-activation hook was added (NEW — 2026-06-07):
+
+**5c3. Register the System-Awareness Alignment Gate hook on SessionStart + UserPromptSubmit.**
+
+This hook is different from the PreToolUse/Stop hooks in 5b — it fires on **SessionStart**
+(announces the mandate) and **UserPromptSubmit** (surfaces a plan-alignment snapshot). The
+generic 5b registration does NOT cover these two events, so this step is required or the gate
+ships inert. The same shape applies to its twin `framing-audit-activation.sh` if that arrived
+in the same pull.
+
+**Step A — settings.local.json (you CAN write this — per-machine, gitignored).**
+Read `.claude/settings.local.json` (create if missing). For BOTH `SessionStart` and
+`UserPromptSubmit`, if no entry already points at `system-awareness-activation.sh`, append:
+
+```json
+{ "matcher": "*", "hooks": [ { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/system-awareness-activation.sh", "timeout": 10 } ] }
+```
+
+Merge into the existing arrays — never overwrite the file. Then:
+```bash
+chmod +x .claude/hooks/system-awareness-activation.sh
+bash .claude/hooks/system-awareness-activation.sh --self-test | tail -1   # expect ALL PASS (19/19)
+```
+
+**Step B — committed settings.json (you CANNOT write this — agent-write-blocked).**
+The team-shared `.claude/settings.json` is off-limits to agent writes. So the per-machine
+wiring in Step A makes the gate work on THIS machine now; for the whole team, surface this
+EXACT block to the operator and ask them to paste it into `.claude/settings.json` under
+`hooks` (add to the arrays if those events already exist):
+
+```json
+"SessionStart": [
+  { "matcher": "*", "hooks": [ { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/system-awareness-activation.sh", "timeout": 10 } ] }
+],
+"UserPromptSubmit": [
+  { "matcher": "*", "hooks": [ { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/system-awareness-activation.sh", "timeout": 10 } ] }
+]
+```
+
+Tell the operator, in plain words: "The gate is live on this machine. To turn it on for the
+whole team, paste the block above into the shared settings file (I'm not allowed to edit that
+one) and commit it." Do NOT loop retrying the blocked write.
 
 ### If this is the first time applying the template to this project:
 

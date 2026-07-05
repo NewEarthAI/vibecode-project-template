@@ -10,6 +10,12 @@ like, how to keep itself safe, how to spend AI budget wisely, and how to plan
 your day. Nothing here is tied to anyone else's business — it's a blank,
 white-label starter you make your own.
 
+**Who it's for, in one line:** a *safety-first* starter for non-technical
+founders building real software with Claude Code. If you're already a power
+user with a workflow you love, a broad community collection may suit you better
+— this box optimises for safe defaults, curation, and plain English over sheer
+volume.
+
 ---
 
 ## Table of contents
@@ -48,6 +54,16 @@ release. Here it is in plain English:
   (a deep security review, a quick scan, a threat-model builder, an "agent
   shield", and a multi-tenant-auth checker). Type *"run a security review on
   this repo"* any time and Claude will audit it in front of you.
+- **Watch it protect you — try this on day one.** After `/setup`, ask Claude to
+  run `git push --force` or a `DELETE` without a `WHERE` clause. The guardrail
+  blocks it and explains why, in front of you. Trust you can *see* beats trust
+  you're asked for.
+
+> **What this template does NOT guarantee (honesty clause):** guardrails block
+> the well-known destructive patterns; they can't make every possible mistake
+> impossible. It also doesn't replace backups, code review on things that
+> matter, or your own judgment on what to ship. It stacks the odds heavily in
+> your favour — it doesn't suspend gravity.
 
 > **MCP** = the bridge that lets Claude Code control your other tools (your
 > database, your automations, GitHub, a browser). It's how one chat can read a
@@ -76,6 +92,18 @@ Then:
 > **Prefer a visual tour first?** Open 📊 the welcome deck — the file
 > `docs/welcome-deck.html` — in any browser for a 12-slide walkthrough (arrow
 > keys to move). `/setup` offers to show it automatically at the start and end.
+
+**Your first session — three wins that need nobody else:**
+
+1. **See your safety net work.** Ask Claude to force-push something. Watch it
+   get blocked, with a plain-English reason.
+2. **Get a plan you'd actually follow.** Run `/daily-plan` and get a ranked,
+   realistic list for today — grounded in *your* project, not a generic list.
+3. **Ship one small real thing.** Describe a tiny feature in plain English and
+   let `/autovibe` take it from idea to a reviewed, committed change.
+
+Everything above works with zero other users, zero community, zero extra
+accounts. The box is complete on day one.
 
 **Connecting your tools (optional, when you're ready):** if you want Claude to
 control a database, automations, GitHub, or a browser, there's a one-time helper
@@ -185,9 +213,12 @@ ceremony.
 
 ## 5 · The full toolkit, grouped
 
-Around **90+ skills**, **28 commands**, **~25 specialist agents**, and **~60
+Around **110 skills**, **38 commands**, **~30 specialist agents**, and **~60
 safety/efficiency hooks** ship in the box. You rarely call most of them by name —
-Claude reaches for the right one automatically. Grouped by what they're for:
+Claude reaches for the right one automatically. **Don't try to learn the list**
+— read 📄 `CATALOG.md` instead: it tiers everything into a small CORE you'll
+actually touch, a RECOMMENDED set for when a situation applies, and SPECIALIST
+tools that wait quietly. Grouped by what they're for:
 
 ### 🧭 Think before you build — first principles & systems thinking
 A "framing audit" checks you're answering the *right question* before you commit.
@@ -215,6 +246,7 @@ A "framing audit" checks you're answering the *right question* before you commit
 | `/execute` | Turn an approved plan into working code |
 | `/verify-shipped` | Cross-checks that what you *think* shipped actually deployed (catches silent drift) |
 | `/e2e-test` | Self-healing end-to-end browser tests with database validation |
+| `production-readiness-review` | The "are we actually ready for real users?" audit before a launch |
 
 ### 💸 Spend AI budget wisely — token efficiency
 The template is built to make your AI accounts last far longer.
@@ -244,7 +276,7 @@ The template is built to make your AI accounts last far longer.
 ### 🤝 Work with your team & reach the world
 | Tool | What it does |
 |---|---|
-| `/collab` | Drop a shared idea, bug, question, or decision; a teammate's `/daily-plan` pulls it in automatically, against *their* own context |
+| `collab` skill | Say "log a collab item" to drop a shared idea, bug, question, or decision; a teammate's `/daily-plan` pulls it in automatically, against *their* own context |
 | WhatsApp (via Wassenger) / Telegram | Send and triage messages from a chat — pick whichever messenger you prefer |
 
 ### 🗓️ Control your Google Workspace
@@ -260,7 +292,7 @@ Drive your whole Google account from a chat (needs a small `gws` command-line to
 ### 🎨 Frontend & design
 | Tool | What it does |
 |---|---|
-| `ui-design-system` *(branded name being retired)* | A premium, minimal design system + dark preset |
+| `ui-design-system` | The house design system: premium, minimal, with a motion whitelist + restraint rules that stop "AI-looking" UIs |
 | `/design-review` | Visual + accessibility + responsive audit of a built UI |
 | `landing-page-mvp` | A fast, conversion-aware landing page |
 | `tailwind-shadcn-system`, `data-table-design`, `build-dashboard`, `kpi-dashboard-design`, `guided-tour` | Component patterns, tables, dashboards, and onboarding tours |
@@ -297,14 +329,13 @@ branches, pull requests, and releases.
 ### 🧩 Parallel sessions & worktrees
 | Tool | What it does |
 |---|---|
-| `/where` | Plain-English map of every running chat, branch, and working copy — derived live from git, never a stale list |
 | Worktree guardrails | Each chat gets its own isolated working copy so two sessions never corrupt each other's files |
 | `/build-with-agent-team` | Several Claude instances build in parallel, contract-first (needs `tmux`) |
 | `ssh-claude-setup` | The plumbing for launching fresh Claude sessions over SSH (advanced) |
 
 ### 🗄️ Databases
-`postgres`, `supabase-postgres-best-practices`, `postgresql-code-review`,
-`postgresql-patterns`, `supabase-database-hygiene` — performance rules, safe
+`supabase-postgres-best-practices`, `postgresql-code-review`, `postgresql-patterns`,
+`postgresql-internals`, `supabase-database-hygiene` — performance rules, safe
 query patterns, and hygiene checks with worked SQL examples.
 
 ### ♻️ Keep improving — skill-craft & templatisation
@@ -430,6 +461,18 @@ everyone benefits.
 > cleanly theirs. `/update-latest` still lets them pull improvements forever —
 > no git relationship required.
 
+**The update promise:** updates never silently break a working setup. Breaking
+changes are rare, flagged loudly in `CHANGELOG.md` under a **BREAKING** heading,
+and `/update-latest` shows them to you *before* applying anything. Renamed
+tools keep their old names working for at least two releases.
+
+**The price promise:** the template is free, all of it, permanently. No paid
+tier, no premium skills. If that ever changes it will be a new project, not a
+rug-pull on this one.
+
+**Found friction?** See 📄 `FEEDBACK.md` — three plain-English lines from you
+becomes a fix that ships to everyone.
+
 ---
 
 ## 10 · The philosophy underneath
@@ -443,8 +486,8 @@ A few principles shaped every choice here:
   non-technical teammate without translating. Jargon is defined the first time
   it appears.
 - **Frame before you solve.** The most expensive mistake is a thorough answer to
-  the wrong question — so the template makes a framing check compulsory before
-  big decisions.
+  the wrong question — so the template puts a framing check (first-principles,
+  commensurability, feedback-loops) in front of big decisions.
 - **Decide, don't menu.** When there's a clearly best path, the template takes
   it and tells you, instead of handing you a three-option quiz.
 - **Disagree on purpose.** A council with a built-in devil's advocate, and code

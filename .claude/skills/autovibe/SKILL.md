@@ -2,14 +2,10 @@
 name: autovibe
 description: |
   Top-of-stack autonomous shipping orchestrator. One invocation handles the
-  full goal-audit→plan→execute→code-council→ship loop, or routes trivial
-  work directly to /ship quick. Composes /ship, /execute, /code-council,
-  /prompt-forge, prime-lite, the framing-audit primitives, and the Pocock
-  toolkit. Strategy council (/council --extended) + /amend-plan retired
-  from the autofire loop 2026-05-23 — rabbit-hole detours, work not
-  finishing. /council itself survives as a MANUAL operator skill outside
-  autovibe; /code-council (DIFF reviewer for shipped code) stays at step 7.
-  Never reimplements composed-skill logic; reads/writes its own state file
+  full plan→council→amend→execute→code-council→ship loop, or routes trivial
+  work directly to /ship quick. Composes /ship, /council --extended,
+  /amend-plan, /execute, /code-council, /prompt-forge, prime-lite. Never
+  reimplements composed-skill logic; reads/writes its own state file
   (.claude/autovibe-state.json) for crash-safe resume. Dual-use: same code
   path serves direct human invocation and programmatic call sites — only
   AUTOVIBE_FORMAT=json toggles the output serializer.
@@ -47,6 +43,112 @@ status: Phases 0-5 complete; Phase 6 (dogfood) deferred to first live invocation
 
 ---
 
+## Kernel Registration (OPTIONAL — only with a kernel substrate)
+
+> **OPTIONAL.** This section applies **only if your project has a kernel-style observability
+> substrate**: an `agent_sessions` table plus the `autovibe_register()` / `autovibe_transition()`
+> RPCs (and, for outcome recording, a `session_outcomes` table + `record_session_outcome()`).
+> **If that substrate is not present, skip kernel registration entirely** — autovibe runs
+> without it. Do **not** treat a missing RPC as a halt condition when the substrate was never
+> installed. The rest of this section assumes the substrate exists.
+
+When the substrate is present, every autovibe run writes a complete lifecycle record so the
+run is observable (speed, operator-attention cost, self-recording, throughput, handoff UX
+become measurable rather than paper-only).
+
+**Helper**: `bash .claude/skills/autovibe/scripts/autovibe-transition.sh <mode> <args>` emits
+ready-to-run SQL (single-quote-escaped, status-enum-validated) prefixed with `[KERNEL-CALL]`.
+Pipe its stdout into `mcp__supabase-{{project}}__execute_sql` to land the row.
+
+**Wiring contract** — Claude calls these from the conversation layer (not from
+`orchestrate.sh`). The shell subprocess has no MCP access; the conversation has both MCP
+access and the lifecycle awareness needed to populate phase metadata correctly.
+
+| Phase boundary | Action | Target status |
+|---|---|---|
+| **Session start** (before `orchestrate.sh` fires) | Call `autovibe_register($CLAUDE_SESSION_ID, intent, branch, profile_slug)`. Capture `run_id`. Persist it. | `registered` |
+| **After triage** | `autovibe_transition(run_id, 'phase0', 'triage_complete', 'queued', {triage_outcome, mode})` | `queued` |
+| **Plan start** | `autovibe_transition(run_id, 'phase1', 'plan_start', 'running', {plan_path?})` | `running` |
+| **Post-council** | `autovibe_transition(run_id, 'phase2', 'council_complete', 'running', {council_path, council_verdict})` | `running` (heartbeat) |
+| **Post-amend-plan** | `autovibe_transition(run_id, 'phase3', 'amend_complete', 'running', {amendments_applied})` | `running` (heartbeat) |
+| **Post-execute** | `autovibe_transition(run_id, 'phase4', 'execute_complete', 'running', {files_touched_count})` | `running` (heartbeat) |
+| **Post-fleet-audit** (Phase 4.5) | `autovibe_transition(run_id, 'phase4_5', 'fleet_audit_complete', 'running', {fleet_drift_count})` | `running` (heartbeat) |
+| **Post-master-continuation** (Phase 4.7) | `autovibe_transition(run_id, 'phase4_7', 'continuation_written', 'running', {continuation_path})` | `running` (heartbeat) |
+| **Post-code-council** | `autovibe_transition(run_id, 'phase5', 'code_council_complete', 'running', {code_council_path, code_council_verdict})` | `running` (heartbeat) |
+| **Staging-first gate entered** (Phase 5.5) | `autovibe_transition(run_id, 'phase5_5', 'staging_gate_entered', 'running', {entity, ship_target})` | `running` (heartbeat) |
+| **Gate pass — staging** | `autovibe_transition(run_id, 'phase5_5', 'staging_gate_pass', 'running', {ship_target:'staging'})` | `running` |
+| **Prod-direct override** (truthy `AUTOVIBE_PROD_DIRECT`, write-then-verified) | `autovibe_transition(run_id, 'phase5_5', 'prod_direct_override', 'running', {reason, who})`, then SELECT the row back by `run_id` to confirm it landed BEFORE `/ship`. Follows register HALT discipline. | `running` |
+| **Gate halt** (stub / unresolved entity / checklist fail / no flag) | `autovibe_transition(run_id, 'phase5_5', 'staging_gate_halt', 'failed', {reason, continuation_path})`. Write a continuation; do NOT `/ship` to production. `failed` (not `waiting`) so the orphan watchdog does not race the operator. | `failed` |
+| **Ship complete** | `autovibe_transition(run_id, 'phase6', 'ship_complete', 'completed', {exit_code, pr_number, merged_sha, ship_signal})` | `completed` |
+| **Ship failed** | `autovibe_transition(run_id, 'phase6', 'ship_failed', 'failed', {exit_code, error})` | `failed` |
+| **User cancellation** | `autovibe_transition(run_id, 'phase6', 'user_cancel', 'cancelled', {reason})` | `cancelled` |
+| **Context-budget gate fires** (Phase 4.6) | `autovibe_transition(run_id, 'phase4_6', 'budget_handoff', 'waiting', {context_budget_pct, continuation_path})` | `waiting` |
+
+**Permitted transitions** (enforced by `autovibe_transition()` — illegal moves raise `check_violation`):
+- `registered` → `{queued, running, failed, cancelled}`
+- `queued` → `{running, failed, cancelled}`
+- `running` → `{running, waiting, completed, failed, cancelled}`
+- `waiting` → `{running, failed, cancelled}`
+- Terminal states (`completed`, `failed`, `cancelled`) are immutable.
+
+**Capture pattern** (in conversation, after calling the helper):
+
+```
+# Step 1 — emit the SQL
+bash .claude/skills/autovibe/scripts/autovibe-transition.sh register "$session_uuid" "build foo feature" "main"
+# stdout: [KERNEL-CALL] SELECT autovibe_register('...','build foo feature','main',NULL,NULL) AS run_id;
+
+# Step 2 — Claude reads the emitted SQL and runs it:
+mcp__supabase-{{project}}__execute_sql({ query: "<that SQL>" })
+# returns: [{ "run_id": "<uuid>" }]
+
+# Step 3 — MANDATORY: persist run_id to the durable state file before any other action.
+# .claude/autovibe-state.json IS the canonical store; conversation memory is NOT (a
+# context-budget handoff or session compact would lose it).
+bash .claude/skills/autovibe/scripts/state.sh write agent_session_kernel_id <uuid>
+```
+
+**HALT discipline on register failure** — if `execute_sql` returns no row OR errors (network
+drop, MCP timeout, auth rejection) *while the substrate exists*, Claude MUST halt the run with
+exit-code-1 (preflight class). Do NOT proceed past register without `run_id`. (This does NOT
+apply when the substrate was never installed — see the OPTIONAL preamble.)
+
+**Observability** — a `v_autovibe_runs` view returns full lifecycle data:
+```
+SELECT run_id, status, intent, branch, duration_seconds, pr_number, merged_sha, exit_code
+  FROM v_autovibe_runs
+ WHERE started_at > now() - interval '24h'
+ ORDER BY started_at DESC;
+```
+
+**Orphan detection** — a `pg_cron` job runs every 5 minutes; any row with
+`status IN (registered, running, waiting)` and `last_heartbeat_at < now() - interval '90 minutes'`
+gets auto-transitioned to `failed`. 90 minutes (not 30) so a long `/council --extended` run
+(8 parallel agents) does not false-positive; `running → running` heartbeats during long phases
+keep the watchdog quiet.
+
+### Session Outcome Recording (OPTIONAL — same substrate umbrella)
+
+If a `session_outcomes` table + `record_session_outcome()` RPC are present, autovibe also writes
+regression-substrate signals at three points. The RPC is idempotent on `agent_session_id`
+(UNIQUE + ON CONFLICT DO UPDATE with COALESCE) — partial-update calls accumulate fields.
+
+| When | Mode | What gets written |
+|---|---|---|
+| **Phase 5 — Post-code-council** | `council` | `review_verdict` (PASS / ADVISORY / BLOCKING / NONE) |
+| **Phase 6 — Ship complete** | `outcome` | `result_success=true`, `outcome_summary` (PR#, commits, signal), `retrieval_method` |
+| **Phase 6 — Ship failed** | `outcome` | `result_success=false`, `outcome_summary` (exit_code, error_type) |
+
+**Helper**: `bash .claude/skills/autovibe/scripts/record-outcome.sh {outcome|council|e2e} <args>`
+emits `[KERNEL-CALL] SELECT record_session_outcome(...);`. Claude runs it via
+`mcp__supabase-{{project}}__execute_sql`.
+
+**HALT discipline on outcome-write failure**: unlike register, an outcome-write failure does
+NOT halt the run — the lifecycle row is the load-bearing surface; `session_outcomes` is
+additive. Log the failure and continue.
+
+---
+
 ## Dispatch
 
 | Invocation | Action |
@@ -77,33 +179,6 @@ D2 trigger list lives in `triage.sh` and `references/decisions-locked.md`. Edita
 
 ---
 
-## Framing Audit (mandatory — one checkpoint)
-
-Per `.claude/rules/framing-audit-mandate.md`, a framing audit — confirming the work is the
-*right question* before it is answered — is compulsory before load-bearing, multi-phase
-work. `/autovibe` IS such work, so **planned mode** runs the audit at one checkpoint
-before any plan is drafted:
-
-| Checkpoint | When | Audits | Defined in |
-|---|---|---|---|
-| Goal audit | step 2a, before `EnterPlanMode` | the raw INTENT / GOAL | `modes/planned.md` step 2a |
-
-The 1-minute first-principles check on the GOAL catches wrong-framings at the higher-leverage
-point (before the plan, not after). Plan-side framing review is now an operator self-check
-during ExitPlanMode review (step 5) rather than a council-driven Reframer pass — the strategy
-council was retired from the autofire loop 2026-05-23 because the 8-agent deliberation reliably
-produced rabbit-hole detours and work never actually finished. Goal audit runs the matching
-primitive (`/reduce-to-first-principles`, `/check-commensurability`, or `/map-feedback-loops`
-DECISION mode), records the verdict, and HALTs on a flagged frame.
-
-**Direct mode** (trivial work) runs no framing audit — correct per the mandate rule's
-not-for-trivia scope.
-
-Cite the primitives; never copy their procedures — see `framing-audit-mandate.md` for the
-full trigger table and the five primitives.
-
----
-
 ## Research-Only Continuation Pivot
 
 When the user invokes `/autovibe <continuation-file>` and the file is research-only (no code to ship at the end), DO NOT run the plan → council → execute → ship loop. There is no PR target — the deliverable is a research artefact, not a code change. Forcing autovibe through means `/ship` fails with no diff.
@@ -123,30 +198,95 @@ When the user invokes `/autovibe <continuation-file>` and the file is research-o
 
 ---
 
-## Foundation-First Shipping (operator self-check during ExitPlanMode review)
+## Foundation-First Shipping (when council finds heavy MUST-HAVE count)
 
-When the drafted plan looks heavy at ExitPlanMode review (step 5), the operator runs this self-check before accepting the plan. No council required — this is operator judgement on the plan you just read.
+When `/council --extended` returns ADVISORY-SHIP with **10+ MUST-HAVE defenses** AND Pragmatist's honest estimate spans 3+ sessions:
 
-**Don't compress heavy plans into one session.** That forces a thin-shell intermediate state that ships silent failures.
-
-**Detection signal — if 3 of 4 hold during plan review, default to foundation-first**:
-- Plan stacks 3+ defenses (rate-limit + idempotency + reaper + audit-trail + …)
-- Plan touches 3+ surfaces (edge fn + migration + n8n workflow + UI + …)
-- Plan carries 3+ specific time-bombs (rate-locked APIs, partner-facing data fidelity, RLS, etc.)
-- Honest ship-date confidence for one session < 70%
+**Don't compress into one session.** That forces the thin-shell intermediate state the council rejected.
 
 **Ship the foundation PR this session**:
+- Council session file (locked verdict + auto-resolved decisions)
 - Contract specs (URL shapes, schema decisions, integration boundaries)
 - Additive migrations (idempotent, low-risk, `NOTIFY pgrst, 'reload schema';` included)
-- v2 execution continuation with all defenses as Phase 1b–N line items
+- v2 execution continuation with all MUST-HAVE defenses as Phase 1b–N line items
 - ROADMAP entry + memory file
 - Typically 5 files, ~1000 lines, 100% additive, no existing code touched
 
-**Queue implementation for next session** via the v2 execution continuation. Each defense becomes a checklist item the next session cannot skip.
+**Queue implementation for next session** via the v2 execution continuation. Each MUST-HAVE defense becomes a checklist item the next session cannot skip.
 
-**Failure mode prevented**: shipping all defenses + the implementation in one session = high probability the implementation skips 2-3 defenses under time pressure, ships silent failures, and the plan retroactively becomes theatre.
+**Detection signal — if 3 of 4 hold, default to foundation-first**:
+- Devil's Advocate finds 3+ CRITICAL findings
+- Reliability Engineer flags 3+ NON-SHIPPABLE FLAGS
+- Edge Case Finder names 3+ specific time-bombs
+- Pragmatist confidence on ship-date < 70%
 
-**Precedents**: 2026-05-03 PP.1 (17 defenses, 3-session split — foundation in PR #406), 2026-04-30 CM.35 Wave A foundation + Wave B v2 plan, 2026-04-23 Strategy Grades chip v1→v2. (These precedents pre-date the 2026-05-23 council retirement; they were originally triggered by council MUST-HAVE counts. The pattern survives — only the trigger mechanism changed from council verdict to operator judgement during plan review.)
+**Failure mode prevented**: shipping all 17 defenses + the implementation in one session = high probability the implementation skips 2-3 defenses under time pressure, ships silent failures, and the council retroactively becomes theatre.
+
+**Precedents**: 2026-05-03 PP.1 (17 defenses, 3-session split — foundation in PR #406), 2026-04-30 CM.35 Wave A foundation + Wave B v2 plan, 2026-04-23 Strategy Grades chip v1→v2.
+
+---
+
+## Framing Audit (mandatory — two checkpoints)
+
+Per `.claude/rules/framing-audit-mandate.md`, a framing audit — confirming the work is the
+*right question* before it is answered — is compulsory before load-bearing, multi-phase
+work. `/autovibe` IS such work, so **planned mode** runs the audit at two checkpoints:
+
+| Checkpoint | When | Audits | Defined in |
+|---|---|---|---|
+| 1 — goal audit | step 2a, before `EnterPlanMode` | the raw INTENT / GOAL | `modes/planned.md` step 2a |
+| 2 — plan audit | step 5, the `/council --extended` Phase 0 Reframer | the DRAFTED PLAN | `modes/planned.md` step 5 |
+
+**Two checkpoints, not one**: the Reframer (checkpoint 2) only ever sees a plan that has
+*already* been drafted — a wrong frame would already have shaped the plan-writing step.
+Checkpoint 1 catches a wrong frame on the goal itself, before any plan exists. Both run the
+matching framing-audit primitive (`/reduce-to-first-principles`, `/check-commensurability`,
+or `/map-feedback-loops` DECISION mode), record the verdict, and HALT on a flagged frame.
+**Direct mode** (trivial work) runs neither — correct per the mandate rule's not-for-trivia
+scope.
+
+Cite the primitives; never copy their procedures — see `framing-audit-mandate.md` for the
+full trigger table and the five primitives.
+
+---
+
+## Phase 5.5 — Staging-First Gate (mandatory before `/ship`)
+
+Between Phase 5 (post-code-council) and the `/ship` phase, an autonomous run MUST pass the
+**hard staging-first gate** — so an autonomous agent cannot reach production directly; the
+default path is staging, and production-direct is friction-positive (explicit flag + verified,
+externally-attributed log). This is the structural precondition for autonomous operation.
+
+**Requires the `dev-prod` skill** (which owns the routing registry + the gate contract).
+Do not reimplement the gate here — invoke `dev-prod`. Authoritative procedure:
+`.claude/skills/dev-prod/references/autovibe-gate-wiring.md`; routing registry:
+`.claude/skills/dev-prod/references/entity-routing.md`.
+
+The contract, in brief:
+
+1. **Resolve entity** from `profile_slug` / branch. Unresolved/unknown/ambiguous →
+   **fail-closed**: halt, write continuation, never default to any entity.
+2. **Read the `STATUS:` token** (not prose) in the dev-prod registry. Anything but exactly
+   `wired` (or a missing staging ref) → HALT, continuation. Never `/ship` to a stub.
+3. **Default ship target = staging.** `/ship` targets staging unless the override is satisfied.
+4. **Pre-promotion checklist** (dev-prod SKILL.md) must pass — incl. the exhaustive
+   hardcoded-prod-ref grep and the staging-healthy precondition (timeout ≠ pass).
+5. **Production-direct override** requires BOTH: (a) `AUTOVIBE_PROD_DIRECT` affirmatively truthy
+   (`1/true/yes/enabled`; absent or `0/false/no/off/disabled` = staging-first), AND (b) an
+   externally-attributed, write-then-read-back-verified override record. The record write
+   follows HALT discipline — a failed/timed-out write halts the run; never "shipped anyway."
+
+If the project's autovibe has the kernel-registration layer, the gate emits the Phase 5.5
+transitions (`staging_gate_entered/_pass`, `prod_direct_override`, `staging_gate_halt` → `failed`);
+otherwise record the gate decision in the project's audit trail.
+
+**Enforcement honesty**: this gate is procedure-level (the orchestrator honours it), NOT a hard
+PreToolUse block. It is as strong as the orchestrator's adherence — a future hardening hook could
+make it tamper-proof.
+
+**Coupling (propagation):** Phase 5.5 depends on the `dev-prod` skill. Any contract change here
+MUST be mirrored in `dev-prod`, and BOTH skills pushed to the template together — never one
+without the other.
 
 ---
 
@@ -222,9 +362,11 @@ Same code path serves both. Only output serializer differs.
 | `state.sh` | `scripts/state.sh` | Lock + state management (mirrors ship's lock.sh) |
 | `preflight.sh` | `scripts/preflight.sh` | Path/disk/locks/auth gates |
 | `/prompt-forge` | command | Input normalization (gated by D4: <20 words OR no verb/object pair) |
-| framing-audit primitives | `../reduce-to-first-principles/`, `../check-commensurability/`, `../map-feedback-loops/` | Planned-mode framing audit — goal-audit checkpoint (step 2a only). See §Framing Audit. |
+| `/council --extended` | command | Phase 0 reframer + 7-agent deliberation |
+| `/amend-plan` | command | Apply council verdicts to plan |
 | `/execute` | command | Plan implementation |
-| `/code-council` | command | Multi-lens diff review on shipped code (PASS/ADVISORY/BLOCKING). Different beast from the retired strategy council — stays in the loop at step 7. |
+| `/code-council` | command | Multi-lens diff review (PASS/ADVISORY/BLOCKING) |
+| `dev-prod` | skill | **Phase 5.5 staging-first gate** — entity routing + promote/rollback + prod-direct override contract. autovibe INVOKES it before `/ship`; never reimplements the gate. Coupled: push BOTH to template together. See §Phase 5.5. |
 | `/ship quick` | skill | Direct-path target |
 | `/ship pr` | skill | Planned-path target — full PR + CI + smoke |
 | `/ship hotfix` | skill | **NEVER auto-invoked** — exit 9 if conditions detected |
@@ -246,9 +388,7 @@ Same code path serves both. Only output serializer differs.
 - Trap-release the lock on INT/TERM/EXIT
 - Pass through `/ship`'s exit code unchanged when ship halts
 - Run post-push doc step after successful ship
-- When composing `/code-council` or `/code-forge`: verify the orchestrator has Read `.claude/rules/code-review-identity.md` per each command's Pre-flight block. If absent (e.g., command body modified without preserving the Pre-flight, or a degraded subprocess context), HALT before subagent dispatch and re-Read. The identity preamble + Self-Check Razors are non-skippable on every review pass. Composes with the BASELINE routing-table row + `hookify.code-review-identity-load.local.md` Agent-tool hook.
 - Use `AUTOVIBE_DRYRUN=1` for any new test scenario before live invocation
-- Run the planned-mode goal audit before drafting a plan — checkpoint at `modes/planned.md` step 2a audits the GOAL. Per `.claude/rules/framing-audit-mandate.md`; skipping it on load-bearing work is a contract violation. Plan-side framing review is now an operator self-check during ExitPlanMode (step 5) rather than a council-driven Reframer pass.
 
 ---
 
@@ -270,7 +410,7 @@ After `/ship` exits 0, the conversation:
 
 After Phase 4 doc step, BEFORE Session Learning Gate:
 
-1. Try cached fleet state first: `bash .claude/skills/verify-shipped/scripts/read-state.sh --max-age 300` (5-minute freshness window — covers SessionStart hook's recent fleet read while staying tight enough to detect drift from a just-completed ship). Bumped from 60s on 2026-05-08 per token-burn audit (Hotspot #5) — eliminates double-audit when SessionStart fired <5min ago.
+1. Try cached fleet state first: `bash .claude/skills/verify-shipped/scripts/read-state.sh --max-age 60` (60-second freshness window — anything older is suspect post-ship)
 2. If exit 1 (missing/stale): invoke `Skill verify-shipped quick` (Layers 1+2+3+6 only — Layer 5 was just affected by this session's deploys; give 30s buffer before next audit)
 3. Parse the result `exit_code`:
    - `0` (clean): log `fleet clean post-ship` to the session file; continue to Phase 5
@@ -279,11 +419,36 @@ After Phase 4 doc step, BEFORE Session Learning Gate:
    - **Any non-parseable result** (Skill tool itself failed, MCP unavailable, network failure, JSON malformed): treat as `2` — log `[INFO] fleet audit unavailable — continuing without fleet status` and continue to Phase 5. The post-ship flow MUST NOT block on `/verify-shipped` failure under any circumstance. (Per code-council 2026-05-07 IMPORTANT #2 — never-block guarantee.)
 4. **Composes with Phase 5**: drift detection adds the `fleet drift detected post-ship` row to the Session Learning Gate triggers below.
 
-**Wall-clock budget**: target <20s on Justin's 50-worktree fleet. The hook MUST NOT block the post-ship flow significantly — graceful degradation is mandatory.
+**Wall-clock budget**: target <20s on a multi-worktree fleet. The hook MUST NOT block the post-ship flow significantly — graceful degradation is mandatory.
 
-**Failure mode prevented (Cedar Hurst doctrine)**: ships PR #N with code that depends on PR #N-K's edge function being deployed; PR #N-K's deploy was forgotten. Without this hook, partner-facing flow breaks silently. Layer 5 of `/verify-shipped` catches the drift; Phase 4.5 surfaces it the moment Justin is most likely to act.
+**Failure mode prevented**: ships PR #N with code that depends on PR #N-K's edge function being deployed; PR #N-K's deploy was forgotten. Without this hook, partner-facing flow breaks silently. Layer 5 of `/verify-shipped` catches the drift; Phase 4.5 surfaces it the moment the operator is most likely to act.
 
 **State-file dependency**: see `verify-shipped/references/integration.md` for the schema + suppress-file format + lock contract.
+
+---
+
+## Phase 4.55 — Post-Ship Topology Re-Emit (added 2026-06-12) — scoped, never-blocking
+
+**Why here**: a clean ship is the exact moment the system's structure is KNOWN to have changed, and the conversation still holds the MCP access the topology emitters need (the reason a session-end hook / background cron was rejected — emitters are model-driven; see `system-awareness-mandate.md` § refresh-when-it-matters). Re-emitting now means the map is fresh for ALL downstream consumers (reconcile, portal surfaces, the next session) instead of deferring the cost to the next plan-class session's gate. The plan-time refresh-when-stale gate REMAINS as the safety net — this phase just makes it rarely fire.
+
+**When**: after Phase 4.5 returns, before Phase 4.7. Fires only on `ship_signal == "clean"`. Skip silently (one-line note) on projects that have not initialised the topology substrate.
+
+**Scope by what the ship actually touched** (read the merged diff / ship-state):
+
+| Ship touched | Emitter to re-run | Token cost |
+|---|---|---|
+| `src/**` or `supabase/functions/**` | code emitter (`.claude/skills/code-emitter/` — pure scripts) | ~free (script-side; only receipts enter context) |
+| `supabase/migrations/**` applied this session | supabase-live emitter (`.claude/skills/supabase-live-emitter/`) | moderate (MCP catalogue queries pass through context) |
+| n8n workflow changes | n8n-cloud emitter | moderate |
+| docs/rules only | NOTHING — skip with one-line note | zero |
+
+**Context-budget interaction (Phase 4.6)**: if estimated context usage ≥ 40%, run ONLY the script-side code emitter and SKIP the MCP-bearing emitters with a logged note (`topology-reemit-deferred: <layer> — context budget; plan-time gate covers it`). The deferred layer self-heals at the next plan-class session per the standing gate.
+
+**Never-blocking guarantee** (mirrors Phase 4.5): any emitter failure → log `topology-reemit-failed: <reason>` to the session file, emit a one-line chat note, continue to Phase 4.7. The post-ship flow MUST NOT halt on a map refresh.
+
+**Verification**: after a re-emit, the topology health-check's first line must read FRESH for the re-emitted layer; paste that line into the session log.
+
+**Composes with — does not replace**: the SessionStart/plan-time hook (`system-awareness-activation.sh`) + `/topology align` deep read stay untouched; this phase only shifts WHEN the write-path usually runs (post-ship instead of next-plan).
 
 ---
 
@@ -358,9 +523,9 @@ Claude does NOT see exact token counts. Use these signals:
 
 1. **Tool-result accumulation**: estimate ~500-2000 tokens per file Read, ~3000-10000 tokens per spawned Agent return, ~200-500 tokens per Bash result. Sum since session start.
 2. **Conversation turn count**: each user-assistant pair ≈ 500-2000 tokens average. Multiply by turns.
-3. **Spawned-agent outputs**: /agent-research deep run = ~50-80K tokens of agent outputs alone. (Strategy council is no longer in the autofire loop as of 2026-05-23, so the prior "7-agent council = ~50-80K" budget item no longer applies to autovibe; if the operator invokes `/council` manually mid-session, treat the same.)
+3. **Spawned-agent outputs**: 7-agent council = ~50-80K tokens of agent outputs alone. /agent-research deep = similar.
 4. **Compaction warning from harness**: if the harness has emitted ANY auto-compact warning during this session, treat as `>= 50% used`.
-5. **Operator override**: if Justin explicitly said "context is getting full" or "let's hand off" — treat as immediate trigger.
+5. **Operator override**: if the operator explicitly said "context is getting full" or "let's hand off" — treat as immediate trigger.
 
 ### Decision matrix
 
@@ -409,118 +574,40 @@ If the 40% gate fires MUCH earlier (Phase 1 or Phase 4 mid-execute), write the s
 
 ---
 
-## Phase 4.8 — Autofire Continuation via /schedule (added 2026-05-08, Pillar D')
+## Phase 4.8 — Autofire Continuation (OPT-IN — org-specific wiring)
 
-**Purpose**: closes the manual-paste gap. After Phase 4.7 writes a canonical MASTER continuation, Phase 4.8 schedules a fresh chat (via `Skill schedule`) ~5 minutes in the future that reads from the canonical file. Result: multi-session features no longer require manual chat-open + paste — the next session fires itself.
+> **OPT-IN, and the dispatch transport is org-specific.** Phase 4.8 closes the manual-paste
+> gap: after Phase 4.7 writes a canonical MASTER continuation, Phase 4.8 schedules a fresh
+> session (~5 minutes out) that resumes from that file — so multi-session features fire
+> themselves with no manual chat-open + paste. The **gates** below ship in the template; the
+> **transport** that actually spawns the child session is environment-specific and is **not**
+> templatized. Read `.claude/skills/autovibe/references/newvibe-integration-guide.md`
+> (the per-repo wiring runbook, with `[ORG-SPECIFIC]` markers) before enabling autofire.
 
-**Architecture** (Builder/Verifier/Firer per `agency/memory/feedback_d-prime-family-elevated-2026-05-08.md`):
-- **Builder** = Phase 4.7 (writes canonical MASTER) — already shipped
-- **Verifier** = `scripts/verify-continuation.sh` — structural lint gate (this feature)
-- **Firer** = `Skill schedule` invocation, gated by verifier exit code (this feature)
-
-### When to fire — ALL conditions must hold
+**When to fire — ALL conditions must hold** (every gate fails closed):
 
 1. Phase 4.7 succeeded (latest `.claude/phase47-log.jsonl` entry has `status:"written"`)
 2. `ship_signal == "clean"` (NOT `rollback`, `admin_merge`, `smoke_unverifiable`, or any non-zero ship exit)
-3. Mode != hotfix (autovibe never auto-invokes hotfix; this is belt-and-suspenders)
-4. Verifier PASSes: `bash .claude/skills/autovibe/scripts/verify-continuation.sh <canonical-path>` exits 0
-5. Kill-switch off: `AUTOVIBE_AUTOFIRE` env var is unset OR != "0" (default = enabled)
-6. Original autovibe intent contains no destructive keywords — verifier scans the FILE; conversation should additionally scan the INTENT for: `delete`, `drop`, `destroy`, `rm -rf`, `force.push`, `--no-verify`, `truncate`
+3. Mode != hotfix
+4. Verifier PASSes: `bash .claude/skills/autovibe/scripts/verify-continuation.sh <canonical-path>` exits 0 (capture rc by direct redirect — never `… | tail`; a pipe would mask the exit code)
+5. Kill-switch off: `AUTOVIBE_AUTOFIRE` accepts any of `0`/`false`/`no`/`off`/`disabled` (case-insensitive) as DISABLE; anything else (unset, `1`, `true`, `yes`) = ENABLED
+6. The original intent contains no destructive keywords (`delete`, `drop`, `destroy`, `rm -rf`, `force.push`, `--no-verify`, `truncate`)
 
-If ANY condition fails: skip Phase 4.8, append `.claude/phase47-log.jsonl` entry with `status:"autofire-skipped"` + `skip_reason:"<which-gate>"`, emit heartbeat, continue to Session Learning Gate.
+If ANY condition fails: skip Phase 4.8, append `.claude/phase47-log.jsonl` with
+`status:"autofire-skipped"` + `skip_reason:"<which-gate>"`, emit a heartbeat, continue.
 
-### How to fire (conversation-level instructions to Claude)
+**How to enable**: the gates + verifier (`verify-continuation.sh`) + chain-guard
+(`newvibe-chain-guard.sh`, depth ≤ 5) ship with this skill dir. The **firer** — what actually
+launches the next session — is org-specific (e.g. the in-session `/schedule` skill, a cron
+tool, or a remote-execution workflow). Wire your transport per the integration guide; until a
+transport is wired, autofire is a silent no-op and the next session is a normal manual paste
+(Phase 4.7's MASTER file still exists, so nothing is lost).
 
-1. **Kill-switch check**: read `AUTOVIBE_AUTOFIRE` env. The kill-switch accepts ANY of `0`, `false`, `no`, `off`, `disabled` (case-insensitive) as DISABLE — anything else (unset, empty, `1`, `true`, `yes`, etc.) means ENABLED. If disabled, skip with `skip_reason:"kill-switch"` AND emit a loud chat heartbeat: `⏸️ Phase 4.8 autofire SKIPPED — kill-switch active (AUTOVIBE_AUTOFIRE=<value>). Manual paste required. To re-enable: 'unset AUTOVIBE_AUTOFIRE'`. (Per code-council 2026-05-08 finding 5+8 — symmetric truthy-variant accept + visible-disable signal.)
-2. **Recompute canonical path** the same way Phase 4.7 did (from `autovibe-state.json` `started_at` + slugified `intent`).
-3. **Run verifier with direct-redirect rc capture** (per `.claude/rules/shell-portability.md` rule 1 + `code-council-static-analysis.md` rule 3 — pipes eat $? and `tail` would mask the verifier's exit):
-   ```bash
-   bash .claude/skills/autovibe/scripts/verify-continuation.sh "$CANONICAL_PATH" > /tmp/verify-cont.log 2>&1
-   VERIFIER_RC=$?
-   cat /tmp/verify-cont.log    # surfacing the [PASS]/[FAIL] line is fine — but AFTER capturing rc
-   ```
-   **NEVER** use `bash verify... 2>&1 | tail -N; rc=$?` — that captures `tail`'s rc=0, masking verifier failures. This pattern reproduces the 2026-05-06 typecheck-incident class. If `VERIFIER_RC -ne 0`, skip with `skip_reason:"verifier-exit-<N>"` and emit chat heartbeat.
-4. **Intent destructive-keyword scan** (extra layer beyond verifier's file scan):
-   ```bash
-   echo "$INTENT" | grep -qiE '(delete|drop table|destroy|rm -rf|force.push|--no-verify|truncate)' && skip
-   ```
-5. **Compute scheduled time**: `now + 5 minutes` (gives current chat time to wrap, leaves margin for state to settle). Format as ISO 8601 UTC.
-6. **Invoke `Skill schedule`** with parameters:
-   - One-shot run (NOT recurring)
-   - When: the computed timestamp (~5 min in future)
-   - Prompt body (paste-ready): the hyper-micro-prompt from the canonical MASTER's tail section + the canonical file path link
-7. **Capture the routine identifier** returned by Skill schedule (e.g., `routine_xxx` or `cron_xxx`).
-8. **Append `.claude/phase47-log.jsonl`**:
-   ```json
-   {"ts":"<iso8601>","slug":"<slug>","status":"autofire-scheduled","routine_id":"<id>","scheduled_at":"<iso8601>","canonical_path":"<path>"}
-   ```
-9. **Emit heartbeat to chat**:
-   `🚀 Autofire scheduled: routine <id> fires at <iso> — fresh chat will resume from <canonical-path> with no manual paste.`
-
-### Kill switches (Reliability Engineer veto layer — defense in depth)
-
-Every gate fails closed. Multiple independent layers:
-
-| Gate | Mechanism | Effect when triggered |
-|---|---|---|
-| Env kill-switch | `AUTOVIBE_AUTOFIRE=0` in shell env | Phase 4.8 skips immediately, logs `kill-switch` |
-| Verifier exit non-zero | `verify-continuation.sh` returns 1-6 | Phase 4.8 skips, logs `verifier-exit-<N>` |
-| Destructive keyword in intent | `grep -iE` against intent string | Phase 4.8 skips, logs `destructive-intent` |
-| Destructive keyword in file body | Verifier's own check (exit 6) | Phase 4.8 skips, logs `verifier-exit-6` |
-| Non-clean ship_signal | post-ship.sh writes signal; conversation reads | Phase 4.8 skips, logs `ship-signal-<X>` |
-| Hotfix mode | Triage outcome was hotfix | Phase 4.8 skips, logs `hotfix-mode` |
-
-The user can disable Phase 4.8 instantly via:
+**Kill switch** (instant disable):
 ```bash
-export AUTOVIBE_AUTOFIRE=0      # this shell only
-echo 'export AUTOVIBE_AUTOFIRE=0' >> ~/.zshrc   # persistent
+export AUTOVIBE_AUTOFIRE=0                        # this shell only
+echo 'export AUTOVIBE_AUTOFIRE=0' >> ~/.zshrc     # persistent
 ```
-
-### Failure modes (graceful degradation)
-
-| Mode | Behaviour |
-|---|---|
-| `Skill schedule` not registered | Phase 4.8 logs `skill-unavailable`, no autofire — next chat = manual paste (Phase 4.7's MASTER still exists) |
-| `Skill schedule` returns error or times out | Phase 4.8 logs `schedule-error`, no autofire — manual fallback |
-| Verifier finds destructive keyword in continuation body | Refuses; logs `verifier-exit-6-destructive` |
-| Slug collision (same slug as existing MASTER) | Verifier exit 5; logs `verifier-exit-5-slug-collision` |
-| Filename pattern mismatch | Verifier exit 3; logs `verifier-exit-3-filename` (file doesn't match `AUTOVIBE-{ts}-{slug}-MASTER.md`) |
-| Fewer than 12 sections | Verifier exit 4; logs `verifier-exit-4-structure` (12-section template not satisfied) |
-| File missing at canonical path | Verifier exit 1; logs `verifier-exit-1-missing` (Phase 4.7 must have failed earlier) |
-| File < 500 bytes | Verifier exit 2; logs `verifier-exit-2-undersized` (truncated continuation) |
-| `phase47-log.jsonl` write fails | Heartbeat still emitted; autofire still scheduled (logging is opportunistic — see V1.1 follow-up below) |
-
-**V1.1 follow-up backlog** (per code-council 2026-05-08 — non-blocking):
-- TOCTOU: capture `sha256sum` of canonical file at verify-time; embed in scheduled prompt; fresh chat re-verifies hash before acting (closes the 5-min window between verify-pass and fire-time)
-- Log-write failure should fail-closed (no autofire) instead of opportunistic — required for decommission-trigger #1 measurability
-- Self-test boundary cases: empty file (size=0), exactly-500-byte file, exactly-12-section file, glob-substring slug variants
-- Exit code 1 split: usage error → exit 7 (currently overloaded with FAIL_MISSING)
-
-### Decommission triggers
-
-Phase 4.8's `feedback_d-prime-family-elevated-2026-05-08.md` graduation gate AND failure-class triggers:
-
-**Graduation trigger (memo intent — closes the elevated-deferral gate)**:
-
-0. **≥3 consecutive successful end-to-end runs**: autovibe → write continuation → autofire fresh chat → fresh chat resumes work cleanly with NO human paste needed = Phase 4.8 graduates from "elevated-deferral" to "shipped-permanently". Update `agency/memory/feedback_d-prime-family-elevated-2026-05-08.md` status from `elevated` → `shipped`. After graduation, this rule moves out of in-flight memory.
-
-**Failure / upgrade triggers (any one fires)**:
-
-1. **Junk-continuation rate > 20%**: 3+ consecutive autofire chains produce continuations the fresh chat couldn't act on (semantic junk slipped past structural verifier). Upgrade verifier to a `claude --print` subprocess (similar to `code-forge`).
-2. **User permanently disables**: `AUTOVIBE_AUTOFIRE=0` (or any disable variant) in shell rc for >7 days = signal to remove or rework.
-3. **/schedule deprecated**: if Anthropic deprecates the schedule skill, swap firer for `CronCreate` deferred tool.
-
-### Verification gates (run after first 3 autofire chains)
-
-The decommission trigger #1 requires measuring junk rate. After ≥3 autofire chains:
-
-```bash
-# Count autofire-scheduled entries in past 7 days
-jq -c 'select(.status == "autofire-scheduled")' .claude/phase47-log.jsonl | wc -l
-# Manually inspect each scheduled fresh chat's first message for "couldn't act" signals
-```
-
-If 0/3 OR 1/3 fresh chats reported confusion, V1 verifier is sufficient. If 2/3+, escalate to Claude-subprocess verifier.
 
 ---
 
@@ -530,12 +617,12 @@ After post-push doc, the conversation evaluates whether the session produced cro
 
 ### Gate — invoke `/reflect` IF any of these are true:
 
+- Ran `/council` or `/council --extended` during the session
 - Exited plan mode (ExitPlanMode fired at least once)
 - User correction received — signal phrases: "no, do X instead", "make sure no regression", "wrong approach", "stop doing Y", or rejected an ExitPlanMode
 - Shipped ≥2 PRs during the session (indicates non-trivial work)
-- `/code-council` returned BLOCKING or ADVISORY verdict (not PASS) — that's the DIFF reviewer at step 7, unaffected by the 2026-05-23 strategy-council retirement
+- `/code-council` returned BLOCKING or ADVISORY verdict (not PASS)
 - Any composed-skill step returned a non-zero exit code that was recovered from mid-session
-- Operator manually invoked `/council` mid-session (rare since the autofire retirement; if it happened, the deliberation produced a learning worth capturing)
 - **Phase 4.5 fleet audit detected post-ship drift** (added 2026-05-07, v1.1) — the drift IS the cross-session learning. `/reflect` may surface a hookify rule, doctrine entry, or memory note that prevents recurrence (e.g., "always run X check before Y").
 
 ### Gate behavior
@@ -565,9 +652,9 @@ After post-push doc, the conversation evaluates whether the session produced cro
 
 ## Hookify Disposition
 
-`auto-council-on-plan.local.md` hookify rule (in template repo, not installed here): **left uninstalled** AND no longer relevant — strategy council was retired from the autovibe autofire loop on 2026-05-23 because the 8-agent deliberation reliably produced rabbit-hole detours and work never actually finished. The forged prompt + master-continuation-prompt already carry the structured framing council was supposed to add. `/code-council` at step 7 (diff reviewer) is unaffected — different beast, stays in the loop. `/council` itself survives as a MANUAL operator skill outside autovibe for strategic deliberations that genuinely need multi-perspective lensing.
+`auto-council-on-plan.local.md` hookify rule (in template repo, not installed here): **left uninstalled**. `/autovibe` is the explicit trigger. Manual `ExitPlanMode` does NOT auto-fire council. One trigger, one path.
 
-If a future operator wants the hook back, install the hookify rule, restore the council + amend steps to `modes/planned.md`, and update `references/decisions-locked.md`. But assess the council-free loop on real work first before tweaking back.
+User can revise this by installing the hookify rule and updating `references/decisions-locked.md` accordingly.
 
 ---
 
@@ -584,12 +671,9 @@ Zero blast radius outside `.claude/skills/autovibe/`, `.claude/skills/prime-lite
 
 ## References
 
-- **Plan**: `/Users/justin/.claude/plans/elegant-zooming-sparrow.md`
 - **Continuation source**: `continuations/AUTOVIBE-SKILL-DESIGN-MASTER-CONTINUATION-2026-04-19.md`
 - **Decisions locked**: `references/decisions-locked.md`
 - **Invocation contract**: `references/invocation-contract.md`
-- **NewVibe integration guide**: `references/newvibe-integration-guide.md` — per-repo wiring for autofire (the two hooks, slug detection, the n8n substrate, the safety model). Read this to wire NewVibe autofire into a repo derived from this template.
 - **Ship contract**: `../ship/SKILL.md`
-- **Council protocol (manual `/council` only — not autofire)**: `../../rules/council-protocol.md`
-- **Council-retired-from-autofire memory entry**: stored in the project's auto memory under `feedback_council_removed_from_autovibe_2026_05_23.md` — read for the assess-first-before-tweaking doctrine + original file change list
+- **Council protocol**: `../../rules/council-protocol.md`
 - **Memory guidance**: `CLAUDE.md` §Auto memory

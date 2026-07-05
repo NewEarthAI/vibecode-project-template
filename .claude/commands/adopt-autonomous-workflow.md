@@ -55,7 +55,7 @@ Proceed? (y/n)
 Use `mcp__github__get_file_contents` to fetch each file from the template repo.
 Default template repo: `https://github.com/NewEarthAI/vibecode-project-template`
 
-Parse owner/repo from URL: owner=`NewEarthAI`, repo=`claude-code-project-template`
+Parse owner/repo from URL: owner=`NewEarthAI`, repo=`vibecode-project-template`
 
 Fetch these files in parallel (all from branch `main`):
 1. `.claude/skills/daily-plan-generator/SKILL.md`

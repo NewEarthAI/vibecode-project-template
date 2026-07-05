@@ -1,0 +1,9 @@
+# Python deps for skool-to-obsidian (install into .venv)
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/playwright install chromium
+playwright>=1.40
+
+# System / CLI deps (install via Homebrew, NOT pip):
+#   brew install yt-dlp ffmpeg whisper-cpp
+# - yt-dlp     : video + subtitle download (all hosts)
+# - ffmpeg     : muxing + audio extraction for transcription
+# - whisper-cpp: local transcription fallback (Loom / Skool-native / no-caption videos)

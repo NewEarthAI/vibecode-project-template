@@ -1,20 +1,22 @@
 ---
 name: pi-migration
 description: |
-  Migrate a repo from Claude Code to pi with 100% parity. Use when: "migrate to pi",
-  "set up pi", "switch from claude to pi", "pi migration", "convert hooks to pi",
-  "port extensions". Handles MCP consolidation, skill linking, hook→extension porting,
-  command→prompt conversion, model config, and full verification. Works on any Mac/repo.
-  Implements 7-phase migration: prerequisites → MCP → skills → agents → extensions → prompts → verify.
+  Migrate a repo from Claude Code to pi with 100% parity, OR resync an existing pi mirror
+  after the .claude side has moved on. Use when: "migrate to pi", "set up pi", "switch from
+  claude to pi", "pi migration", "convert hooks to pi", "port extensions", "resync pi",
+  "bring pi up to par", "update the pi version". Handles MCP consolidation, skill linking,
+  hook→extension porting, command→prompt conversion, model config, full verification, AND
+  delta resync (new/drifted/removed detection). Works on any Mac/repo.
+  Implements 7-phase fresh migration + a Phase R resync path.
 allowed-tools: Read, Write, Bash, Grep, Glob
 user-invocable: true
-version: 1.0
+version: 1.1
 classification: capability-uplift
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-06-24
 validated_on:
   - Agency-Main (23 extensions, 37 prompts, 90 skills, 13 MCP servers)
-  - the agency fleet (multi-project, multi-MCP)
+  - NewEarth AI fleet (multi-project, multi-MCP)
 parameters:
   - name: project_root
     type: string
@@ -37,10 +39,6 @@ parameters:
 
 > **Philosophy**: Migrate incrementally, verify at each phase, never break the Claude Code setup.
 > Both tools can coexist — pi reads from `.pi/`, Claude Code reads from `.claude/`.
->
-> **This skill is NOT complete until the Definition of Done passes** (see the
-> "Definition of Done" section near the end). "Ported the files" is not done —
-> *verified parity* is done. Every migration ends by running that gate.
 
 ---
 
@@ -60,6 +58,66 @@ parameters:
 | pi-mcp-adapter | `pi-mcp-adapter --help` | `npm i -g pi-mcp-adapter` |
 | jq | `jq --version` | `brew install jq` |
 | git | `git --version` | xcode-select --install |
+
+---
+
+## Phase R: Resync (the recurring job) — run this when `.pi/` already exists
+
+Fresh migration (Phases 0-8) is a **one-time** install. The **recurring** job is resync: the
+`.claude/` side has moved on (new skills, new hooks, edited skills) and `.pi/` must catch up.
+If `.pi/` already exists, START HERE — do NOT re-run the full migration.
+
+> **Hook-safety note**: in repos with `bash-guardian`, `find -exec`, `rm -rf`, and some compound
+> commands are BLOCKED. Every command below is the hook-safe form: `rm -r` (not `-rf`), explicit
+> file lists piped to `xargs perl` (not `find -exec`), one destructive op per invocation.
+
+### R.1 Compute the delta (directory-level, not file-count)
+
+```bash
+# New skills in .claude not yet in .pi (excludes _archived):
+comm -23 <(ls -1 {{claude_source}}/skills | grep -v '^_archived$' | sort) \
+         <(ls -1 {{pi_target}}/skills | sort)
+# New commands not yet ported:
+comm -23 <(ls -1 {{claude_source}}/commands/*.md | xargs -n1 basename | sort) \
+         <(ls -1 {{pi_target}}/prompts/*.md | xargs -n1 basename | sort)
+# New hooks with no matching extension (compare names by hand — porting is per-hook TS work):
+ls -1 {{claude_source}}/hooks/*.sh | xargs -n1 basename | sed 's/\.sh$//' | sort
+ls -1 {{pi_target}}/extensions/*.ts | xargs -n1 basename | sed 's/\.ts$//' | sort
+```
+
+### R.2 Apply per category
+
+- **New skills** → run the Phase 2.1 loop (it `[ -e ] && continue`-guards existing entries, so it
+  only touches the new ones: symlink no-MCP, copy+translate MCP).
+- **Drifted copies** → run the Phase 2.3 drift check, then refresh each (R.3).
+- **New commands** → run the Phase 5.1 conversion (idempotent; re-copies + re-fixes shell-expansion).
+- **New hooks** → port each to a TypeScript extension per Phase 4 (this is genuine authoring, not a
+  copy — read the source hook, map the event, preserve fail-closed/never-block semantics).
+- **Agents** → run the Phase 3.1 loop (guarded; only new agents get copied).
+
+### R.3 Refresh a drifted copy (hook-safe remove-then-copy)
+
+```bash
+rm -r {{pi_target}}/skills/<name>          # NOT `rm -rf` (bash-guardian blocks -f); one per call
+cp -r {{claude_source}}/skills/<name> {{pi_target}}/skills/<name>
+files=$(grep -rl 'mcp__' {{pi_target}}/skills/<name> 2>/dev/null)
+[ -n "$files" ] && printf '%s\n' "$files" | xargs perl -i -pe \
+  's/mcp__([A-Za-z0-9_*-]+)/($x=$1)=~s|-|_|g; $x=~s|__|_|g; $x/ge'
+```
+
+### R.4 Verify
+
+```bash
+# zero broken symlinks
+for e in {{pi_target}}/skills/*; do [ -L "$e" ] && [ ! -e "$e" ] && echo "BROKEN: $e"; done
+# zero residual untranslated tool-names in copies
+grep -rl 'mcp__' {{pi_target}}/skills 2>/dev/null
+# new extensions parse (Node 24 type-strip — offline, fast)
+for x in {{pi_target}}/extensions/*.ts; do node --experimental-strip-types --check "$x" || echo "ERR $x"; done
+```
+
+`.pi/settings.json` registers `.pi/{skills,prompts,extensions}` as DIRECTORIES — pi auto-loads
+everything inside, so no manifest/registration step is needed for new items.
 
 ---
 
@@ -133,20 +191,40 @@ pi --no-skills --no-context-files -p \
 
 ### 2.1 Link Skills
 
+Three dispositions per skill dir:
+- `_archived` → **skip** (do not mirror archived skills).
+- No `mcp__` refs anywhere → **symlink** (auto-tracks future `.claude` edits, incl. `_shared`).
+- Has `mcp__` refs → **copy + translate** tool-names (a copy does NOT auto-track — see drift check 2.3).
+
 ```bash
 mkdir -p {{pi_target}}/skills
+
+# Verified MCP-name translation (hook-safe — NO `find -exec`, NO `rm -rf`).
+# mcp__supabase-yourproject__execute_sql  ->  supabase_yourproject_execute_sql
+#   strip `mcp__`, hyphens -> `_`, collapse `__` -> `_`
+TRANSLATE='s/mcp__([A-Za-z0-9_*-]+)/($x=$1)=~s|-|_|g; $x=~s|__|_|g; $x/ge'
+
 for skill_dir in {{claude_source}}/skills/*/; do
   name=$(basename "$skill_dir")
+  case "$name" in _archived) continue ;; esac          # skip archived
   target="{{pi_target}}/skills/$name"
   [ -e "$target" ] && continue
-  if grep -q 'mcp__' "$skill_dir/SKILL.md" 2>/dev/null; then
+  if grep -rq 'mcp__' "$skill_dir" 2>/dev/null; then     # grep -r: catch refs in ANY file, not just SKILL.md
     cp -r "$skill_dir" "$target"
-    # Fix tool names: mcp__server__tool → server_tool (sed replace all MCP patterns)
-    find "$target" -type f \( -name "*.md" -o -name "*.sh" \) -exec sed -i '' 's/mcp__[a-z-]*__/\L&_/g' {} \;
+    # Pass the file LIST to perl (find -exec is blocked by bash-guardian in some repos)
+    files=$(grep -rl 'mcp__' "$target" 2>/dev/null)
+    [ -n "$files" ] && printf '%s\n' "$files" | xargs perl -i -pe "$TRANSLATE"
   else
-    ln -s "../../{{claude_source}}/skills/$name" "$target"
+    ln -s "../../{{claude_source}}/skills/$name" "$target"   # symlink (incl. _shared)
   fi
 done
+```
+
+Sanity-test the translator before trusting a batch:
+```bash
+printf 'mcp__supabase-yourproject__execute_sql\nmcp__n8n-mcp-yourinstance__*\n' \
+ | perl -pe 's/mcp__([A-Za-z0-9_*-]+)/($x=$1)=~s|-|_|g; $x=~s|__|_|g; $x/ge'
+# expect: supabase_yourproject_execute_sql   and   n8n_mcp_yourinstance_*
 ```
 
 ### 2.2 Verify Skills
@@ -155,6 +233,24 @@ done
 pi --no-skills --no-context-files -p \
   "How many skills can you see? Just the count."
 ```
+
+### 2.3 Drift check (copies only — symlinks auto-track)
+
+Symlinked skills always reflect `.claude`. **Copied** skills (the `mcp__`-bearing ones) do NOT —
+a later edit on the `.claude` side silently leaves the pi copy stale. List the drifted copies:
+
+```bash
+for e in {{pi_target}}/skills/*; do
+  [ -L "$e" ] && continue                                # skip symlinks (auto-track)
+  name=$(basename "$e")
+  src="{{claude_source}}/skills/$name/SKILL.md"
+  dst="$e/SKILL.md"
+  [ -f "$src" ] && [ -f "$dst" ] && [ "$src" -nt "$dst" ] && echo "DRIFTED: $name"
+done
+```
+
+Refresh each drifted copy by re-copying + re-translating (see Phase R.3 for the hook-safe
+remove-then-copy sequence — `rm -r`, never `rm -rf`).
 
 ---
 
@@ -343,7 +439,7 @@ pi --no-skills --no-context-files -p "How many skills can you see?"
 
 # Test 2: MCP connectivity
 pi --no-skills --no-context-files -p \
-  "Use supabase_your-org_execute_sql to run: SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'"
+  "Use supabase_yourproject_execute_sql to run: SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'"
 
 # Test 3: Prompt templates
 pi --no-skills --no-context-files -p "List every prompt template."
@@ -468,40 +564,6 @@ cat ~/.pi/agent/sessions/SESSION-*.md | head -20
 # Vault: session block with #auto-capture tag
 cat "/path/to/vault/Daily Notes/$(date +%Y-%m-%d).md" | tail -20
 ```
-
----
-
-## Definition of Done (BINDING — the migration is NOT complete until every box is ticked)
-
-This skill has not finished its job until a pi session reproduces the Claude Code
-experience on this repo. "Ported the files" is NOT done. **Done is verified parity.**
-Run every check below; if ANY fails, the migration is INCOMPLETE — fix and re-verify,
-never report success on a half-migrated repo.
-
-**Coverage — every Claude Code artefact has a pi home:**
-- [ ] Every `.claude/skills/*` is in `.pi/skills/` (symlinked, or copied + tool-renamed if it calls MCP). Counts match.
-- [ ] Every `.claude/commands/*.md` is in `.pi/prompts/*.md` (shell-expansion + MCP tool-names converted). Counts match.
-- [ ] Every `.claude/agents/**` is in `.pi/agents/` with a `name:` in frontmatter.
-- [ ] Every shell hook + every `.claude/hookify.*.local.md` rule is covered — bespoke hooks ported to `.pi/extensions/` TypeScript; hookify rules auto-loaded by `hookify-loader.ts`.
-- [ ] Project files (`CLAUDE.md`, `DESTINATION.md`, `ROADMAP.md`, `specs/`, `docs/`) read by pi UNCHANGED — they are shared, never copied.
-
-**Behaviour — it actually works, proven live (per §7.1–7.3 and §8.6):**
-- [ ] Skills load (live count), prompts list, extensions list — all non-zero and matching the source counts.
-- [ ] One live MCP call succeeds (e.g. a real `SELECT`) via a pi-renamed tool.
-- [ ] A real edit + commit fires the lifecycle hooks — a session summary is written; the Obsidian daily-note is appended if a vault is configured.
-- [ ] At least one NON-Anthropic model answers (the entire reason to use pi — cheaper models).
-- [ ] `CLAUDE.md` auto-loads, prose/caveman + tool guards are active, and `autovibe` runs end-to-end on a trivial intent.
-
-**Credentials + safety:**
-- [ ] Credentials live in the macOS Keychain / pi MCP config — never in a tracked file.
-- [ ] Claude Code still works from `.claude/` untouched (both tools coexist; rollback = delete `.pi/`).
-
-**Sign-off (write it verbatim into `.pi/PI-MIGRATION-STATE.md`):**
-> "Migration verified {date}: {N} skills, {N} prompts, {N} extensions, {N} MCP servers; live MCP call, hook-fire, a non-Anthropic model, and autovibe all confirmed. Claude Code parity: ACHIEVED."
-
-**If you cannot write that statement truthfully, the migration is not done.** This
-is the binding gate — the `pi-setup` command and any "migration complete" claim
-both inherit it.
 
 ---
 

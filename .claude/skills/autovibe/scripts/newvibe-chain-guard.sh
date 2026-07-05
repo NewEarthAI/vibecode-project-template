@@ -30,7 +30,10 @@
 
 set -uo pipefail
 
-MAX_CHAIN_DEPTH=5
+MAX_CHAIN_DEPTH=2   # Conservative default: bound autonomous-chain blast radius.
+                    # Persistent-arm removed a brake AND there is no ROADMAP-drift
+                    # gate yet AND dev/prod separation is unbuilt — so bound the
+                    # blast radius hard until those land. Raise back deliberately.
 CHAIN_WINDOW_MIN=360   # 6h — autofire hops land minutes apart; a genuine fresh
                        # manual run hours later correctly starts a new chain.
 SPAWN_STATUS_RE='^autofire-(dispatched|ssh-failed|status-unknown)$'
@@ -104,9 +107,6 @@ run_guard() {
 
 # --- self-test --------------------------------------------------------------
 self_test() {
-  # Pin LC_ALL=C — autofire hooks run in non-interactive C-locale shells; the
-  # self-test must reproduce that environment, not an ambient UTF-8 one.
-  export LC_ALL=C
   local tmp pass=0 fail=0
   tmp=$(mktemp -d)
 
@@ -144,12 +144,18 @@ self_test() {
   : > "$tmp/empty.jsonl"
   _check "T2 empty log -> depth 1 allow" 0 1 "$tmp/empty.jsonl" testslug
 
-  # T3: 4 in-window real-spawn entries -> next depth 5, allow (5 <= MAX)
+  # T3: 4 in-window real-spawn entries -> next depth 5 -> REFUSE (5 > MAX=2).
+  # (Was "allow" under the old MAX=5; cap lowered to 2 on 2026-05-19 — deeper
+  #  chains now correctly refuse sooner. T4 keeps the distinct deeper-refuse case.)
   { _entry testslug autofire-dispatched 1 "$NOW"
     _entry testslug autofire-dispatched 2 "$NOW"
     _entry testslug autofire-dispatched 3 "$NOW"
     _entry testslug autofire-dispatched 4 "$NOW"; } > "$tmp/depth4.jsonl"
-  _check "T3 four in-window -> depth 5 allow" 0 5 "$tmp/depth4.jsonl" testslug
+  _check "T3 four in-window -> depth 5 REFUSE (cap=2)" 1 5 "$tmp/depth4.jsonl" testslug
+
+  # T3b: cap-2 ALLOW boundary — 1 in-window entry -> next depth 2 -> allow (2 <= MAX=2).
+  { _entry testslug autofire-dispatched 1 "$NOW"; } > "$tmp/depth1.jsonl"
+  _check "T3b one in-window -> depth 2 allow (cap=2 boundary)" 0 2 "$tmp/depth1.jsonl" testslug
 
   # T4: 5 in-window real-spawn entries -> next depth 6, REFUSE
   { _entry testslug autofire-dispatched 1 "$NOW"

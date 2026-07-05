@@ -57,6 +57,52 @@
       "prompt": "The n8n VPS disk is at 90% — clean it up.",
       "should_trigger": false,
       "expectations": []
+    },
+    {
+      "id": "eval-007",
+      "prompt": "Our Supabase migration history is drifted and Branching won't build. Make it rebuildable from code.",
+      "should_trigger": true,
+      "expectations": [
+        "Resolves the DB system's adapter (postgres-supabase) and confirms STATUS is wired before proceeding",
+        "Runs the make-safe-baseline 7-step recipe, not an ad-hoc squash",
+        "Step 0: freeze-check FIRST — refuses to baseline while migrations are actively shipping (stale-on-arrival)",
+        "Step 5: rescans for code/tests reading migration files by path and re-points them BEFORE archiving",
+        "Treats the credentialed snapshot and the ledger reconcile as production writes needing an explicit operator nod",
+        "Completion gate is a throwaway copy rebuilding HEALTHY (step 7), not the reconcile"
+      ]
+    },
+    {
+      "id": "eval-008",
+      "prompt": "Make a safe migration baseline for our MySQL database.",
+      "should_trigger": true,
+      "expectations": [
+        "Looks up references/db-adapters/mysql.md and reads its STATUS token",
+        "Identifies it as STUB (not yet wired — no client on MySQL) and STOPS",
+        "Does NOT invent a MySQL baseline recipe",
+        "Tells the operator the system is not wired and names what wiring requires (answer the 7 questions, prove on a throwaway copy, then flip to wired)"
+      ]
+    },
+    {
+      "id": "eval-009",
+      "prompt": "Snapshot the prod schema now to make the baseline — a couple of other chats are mid-way through shipping migrations.",
+      "should_trigger": true,
+      "expectations": [
+        "REFUSES to snapshot while migrations are shipping — invokes the freeze-check (step 0)",
+        "Explains the stale-on-arrival failure: a migration landing seconds before the dump is absent from it, baking drift into the baseline",
+        "Requires a quiet window (ledger stable across the window) before proceeding",
+        "Does not produce a baseline from a mid-shipping snapshot"
+      ]
+    },
+    {
+      "id": "eval-010",
+      "prompt": "The baseline file is dumped — just archive the old migration files and we're done.",
+      "should_trigger": true,
+      "expectations": [
+        "Runs the path-reader rescan (step 5) BEFORE archiving — greps for code/tests that open a migration by path",
+        "Re-points any path-readers at the archive first; refuses to declare clear-to-archive while hits remain",
+        "Corrects 'we're done' — archiving is not the completion gate; the gate is a throwaway copy rebuilding HEALTHY (step 7)",
+        "Notes the ledger reconcile (step 6) still has to happen in a frozen window"
+      ]
     }
   ]
 }

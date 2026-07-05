@@ -11,10 +11,10 @@ description: |
   Use when: "cinematic landing page", "GSAP animations", "scroll-driven page",
   "parallax landing page", "motion-heavy page", "premium animated site",
   "theatrical scroll experience", "animated hero with GSAP".
-version: 2.2
+version: 2.3
 classification: capability-uplift
 created: 2026-03-10
-updated: 2026-03-10
+updated: 2026-06-24
 triggers:
   - "cinematic landing page"
   - "GSAP landing page"
@@ -175,6 +175,15 @@ via `npm i -D tailwindcss @tailwindcss/vite` and add the plugin to `vite.config.
    Because: picsum.photos loads asynchronously; scroll positions miscalculate without refresh.
 5. **Free-tier only** — ScrollTrigger, Observer, Draggable. No SplitText, MorphSVG, DrawSVG
    unless user confirms Club GreenSock license.
+6. **`prefers-reduced-motion` is MANDATORY (a11y, not optional)** — every animation ships a
+   reduced-motion branch via `gsap.matchMedia({ reduce: "(prefers-reduced-motion: reduce)" })`
+   that sets the final state (or `duration: 0`). Rule 3's `matchMedia` is for *responsive*
+   breakpoints; this is a *separate* obligation. A cinematic page that ignores reduced-motion
+   is non-compliant, however beautiful. (This is distinct from — and stricter than — most
+   motion skills, which omit it entirely.)
+7. **Motion is earned, even here** — see "Restraint Within Cinema" below. Cinema is the point
+   on this tier, but ambient/decorative/"because it looked cool" motion is still cut. Tag each
+   beat with a `/* motion-earned: <narrative|attention|brand-feel|feedback> */` comment.
 
 See `references/gsap-patterns.md` for implementation patterns and code examples.
 
@@ -185,6 +194,57 @@ Each preset defines 6 motion categories: entrance, hover, scroll, parallax, text
 
 Read `references/motion-tokens.md` for the full easing/duration/stagger map per preset.
 When composing custom presets, document the composition in a code comment.
+
+## Restraint Within Cinema — NewEarth Discipline (v2.3)
+
+> This is the cinematic/marketing tier, so it has more motion latitude than the product-UI
+> house (`ui-design-system`). But "cinematic" is not "busy", and a landing hero is the #1
+> place AI-tell copy and over-decoration show. This section imports the design-suite discipline
+> at the level a marketing page needs — it does NOT impose the product-UI rulebook. It composes
+> the design suite rather than duplicating it (the canonical rules live in those skills).
+
+**1. Motion is earned (cinematic recast).** Every beat must serve **narrative, attention,
+brand-feel, or feedback**. Cut ambient loops, decorative drift, and "because it looked cool."
+The instinct is one orchestrated hero moment + restrained section reveals — not five competing
+animations. Carry the `/* motion-earned: <reason> */` comment (GSAP Rule 7) so the intent is
+auditable. `/design-review` grades for its presence.
+
+**2. Reduced-motion is mandatory** — GSAP Rule 6. Not optional, even on a showcase page.
+
+**3. Restraint counters** — landing pages over-decorate more than any surface. Apply the
+mechanically-counted checks in
+[`ui-design-system/references/restraint-preflight.md`](../ui-design-system/references/restraint-preflight.md):
+eyebrow ≤ ceil(sections/3), zigzag ≤ 2 consecutive splits, ≥ 4 distinct layout families per 8
+sections, marquee ≤ 1/page, hero ≤ 4 text elements + subhead ≤ 20 words, bento cells = content
+count. Consistency locks: one accent, one radius scale, one theme.
+
+**4. Anti-AI-tell COPY (universal — applies on every tier).** Hero headlines + stat rows are
+where "a robot wrote this" leaks. No **em-dash** (`—`) in generated UI copy; no **invented
+precise numbers** (`92%`, `4.1×`) unless real and sourced; run the Copy NEVER List. Canonical
+rules: [`ui-design-system/references/anti-vibe-coded.md`](../ui-design-system/references/anti-vibe-coded.md)
+#23–25. Mechanical check: `bash ../ui-design-system/scripts/audit-restraint.sh <project>`.
+
+**5. Modern web-platform standards + award lens.** The quality gate checks bundle size but not
+INP or the award bar. For a page that's *judged on* exactly this, also apply
+[`design-review/references/modern-web-platform.md`](../design-review/references/modern-web-platform.md):
+**INP** ≤ 200ms (not FID), `dvh` for full-height heroes, `:focus-visible`, and — where a reveal
+is simple — prefer **CSS scroll-driven animations** (`animation-timeline: view()`, behind
+`@supports`) over a GSAP ScrollTrigger (lighter, no JS). Score the result against the
+**Awwwards weighting** (Design 40 / Usability 30 / Creativity 20 / Content 10) — usability +
+content are 40% combined; a beautiful page that's hard to use can't top-score.
+
+**6. House alignment (NewEarth-brand pages).** For NewEarth's *own* sites prefer the restrained
+presets — **B (Midnight Luxe)**, **F (Clinical Exact)**, **H (Editorial Noir)** — with DM Sans /
+Sora, per the 2026-06-05 NewEarth landing (worked run below). The **Space Grotesk** pairing
+(preset A) and the **overshoot** presets (**C Brutalist Signal** `back.out`, **G Playful Kinetic**
+`elastic.out`) are *intentional client-brand personalities* — keep them for clients whose brand
+genuinely calls for that energy; they are NOT the NewEarth house default. (Space Grotesk is a
+product-UI AI-tell in `ui-design-system`; on a client marketing page it's a legitimate brand
+choice — tier-appropriate, not a contradiction.)
+
+Composes with the full NewEarth Design Suite: `/design-review` audits a built landing page
+against all of the above; `ui-design-system` owns the product-UI motion + restraint canon
+this section imports.
 
 ### SVG Noise Overlay (CONDITIONAL)
 
@@ -336,3 +396,72 @@ Before presenting the final output, verify:
 - [ ] SEO meta generated in `index.html` (if enabled)
 - [ ] Quality gate passes with 0 failures
 - [ ] Output matches aesthetic criteria for the selected preset
+- [ ] Every animation has a `prefers-reduced-motion` branch (GSAP Rule 6) + a `/* motion-earned */` comment (Rule 7)
+- [ ] Restraint counters pass (eyebrow/zigzag/layout-variety/hero-word-limit — see Restraint Within Cinema #3)
+- [ ] No em-dash + no invented stats in hero/UI copy (anti-vibe-coded #23–25); `audit-restraint.sh` run
+- [ ] INP-aware (not FID), `dvh` heroes, `:focus-visible`; scored against the Awwwards lens for award-grade briefs
+- [ ] House-brand page uses a restrained preset (B/F/H) + DM Sans; overshoot/Space-Grotesk reserved for client brands that call for it
+
+## Worked Runs (gotchas from real builds)
+
+### 2026-06-05 — NewEarth AI agency landing page (premium-minimal, custom preset)
+
+Reusable for **client** landing pages (a sellable capability). Build:
+`sites/newearth-landing/` in Agency-Main. Custom preset = B (Midnight-Luxe dark +
+luxury reveal) + H (Editorial-Noir masked-line headline), palette/type overridden
+to a brand brief (silver-on-carbon + one restrained signal colour, Sora/Inter).
+
+Gotchas worth keeping:
+
+1. **Use the `react-ts` template, not `react`.** The brief mandated a `npm run
+   typecheck` gate; the skill's default JS scaffold makes that gate vacuous (nothing
+   to check = silent no-op, the exact class `typecheck-and-review-gates.md` warns of).
+   Add `"typecheck": "tsc --noEmit -p tsconfig.app.json"` to scripts.
+2. **`@fontsource-variable/*` side-effect imports** need a `declare module` stub
+   (`src/fontsource.d.ts`) or TS errors TS2882. Variable fonts = one import, all weights.
+3. **Optimise raster logos to WebP** with `sharp` (devDep) — a 2048² chrome PNG was
+   1.46MB; a 1280² WebP @q92 is 214KB (-85%), and 1280 covers @2x/@3x of a ~340px hero.
+   Clean-low-res cut-out upscaled beats dirty-high-res (a render with a baked dark bg
+   has unusable alpha for compositing).
+4. **Chrome shine-sweep from a flat raster**: overlay a `mask-image: url(logo)` div
+   over a moving linear-gradient, `mix-blend-mode: screen` → highlight rides only the
+   logo's alpha shape. No vector needed. (chrome logos don't vectorise — keep PNG/WebP.)
+5. **Screenshotting reveal-on-scroll content for review**: launch the browser with
+   `reducedMotion: 'reduce'` so `prefers-reduced-motion` guards set all reveal targets
+   visible immediately → full-page screenshot shows everything. Capture the hero in
+   normal motion separately (wait ~3s for the load timeline).
+6. **No Playwright MCP? Use `playwright-core` + the cached chromium headless-shell**
+   (`~/Library/Caches/ms-playwright/chromium_headless_shell-*/.../chrome-headless-shell`)
+   via `executablePath` — no browser download. See `scripts/shoot.mjs` + `smoke.mjs`.
+7. **Escalatable motion = a config object** (`motion.config.ts`) of named beat flags
+   (`heroSweep: once|loop|hover|off`, `heroTilt: settle|pointer|off`, count-ups, grain).
+   Build quiet-spectacle; dial beats up in the review pass with zero re-architecture.
+8. **Tailwind v4: wrap ALL base resets in `@layer base` — this is load-bearing.**
+   `@import 'tailwindcss'` puts every utility inside a cascade *layer*. In CSS, an
+   UNLAYERED rule beats ANY layered rule regardless of specificity. So a hand-written
+   `p { margin: 0 }` / `h1,h2,h3 { margin: 0 }` sitting outside a layer silently kills
+   EVERY `mt-*`/`mb-*` utility on those elements — site-wide, no error, no warning.
+   Symptom: you bump a margin class and nothing moves. Fix: `@layer base { …resets… }`.
+   (2026-06-08: this exact bug made every paragraph/heading margin dead; gap utilities
+   read 0px in-browser until the resets were layered.)
+9. **Measure spacing/alignment in-browser, never by eye on a scaled screenshot.** A
+   `getBoundingClientRect` probe via `playwright-core` gives exact px: element centre vs
+   `innerWidth/2`, gap = nextTop − prevBottom. This caught the @layer bug above (gaps =
+   0 despite large classes) and nailed nav centring to ±1px. Screenshots confirm;
+   numbers diagnose.
+10. **Centring the MIDDLE of an odd nav (logo · links · CTA).** `justify-between` puts
+    the links group wherever the unequal logo/CTA widths leave it — not page centre. To
+    put the middle link dead-centre (in line with a centred hero mark): absolutely
+    position the links group `-translate-x-1/2` and correct for the side-item width
+    asymmetry with a measured `left: calc(50% + Npx)` (the centre item ≠ group centre
+    when flanking labels differ in width). Verify with the measure probe → ±1px.
+11. **CSS-comment trap: a `*/` token inside a comment self-closes it.** Writing the
+    pattern m-t-asterisk-slash-m-b-asterisk inside `/* … */` ends the comment early →
+    "Missing opening (" build error. Write "margin/padding utilities" in prose instead.
+12. **Adjacent centred statement blocks: match their `max-width`.** Two centred sections
+    can share an identical centre (off=0) yet read as "misaligned" because their widths
+    differ (e.g. `max-w-4xl` vs `max-w-3xl`) so left/right edges don't line up. Give
+    sibling statement blocks the same max-width so the column is visually continuous.
+
+Status: built + prod-build smoke PASS; go-live gated on `vercel login` + apex DNS.
+Did NOT `/push-to-template` (single use ≠ proven; push gate is the 2nd client page).
