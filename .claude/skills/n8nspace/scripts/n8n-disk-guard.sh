@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # n8n-disk-guard.sh — Autonomous disk space guardian for n8n production droplets
 # Version: 1.0.0
-# Target: n8n-server-digitalocean (138.197.188.129, 25GB, FRA1)
+# Target: n8n-server-digitalocean (YOUR_VPS_IP, 25GB, FRA1)
 # Deploy: /usr/local/sbin/n8n-disk-guard.sh
 # Cron:   /etc/cron.d/n8n-disk-guard
-# Mac:    ssh root@138.197.188.129 "/usr/local/sbin/n8n-disk-guard.sh"
+# Mac:    ssh root@YOUR_VPS_IP "/usr/local/sbin/n8n-disk-guard.sh"
 #
 # Modes:
 #   retention (default) — delete binaryData files older than RETENTION_MINUTES

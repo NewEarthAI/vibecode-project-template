@@ -6,7 +6,7 @@ tool_matcher: mcp__supabase-(a-logistics-app|the appai|your-org)__(apply_migrati
 action: warn
 ---
 
-**[BLOCK — HARD RULE] Backfill pattern detected — explicit Justin approval required**
+**[BLOCK — HARD RULE] Backfill pattern detected — explicit the operator approval required**
 
 Triggered when the SQL / migration body / edge function body contains ANY of the following patterns suggesting LLM-billed work against historical data:
 
@@ -19,7 +19,7 @@ Triggered when the SQL / migration body / edge function body contains ANY of the
 
 ## Why this fires
 
-Justin's standing rule (2026-05-15): **"We never spend money on backfilling without my explicit permission."**
+the operator's standing rule (2026-05-15): **"We never spend money on backfilling without my explicit permission."**
 
 Origin: pod-ocr-backfill cron firing every 2 minutes for ~3-4 weeks on 4,500 stale PODs, burning ~$60-80/day silently before detection. R1,500+ ZAR lost before anyone noticed.
 
@@ -28,7 +28,7 @@ Origin: pod-ocr-backfill cron firing every 2 minutes for ~3-4 weeks on 4,500 sta
 ```
 BACKFILL APPROVAL GATE:
 [ ] 1. Estimate cost: count of historical records × per-call cost × expected retry multiplier
-[ ] 2. Surface the dollar figure to Justin explicitly in the response BEFORE this SQL runs
+[ ] 2. Surface the dollar figure to the operator explicitly in the response BEFORE this SQL runs
 [ ] 3. Wait for unambiguous OK that names the dollar figure (e.g., "yes, $50 is fine")
 [ ] 4. The OK must be from THIS session — previously-approved backfills do NOT carry forward
 [ ] 5. Job must have a daily budget cap OR a max-records-processed cap before activation
@@ -36,7 +36,7 @@ BACKFILL APPROVAL GATE:
 [ ] 7. Job must include a kill switch (active flag, env var, or feature gate)
 ```
 
-If ANY box unchecked → STOP and ask Justin. Do not proceed.
+If ANY box unchecked → STOP and ask the operator. Do not proceed.
 
 ## Allowed without this gate
 

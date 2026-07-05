@@ -30,6 +30,7 @@ volume.
 8. [Credentials & security, done properly](#8--credentials--security-done-properly)
 9. [Staying up to date](#9--staying-up-to-date)
 10. [The philosophy underneath](#10--the-philosophy-underneath)
+11. [Why this is a platform, not just a pile of tools](#11--why-this-is-a-platform-not-just-a-pile-of-tools)
 
 ---
 
@@ -213,8 +214,8 @@ ceremony.
 
 ## 5 · The full toolkit, grouped
 
-Around **110 skills**, **38 commands**, **~30 specialist agents**, and **~60
-safety/efficiency hooks** ship in the box. You rarely call most of them by name —
+Around **99 skills**, **36 commands**, **26 specialist agents**, and **~60
+safety/efficiency hooks** (23 shell hooks + 40 hookify rules) ship in the box. You rarely call most of them by name —
 Claude reaches for the right one automatically. **Don't try to learn the list**
 — read 📄 `CATALOG.md` instead: it tiers everything into a small CORE you'll
 actually touch, a RECOMMENDED set for when a situation applies, and SPECIALIST
@@ -391,7 +392,7 @@ honestly labelled by readiness so you always know what you're getting:
 
 | Walkthrough | Status | What you get |
 |---|---|---|
-| **Connect your second brain (Obsidian)** | ✅ Ready | Sign up for Obsidian, point the template at a vault, and you inherit the start/mid/end-of-session sync, entity tracking, and visual knowledge graph. Claude will help you decide whether you want one vault per project or sub-projects under one. |
+| **Connect your second brain (Obsidian)** | ✅ Ready | Point the template at an Obsidian vault and every session writes its summary into your daily note, and reads your recent notes back at the next session's start — durable, cross-session memory. Works locally with zero extra setup. For searchable cross-session recall it upserts notes into a `knowledge_items` table in **your own** Supabase (a one-command migration ships in `supabase/migrations/`; `/setup` offers to apply it). Automate the sync with the built-in scheduler. Claude helps you decide one vault per project vs sub-projects under one. Full step-by-step recipe: 📄 `docs/OBSIDIAN-SETUP.md`. |
 | **Parallel agent teams** | ✅ Ready | Several Claudes build at once, contract-first. Needs a terminal multiplexer (`tmux`, or `cmux` for the multi-pane experience) — Claude walks you through installing it. |
 | **Autonomous "autofire" shipping** | ⚙️ Advanced | After a clean ship, a fresh chat launches itself over SSH to continue the next step. Needs an automation workflow + a secure tunnel; Claude walks you through the SSH setup. |
 | **Cheaper models via OpenRouter** | ⚙️ Advanced | Route some work through lower-cost models (including strong Chinese open models) to stretch budget. Claude helps you wire it up. |
@@ -494,6 +495,42 @@ A few principles shaped every choice here:
   reviewers loyal to the project rather than your feelings, keep quality honest.
 - **Verify, never assume.** "Done" needs evidence — a passing test, a real
   deploy, a git check — not a confident claim.
+
+---
+
+## 11 · Why this is a platform, not just a pile of tools
+
+This template is an *innovation platform* — a foundation you build your own
+project on top of. A few ideas from platform economics (Cusumano, Gawer & Yoffie,
+*The Business of Platforms*) shaped its design, and knowing them helps you get
+more out of it:
+
+- **Value on day one, before any network.** A platform that needs a crowd before
+  it's useful dies waiting for the crowd. So this box is complete on its own —
+  `/setup` gives you a planning, safety, and shipping system with zero other
+  users and zero community. (The classic "chicken-and-egg" problem, solved by
+  being genuinely useful solo first.)
+- **Curation is the governance dial.** Wide-open platforms drown you in choice;
+  locked-down ones stifle you. This one sits deliberately in between: opinionated
+  *safe defaults* plus a *curated* catalogue (CORE / RECOMMENDED / SPECIALIST),
+  with the whole thing still open to extend. A smaller set where everything works
+  beats a bigger set full of dead ends.
+- **You're a complementor — the loop is built for you.** Platforms live or die by
+  the people who build on them. `skill-creator` lets you add your own tools;
+  `/push-to-template` contributes them back; `/update-latest` pulls everyone's
+  improvements in. Value flows both ways — and "free forever" means the platform
+  never turns around and extracts from the people building on it.
+- **Stable rules build trust.** People only invest in a platform when its rules
+  are predictable — so updates never silently break a working setup, breaking
+  changes are flagged loudly, and renamed tools keep their old names for two
+  releases. Predictability is a feature, not an afterthought.
+- **A stable core, a swappable periphery.** The handful of tools you touch daily
+  change rarely; the specialist tools around them can be added, swapped, or
+  ignored. That modularity is what lets the template grow without collapsing
+  under its own weight.
+
+The practical upshot: lean on the CORE, extend at the edges with `skill-creator`,
+and contribute anything good back — that's the platform working as designed.
 
 ---
 

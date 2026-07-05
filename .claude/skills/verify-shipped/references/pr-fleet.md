@@ -2,7 +2,7 @@
 
 How `/verify-shipped` walks the GitHub PR fleet (open + recently merged) and produces actionable findings.
 
-This is a Claude-followed recipe (no dedicated bash script — the entire surface is `gh` CLI calls). Total wall-clock on Justin's typical PR fleet: ~3-5 seconds.
+This is a Claude-followed recipe (no dedicated bash script — the entire surface is `gh` CLI calls). Total wall-clock on the operator's typical PR fleet: ~3-5 seconds.
 
 ---
 
@@ -97,7 +97,7 @@ This dedup happens in SKILL.md Phase 7, NOT in Layer 3 itself. Layer 3 emits raw
 
 ## Edge cases
 
-- **Author filter**: `@me` resolves to the authenticated `gh` user. If the authenticated user is bot-like or different from the human (e.g., GitHub Actions token), Layer 3 will under-report. Surface this in the [skip] message if `gh api user --jq .login` returns a non-Justin/non-Chris user.
+- **Author filter**: `@me` resolves to the authenticated `gh` user. If the authenticated user is bot-like or different from the human (e.g., GitHub Actions token), Layer 3 will under-report. Surface this in the [skip] message if `gh api user --jq .login` returns a non-the operator/non-a teammate user.
 - **Rate limit**: `gh pr list` consumes ~3 GitHub API calls per invocation. Free-tier rate limit is 5,000/hr — easily survives this audit.
 - **Fork repos**: `gh pr list` runs against the local repo's GitHub remote. If the worktree is on a fork, results will be PRs on the fork, not upstream. Acceptable for v1.1.
 - **Closed-not-merged PRs**: deliberately ignored. If a user closed without merging, that's a deliberate signal; this skill doesn't lecture about it.
@@ -138,7 +138,7 @@ The recipe-as-markdown approach matches the v1.0 pattern (`edge-fn-drift.md`, `m
 - `gh pr list --state open --limit 50`: ~1-2s
 - `gh pr list --state merged --limit 20`: ~1-2s
 - Per-PR branch+worktree check: ~10ms × 20 = 200ms
-- Total: ~3-5s on Justin's typical PR fleet
+- Total: ~3-5s on the operator's typical PR fleet
 
 Well under the `quick` tier wall-clock budget.
 

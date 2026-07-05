@@ -872,7 +872,7 @@ gh pr create --title "docs: continuation — {{scope}}" \
   --body "Continuation prompt for {{scope}}. impl_status: pending. Next session picks this up from continuations/{{filename}}."
 ```
 
-**Why this is mandatory**: Justin works across multiple Macs. A continuation that exists only on one Mac's working tree is invisible to sessions on other Macs and to the daily plan. Publishing to origin (via either direct push OR PR merge) guarantees:
+**Why this is mandatory**: the operator works across multiple Macs. A continuation that exists only on one Mac's working tree is invisible to sessions on other Macs and to the daily plan. Publishing to origin (via either direct push OR PR merge) guarantees:
 - All Macs see the continuation after `git pull`
 - The daily plan on ANY Mac can surface it
 - Implementation status is tracked in version control

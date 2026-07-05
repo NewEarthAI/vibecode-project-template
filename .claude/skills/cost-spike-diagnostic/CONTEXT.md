@@ -8,7 +8,7 @@
 
 ### Day 0 — 2026-05-13 (Wednesday) — the bill that woke us up
 
-Justin sees an OpenAI line item: ≈$21 in a single day on an API key labelled "a logistics app - AI Workbook". The previous baseline was $5/day max. Three days of accumulating spend ($17 → $18 → $21) suggested something was wrong but had been quietly running for a while.
+the operator sees an OpenAI line item: ≈$21 in a single day on an API key labelled "a logistics app - AI Workbook". The previous baseline was $5/day max. Three days of accumulating spend ($17 → $18 → $21) suggested something was wrong but had been quietly running for a while.
 
 ### Day 1 — 2026-05-14 (Thursday) — three wrong hypothesis branches before the right one
 
@@ -18,7 +18,7 @@ Initial inventory grep'd every OpenAI consumer across three repos (a logistics a
 2. **Second wrong branch — a SaaS app edge functions**: hunted four a SaaS app extraction functions (`extract-deal-flyer`, `extract-mortgage-statement`, `extract-portfolio-tape`, `handle-deal-intake`) that all hard-code gpt-4o. Another parallel Claude session in the SaaS app repo cleared them by checking the audit log table.
 3. **Third wrong branch — n8n retry config**: theorised the Visual AI Media Classifier had `retries: 6` configured in its OpenAI HTTP node, multiplying calls 6× per photo.
 
-The actual root cause surfaced only after Justin pasted a **screenshot of the n8n execution error pane** showing:
+The actual root cause surfaced only after the operator pasted a **screenshot of the n8n execution error pane** showing:
 
 ```
 duplicate key value violates unique constraint "data_conflicts_pkey"
@@ -34,7 +34,7 @@ That single concrete observation collapsed three days of attribution drift in 30
 
 ### Day 2 — 2026-05-15 (Friday) — the attribution illusion is broken
 
-Justin reports: *"Here I am a day later and I am still getting charged tons for gpt 4o!!!"*
+the operator reports: *"Here I am a day later and I am still getting charged tons for gpt 4o!!!"*
 
 The hourly OpenAI usage CSV broke the Day 1 victory claim in one glance:
 - gpt-4o call rate on the suspect key was **flat at 130-150 calls/hour for 30 consecutive hours**
@@ -104,13 +104,13 @@ The skill is being pushed to the the agency template repo for use across all cli
 
 1. **Cross-client cost attribution**: every the agency client project shares the same OpenAI account but should bill into separate projects. This skill's Phase 2 is the authoritative attribution methodology when keys leak across projects.
 
-2. **LLM usage monitoring** (planned in agency repo): Justin has identified two candidate repos to build the per-workflow / per-edge-function dashboard against:
+2. **LLM usage monitoring** (planned in agency repo): the operator has identified two candidate repos to build the per-workflow / per-edge-function dashboard against:
    - 🌐 `https://github.com/NewEarthAI/llm-performance-tracker.git` — performance + cost tracking
    - 🌐 `https://github.com/NewEarthAI/litellm.git` — LiteLLM gateway (proxies model calls, tags each request with metadata for attribution)
    
    The LiteLLM approach is structurally superior for the per-workflow attribution problem: it sits between every code path and the model provider, so each call is automatically tagged with `workflow_name` / `edge_function_name` regardless of which API key is used. This makes the Phase 2 attribution step nearly free.
 
-3. **Doctrine for fresh keys per use case** (queued in deferred-todos): Justin's standing rule for the agency — whenever Claude touches anything API-key-related in a vibe-code session, a brand-new key fully customised for the exact use case must be created so cost attribution stays trivially clean. This skill's Phase 2 will compose with that doctrine once it lands.
+3. **Doctrine for fresh keys per use case** (queued in deferred-todos): the operator's standing rule for the agency — whenever Claude touches anything API-key-related in a vibe-code session, a brand-new key fully customised for the exact use case must be created so cost attribution stays trivially clean. This skill's Phase 2 will compose with that doctrine once it lands.
 
 ---
 

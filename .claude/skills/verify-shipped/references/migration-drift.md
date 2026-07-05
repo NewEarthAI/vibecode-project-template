@@ -18,7 +18,7 @@ git ls-tree --name-only origin/main supabase/migrations/ \
   | sed 's/\.sql$//'
 ```
 
-**Reading from `origin/main`, not the worktree, is mandatory.** Justin runs ~50 worktrees in parallel, many with WIP migration files on feature branches. Reading `ls supabase/migrations/*.sql` from the current worktree would produce flood-of-false-PENDING_APPLY findings — every WIP migration on every feature branch shows up as "pending apply." This trains the operator to ignore PENDING_APPLY exactly when a real one arrives. Council-CRITICAL fix 2026-05-07.
+**Reading from `origin/main`, not the worktree, is mandatory.** the operator runs ~50 worktrees in parallel, many with WIP migration files on feature branches. Reading `ls supabase/migrations/*.sql` from the current worktree would produce flood-of-false-PENDING_APPLY findings — every WIP migration on every feature branch shows up as "pending apply." This trains the operator to ignore PENDING_APPLY exactly when a real one arrives. Council-CRITICAL fix 2026-05-07.
 
 Each filename has the shape `<version>_<name>` where `<version>` is the leading digits (typically a 14-digit timestamp like `20260507123456` OR a 8-digit date like `20260507`).
 

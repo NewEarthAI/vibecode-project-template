@@ -82,7 +82,7 @@ Refusing to produce a review until the brand contract layer exists —
 a review without L1 contracts is generic critique, not NewEarth review.
 
 Run: bash .claude/skills/ui-design-system/scripts/preflight-contract-files.sh
-Then: run impeccable teach (interactive, Justin in the loop) to author L1.
+Then: run impeccable teach (interactive, the operator in the loop) to author L1.
 
 Ref: continuations/NEWEARTH-DESIGN-SUITE-V2-MASTER-CONTINUATION-2026-05-13.md §15 (A1, A2, A6).
 ```

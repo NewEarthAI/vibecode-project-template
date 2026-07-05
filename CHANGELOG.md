@@ -5,7 +5,40 @@ this file to show you what's new since your last sync.
 
 ---
 
-## 2026-07-03 — The big catch-up: system map, parallel-session safety, tiered catalogue
+## 2026-07-05 — Curation pass: leaner, clearer, and a working second brain
+
+A deliberate "less is more" pass so the template is genuinely valuable to a fresh
+builder rather than a maximal pile of tools. Nothing you rely on day-to-day
+changed; a layer of internal-workflow governance and heavyweight infrastructure
+that needed setup most people won't have was removed so the box stays clear.
+
+**BREAKING** — none for a normal project. If you had wired the (advanced,
+infra-heavy) system-map tools, see the note below.
+
+**REMOVED (curated out — needed infrastructure most projects don't have, or were
+internal governance rather than tools)**
+- The **system-map / topology** subsystem (`/topology`, its emitters, the viewer
+  app) — it needed a database substrate to be useful and read as an empty page
+  without one. Use `/understand` for a code map instead.
+- A layer of **multi-session governance rules** and every-session "mandate"
+  banners that suited a large internal team's workflow more than a solo builder.
+  The underlying *thinking tools* (first-principles, commensurability,
+  feedback-loops, council) all stay — they're just offered, not forced.
+
+**NEW / IMPROVED**
+- **Second brain that actually works end-to-end.** A standalone `knowledge_items`
+  migration now ships, so the Obsidian → Supabase sync has a table to write to in
+  **your** project. Full recipe in 📄 `docs/OBSIDIAN-SETUP.md`. Layer 1 (local
+  vault capture) needs no database at all.
+- **Platform-thinking section** in the README (why a template is itself a
+  platform, and how this one is governed) — README §11.
+- **Accuracy + honesty fixes**: real tool counts, a corrected upstream repo name
+  (was 404-ing template pulls), a "start here day one" line in the catalogue, and
+  a full de-leak so nothing internal ships in this public copy.
+
+---
+
+## 2026-07-03 — The big catch-up: parallel-session safety, tiered catalogue
 
 Brings the template up to date with everything the upstream toolkit learned in
 June, plus a platform-thinking pass on how the whole box is organised.
@@ -13,14 +46,8 @@ June, plus a platform-thinking pass on how the whole box is organised.
 **BREAKING** — none. Nothing was renamed or removed; existing projects update cleanly.
 
 **NEW**
-- **The system map (`/topology`)**: a live map of your whole system — code,
-  database, automations, settings — with gentle drift flags when what's built
-  wanders from what you planned. 11 new skills, a viewer app
-  (`topology-viewer/`), 3 new doctrine chapters, and a plan-time alignment
-  hook. Overview: `docs/TOPOLOGY-SYSTEM-OVERVIEW.md`.
-- **Parallel-session safety**: `/where` (plain-English map of every running
-  chat + working copy), collision-detection hooks, and the single-folder
-  worktree discipline rule.
+- **Parallel-session safety**: collision-detection hooks and the single-folder
+  worktree discipline rule, so two chats never corrupt each other's files.
 - **Session-end continuation gate**: every session that ends mid-work now
   leaves a paste-ready "carry on from here" prompt automatically.
 - **The council, complete**: the `/council` skill + 8 council agent

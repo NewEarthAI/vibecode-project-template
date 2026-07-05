@@ -33,7 +33,7 @@ fi
 set -uo pipefail
 
 # ── Portability shims (Amendment 10 / Edge #4) ─────────────────────────────
-# macOS BSD `stat`/`shasum` vs GNU `stat`/`sha256sum` — BuyBox/Nirvana spokes
+# macOS BSD `stat`/`shasum` vs GNU `stat`/`sha256sum` — different machines
 # may run on either. These shims keep the canonical script host-agnostic.
 file_mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0; }
 hash256() { if command -v shasum >/dev/null 2>&1; then shasum -a 256; else sha256sum; fi; }
@@ -99,7 +99,7 @@ OUTCOME_ENDPOINT="$SUPABASE_URL/rest/v1/vault_sync_log"
 # printf-built POST body). For cross-machine slug STABILITY, pin
 # VAULT_SYNC_REPO_SLUG in the launchd plist / spoke caller (the env override
 # wins); the basename fallback is only for an un-pinned hub run, where the
-# clone dir is "Agency-Main" → "agency-main".
+# clone dir name → lowercased slug.
 REPO_SLUG="${VAULT_SYNC_REPO_SLUG:-$(basename "$REPO_ROOT" \
     | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//; s/-$//')}"
 
@@ -198,7 +198,7 @@ fi
 #   1. _claude-memory symlink → 72 memory files ingested as "vault notes"
 #   2. personal/{user}/legacy-import-*/ (git-ignored but on-disk) → privacy breach
 #   3. _agency-main, _{venture-1}, _{client-1}, _template, _{ops-repo} cross-repo
-#      symlinks → BuyBox/Nirvana/template specs polluting knowledge_items
+#      symlinks → other projects' specs polluting knowledge_items
 #
 # Structural fix: explicit DIRECTORY ALLOWLIST. We only walk the dirs that
 # legitimately contain agency-curated vault content. Symlinks at boundaries

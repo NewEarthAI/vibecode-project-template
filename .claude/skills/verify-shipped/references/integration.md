@@ -27,7 +27,7 @@ How `/verify-shipped` plugs into the existing skill ecosystem.
 
 **Failure mode prevented**: ships PR #471, but PR #470's edge function never deployed because `supabase functions deploy` was forgotten. Without this hook, you wouldn't notice until the next morning's daily plan or a partner complaint. Cedar Hurst doctrine codifies this exact silent-killer class.
 
-**Wall-clock budget**: <20s on Justin's 50-worktree fleet (autovibe hook MUST NOT block the post-ship flow significantly).
+**Wall-clock budget**: <20s on the operator's 50-worktree fleet (autovibe hook MUST NOT block the post-ship flow significantly).
 
 ---
 
@@ -67,7 +67,7 @@ If clean:
 🚢 Shipping integrity: 8/10 (2 issues — 1 PR, 1 deploy; 3 suppressed)
 ```
 
-**Rationale**: morning cadence is the natural moment to clean accumulated drift. Surfacing fleet items in NSM-rank means they compete fairly with feature work — Justin chooses based on impact, not whether the item happens to be visible.
+**Rationale**: morning cadence is the natural moment to clean accumulated drift. Surfacing fleet items in NSM-rank means they compete fairly with feature work — the operator chooses based on impact, not whether the item happens to be visible.
 
 **Failure mode prevented**: drift accumulates Mon-Fri until "Friday afternoon = surprise list of 12 things to fix before weekend." Daily snippet + ranking keeps awareness fresh AND makes triage automatic.
 
@@ -148,7 +148,7 @@ Stable contract — `/daily-plan` and `/autovibe` parse this format. Don't break
 
 ## Suppress-file format
 
-Optional file at `.claude/verify-shipped-suppress.json`. Used to silence known-working-on-it findings without alert fatigue (e.g., Wave B.1 phase 0 pending Justin authorisation — don't surface it again every audit).
+Optional file at `.claude/verify-shipped-suppress.json`. Used to silence known-working-on-it findings without alert fatigue (e.g., Wave B.1 phase 0 pending the operator authorisation — don't surface it again every audit).
 
 Format:
 
@@ -176,7 +176,7 @@ Format:
 
 **Default expiry**: 7 days from add-time. `suppressed_until` MUST be present + parseable; missing or malformed = treat as expired = no suppression.
 
-**Auto-purge**: every `/verify-shipped` run reads the suppress file, drops expired entries, writes back the cleaned file in Phase 8. Justin never has to manually clean expired suppressions.
+**Auto-purge**: every `/verify-shipped` run reads the suppress file, drops expired entries, writes back the cleaned file in Phase 8. the operator never has to manually clean expired suppressions.
 
 **Adding entries**: today, hand-edit the JSON file. Future v1.2+ may add a `--suppress <key> --reason "..." --until 7d` flag to `/verify-shipped` for ergonomic add.
 

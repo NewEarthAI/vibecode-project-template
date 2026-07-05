@@ -25,16 +25,15 @@ REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 CONFIG="$REPO_ROOT/.claude/obsidian-second-brain.local.md"
 EXAMPLE="$REPO_ROOT/.claude/obsidian-second-brain.example.md"
 
-# Auto-detect repo slug from folder name. Lowercased, hyphens collapsed, trim
-# the "-ai" suffix the agency uses on most repo names (your project → buybox,
-# Agency-Main → agency-main, nirvana-freight → nirvana-freight). Operators
-# can override by editing the .local.md file after bootstrap.
+# Auto-detect a repo slug from the folder name (lowercased). Trims a trailing
+# "-ai" or "-main" suffix. You can override it by editing the .local.md file
+# after bootstrap.
 detect_slug() {
   local raw
   raw=$(basename "$REPO_ROOT" | tr '[:upper:]' '[:lower:]')
-  # Trim "-ai" suffix when the repo name ends in it (your project convention)
+  # Trim a trailing "-ai" suffix
   raw="${raw%-ai}"
-  # Trim "-main" suffix on parent-repo names (Agency-Main → agency)
+  # Trim a trailing "-main" suffix on hub/parent repo names
   raw="${raw%-main}"
   echo "$raw"
 }
@@ -44,11 +43,11 @@ VAULT_PATH_DEFAULT="$HOME/ObsidianVault"
 SUPABASE_URL_DEFAULT=""   # set to https://YOUR-PROJECT-REF.supabase.co (empty = skip DB sync)
 KEYCHAIN_ITEM_DEFAULT="project-supabase-service-role-jwt"
 
-# Special case: Agency-Main parent should NOT set a scope slug (sees full vault).
-# Detected by folder name OR by the presence of agency/vault/ in this repo.
-IS_AGENCY_MAIN=0
+# Special case: a hub repo that holds the vault itself sees the FULL vault (no
+# scope slug). Detected by the presence of an agency/vault/ folder in this repo.
+IS_HUB_REPO=0
 if [ -d "$REPO_ROOT/agency/vault" ]; then
-  IS_AGENCY_MAIN=1
+  IS_HUB_REPO=1
   SLUG=""
 fi
 
@@ -56,7 +55,7 @@ echo "════════════════════════�
 echo " Obsidian Autopilot Bootstrap"
 echo "═══════════════════════════════════════════════════════"
 echo " Repo:  $(basename "$REPO_ROOT")"
-echo " Slug:  ${SLUG:-<none — full vault (Agency-Main parent)>}"
+echo " Slug:  ${SLUG:-<none — full vault (hub repo)>}"
 echo "═══════════════════════════════════════════════════════"
 echo ""
 
@@ -75,9 +74,9 @@ keychain_item: "$KEYCHAIN_ITEM_DEFAULT"
 EOF
   if [ -n "$SLUG" ]; then
     cat >> "$CONFIG" <<EOF
-# Per-repo scope — restricts SessionStart vault block to rows whose
-# source_path contains this slug. Each downstream repo gets its own; the
-# Agency-Main parent omits this line and sees the full vault.
+# Per-repo scope — restricts the SessionStart vault block to rows whose
+# source_path contains this slug. Each project gets its own; a hub repo omits
+# this line and sees the full vault.
 vault_scope_slug: "$SLUG"
 EOF
   fi
@@ -100,7 +99,7 @@ else
       ' "$CONFIG" > "$CONFIG.tmp" && mv "$CONFIG.tmp" "$CONFIG"
       echo "✓ Added vault_scope_slug: \"$SLUG\" to existing config"
     else
-      echo "✓ Agency-Main parent — no slug needed (sees full vault)"
+      echo "✓ hub repo — no slug needed (sees full vault)"
     fi
   else
     EXISTING_SLUG=$(awk '/^---$/{if(++c==2) exit} c==1 && /vault_scope_slug:/{gsub(/.*vault_scope_slug:[[:space:]]*"?/,""); gsub(/"[[:space:]]*$/,""); print}' "$CONFIG")

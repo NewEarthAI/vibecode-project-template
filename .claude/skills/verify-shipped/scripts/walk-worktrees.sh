@@ -41,7 +41,7 @@ fi
 # Portable timeout wrapper — only used on git status (the high-risk operation that can
 # hang on stuck index locks per shell-portability.md §3). Fast local reads (rev-parse,
 # rev-list) are NOT wrapped — they read local cache and rarely hang; wrapping every
-# git call with a background-kill fallback was 150× overhead on Justin's 50-worktree fleet.
+# git call with a background-kill fallback was 150× overhead on the operator's 50-worktree fleet.
 # Returns: 0 + stdout on success, 124 + empty on timeout, other rc on git failure.
 run_with_timeout() {
   local seconds="$1"; shift

@@ -28,7 +28,7 @@ The skill halts loudly if `PRODUCT.md` + `DESIGN.md` (L1 contracts) are missing 
 bash .claude/skills/ui-design-system/scripts/preflight-contract-files.sh
 ```
 
-If FAIL: run `impeccable teach` (interactive, Justin in the loop) to author the L1 contracts. After Phase 3.2 ships, /design-review goes from "halt on missing contracts" to full multi-layer review.
+If FAIL: run `impeccable teach` (interactive, the operator in the loop) to author the L1 contracts. After Phase 3.2 ships, /design-review goes from "halt on missing contracts" to full multi-layer review.
 
 ## Bound to skill
 

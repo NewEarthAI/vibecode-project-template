@@ -8,7 +8,7 @@
 > **Register**: technical. This is a runbook for Claude consumption, not chat prose.
 >
 > **Origin**: NewEarth AI, NewVibe Phase 2 (2026-05-17). Reference implementation
-> values below (`n8n.newearthai.agency`, workflow `4s3mMGYcpucHbD2Tc3kci`, the
+> values below (`your-n8n-instance.example.com`, workflow `YOUR_WORKFLOW_ID`, the
 > `nv_detect_slug` REPO_MAP) are NewEarth's. An adopting org replaces them with
 > its own — every place that needs replacing is marked **[ORG-SPECIFIC]**.
 
@@ -334,8 +334,8 @@ substitute for the operator action.
 
 Autofire POSTs to an n8n webhook that routes to an SSH-Execute step:
 
-- **[ORG-SPECIFIC]** Webhook: `https://n8n.newearthai.agency/webhook/ki-ssh-execute`
-- **[ORG-SPECIFIC]** Workflow: `W-KI-SSH-EXECUTE` (id `4s3mMGYcpucHbD2Tc3kci`)
+- **[ORG-SPECIFIC]** Webhook: `https://your-n8n-instance.example.com/webhook/ki-ssh-execute`
+- **[ORG-SPECIFIC]** Workflow: `W-KI-SSH-EXECUTE` (id `YOUR_WORKFLOW_ID`)
 
 The workflow's REPO_MAP must contain an entry for this repo's slug (step 5)
 mapping it to `{ repo path on the target Mac, target user }`. Without that entry,

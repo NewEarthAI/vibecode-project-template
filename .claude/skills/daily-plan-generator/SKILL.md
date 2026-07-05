@@ -273,8 +273,8 @@ If `FOUNDER_LANE` was resolved in 0.5A, append a lane block to the plan file:
 **Optional drift detection** (runs only if both founders are present in team.json):
 
 ```bash
-# Justin's expected lane (build) → src/, supabase/, .claude/
-# Chris's expected lane (operate) → strategy/, ROADMAP.md, specs/*.md (proposals)
+# the operator's expected lane (build) → src/, supabase/, .claude/
+# a teammate's expected lane (operate) → strategy/, ROADMAP.md, specs/*.md (proposals)
 
 git log --author="$(git config user.email)" --since="7 days ago" \
   --name-only --pretty=format: 2>/dev/null \
@@ -367,12 +367,12 @@ Output section (after Phase 0.5D, before scored work):
 ## Collab Inbox (from /collab — Phase 0.6)
 
 🔴 Handoffs you owe action (M):
-  • CL-CM40-0011 — Review Pace Morby PSA template diff (handoff, from Chris, 4h ago)
+  • CL-CM40-0011 — Review Pace Morby PSA template diff (handoff, from a teammate, 4h ago)
 
 🔵 Awaiting your consideration (N):
-  🚨 CL-OPS-0099 — Dashboard slow on his Mac (issue, from Chris, 4d ago)
-  ⚠️ CL-CM38-0007 — Reverse dispo angle (feedback, from Chris, 1d ago)
-  🆕 CL-PARTNER-0023 — Trever 0% down 50yr (idea, from Chris, 2h ago)
+  🚨 CL-OPS-0099 — Dashboard slow on his Mac (issue, from a teammate, 4d ago)
+  ⚠️ CL-CM38-0007 — Reverse dispo angle (feedback, from a teammate, 1d ago)
+  🆕 CL-PARTNER-0023 — Trever 0% down 50yr (idea, from a teammate, 2h ago)
 
 ✅ Recently integrated by you (last 24h): K
    (run `/collab pull <id>` to integrate one; `/collab inbox` for full list)
@@ -1192,7 +1192,7 @@ if .claude/sessions/SESSION-*.md count > 14:
 | Hardcode vault path in skill | Different per Mac | Read from `.claude/obsidian-second-brain.local.md` |
 | Run vault commands automatically | User must approve plan first | Surface overdue commands as suggestions, never auto-run |
 | Use `gh pr list` for cross-repo inbox | repo-scoped — misses side repos | Use `gh search prs` (account-wide) per Phase 0.5B |
-| Hardcode founder identity in skill | breaks on per-machine + Chris vs. Justin | Resolve via `gh api user --jq .login` + read team.json |
+| Hardcode founder identity in skill | breaks on per-machine + a teammate vs. the operator | Resolve via `gh api user --jq .login` + read team.json |
 | Auto-add cross-repo review PRs as scored plan steps | Hijacks the user's plan with reactive work | Surface in PR Inbox section only — founder picks what to tackle |
 | Block plan if `gh search` fails or rate-limits | Network blip should not break daily-plan | Phase 0.5 degrades gracefully — every subsection is independent |
 

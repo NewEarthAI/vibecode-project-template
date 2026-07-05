@@ -21,6 +21,6 @@ The full voice rule is loaded via `@.claude/rules/layman-mode.md` from `CLAUDE.m
 
 **Carve-outs (technical register OK)**: code, SQL, sub-agent prompts, rule/memory/continuation files, code-council outputs.
 
-**Self-check before sending every reply**: paste-to-Chris's-team test, no menus, every acronym defined inline, Commonwealth spelling in prose, no raw paths in user-facing labels.
+**Self-check before sending every reply**: paste-to-a teammate's-team test, no menus, every acronym defined inline, Commonwealth spelling in prose, no raw paths in user-facing labels.
 
 If you catch yourself about to send `Three options:`, bare `RPC`, `npm run typecheck` as a label, or `.claude/skills/X/SKILL.md` as a visible identifier — **STOP and rewrite**.

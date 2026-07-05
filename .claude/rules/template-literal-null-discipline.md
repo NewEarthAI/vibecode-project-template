@@ -127,7 +127,7 @@ A non-zero count of any of these in the last 24 hours indicates a near-miss for 
 - `process-submission` edge function called `parseStreetComponents(null)` → all-null result → v2 dedup RPC skipped.
 - Fallback ILIKE built `%null%null%` pattern → matched 2026-05-11 graveyard row `7337e842-...`.
 - 26 submissions over 4 days silently absorbed into the graveyard.
-- Detection horizon: Justin spotted via Step 2 SQL diagnostic (Step 2 PR #736), not via canary.
+- Detection horizon: the operator spotted via Step 2 SQL diagnostic (Step 2 PR #736), not via canary.
 
 **Fix shipped**:
 - PR #743 — Layers 1+2+3 read-side defence

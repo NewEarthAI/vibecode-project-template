@@ -11,7 +11,7 @@ description: Walk the full a SaaS app repo state across 6 layers (worktrees, bra
 
 ---
 
-## The 6 Layers (Justin's "shipped" definition)
+## The 6 Layers (the operator's "shipped" definition)
 
 | Layer | What it catches | Source of truth | This skill detects |
 |---|---|---|---|

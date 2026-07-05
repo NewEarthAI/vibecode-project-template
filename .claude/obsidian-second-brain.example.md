@@ -10,20 +10,19 @@
 # Read by `.claude/hooks/sessionstart-context-aggregator.sh emit_vault_section`
 # to surface the 5 most-recently-updated vault notes at SessionStart.
 #
-# The vault lives in the SHARED NewEarth Agency-Main Supabase project — every
-# NewEarth repo points at the same `knowledge_items` table so sessions across
-# all repos surface the same vault activity. The Keychain entry name is the
-# same on every Mac that has been set up.
+# The vault syncs to a `knowledge_items` table in YOUR Supabase project. If you
+# keep several projects in one vault, they can share the same table so sessions
+# across them surface the same vault activity. The Keychain entry name stays the
+# same on every Mac you set up.
 
-# Path to the local Agency vault folder. Required by vault-capture.sh (Stop
+# Path to your local Obsidian vault folder. Required by vault-capture.sh (Stop
 # hook) so it can append the session summary into the right daily note.
-vault_path: "/Users/<you>/code/newearth-agency-main/agency/vault"
+vault_path: "/Users/<you>/path/to/your-vault"
 
-# Agency-Main Supabase URL. Same value on every NewEarth repo.
+# Your Supabase project URL (Project Settings → API → Project URL).
 supabase_url: "https://YOUR-PROJECT-REF.supabase.co"
 
-# macOS Keychain item name carrying the service_role JWT. Same name on every
-# Mac that's been set up via the agency provisioning protocol.
+# macOS Keychain item holding your Supabase service_role key (see the header).
 keychain_item: "project-supabase-service-role-jwt"
 
 # Per-repo scope filter (OPTIONAL — added 2026-05-23). When set, restricts
@@ -31,14 +30,11 @@ keychain_item: "project-supabase-service-role-jwt"
 # (case-insensitive). Without it, the block returns the full agency vault.
 #
 # Recommended values per repo:
-#   vault_scope_slug: "buybox"        # your project repo
-#   vault_scope_slug: "nirvana"       # Nirvana Freight repo
-#   vault_scope_slug: "my-app"        # your project's slug
-#   (omit on Agency-Main parent repo — designed to see the whole vault)
+#   vault_scope_slug: "my-app"        # this project's slug
+#   (omit if you use one vault per project — it sees everything anyway)
 #
 # Why: each repo's session is most useful with its OWN recent vault activity
-# rather than cross-repo noise. Operators picking up a BuyBox session don't
-# need to see Nirvana fleet entries and vice versa.
+# rather than cross-project noise, when several projects share one vault.
 vault_scope_slug: "<your-repo-slug>"
 ---
 
@@ -52,7 +48,7 @@ Config Resolution Protocol).
 ## What this enables
 
 Every SessionStart on this Mac in this repo will surface the top 5
-most-recently-updated rows from the Agency `knowledge_items` table inside
+most-recently-updated rows from your `knowledge_items` table inside
 the briefing — the "📓 Recent vault activity" section that the upgraded
 aggregator emits.
 
@@ -90,9 +86,9 @@ envelope.
 
 ## Composition
 
-- `agency/vault/` (Agency-Main repo) — where the vault markdown files live
-- `knowledge_items` table (Agency Supabase) — the indexed projection
-- `bin/vault-sync.sh` (Agency-Main repo) — launchd job upserting vault → DB
+- your Obsidian vault — where the vault markdown files live
+- `knowledge_items` table (your Supabase) — the searchable index
+- `bin/vault-sync.sh` — upserts vault notes → the table
 - `vault-capture.sh` (this repo, .claude/hooks/) — Stop hook appending session
    summary to daily notes
 - `sessionstart-context-aggregator.sh` (this repo, .claude/hooks/) — reads

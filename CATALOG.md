@@ -1,6 +1,6 @@
 # The Catalogue — every tool, tiered
 
-One page, three tiers. You do **not** need to learn 110 skills — Claude reaches
+One page, three tiers. You do **not** need to learn 99 skills — Claude reaches
 for the right one automatically. This page exists so you always know what's in
 the box, what matters on day one, and what's safely ignorable until you grow
 into it.
@@ -18,6 +18,9 @@ into it.
 ---
 
 ## CORE — the daily rhythm
+
+> **Start here, day one:** `/setup` → `/prime` → `/daily-plan`, then just describe
+> what you want to build in plain English. Everything else waits until you need it.
 
 | Tool | One line |
 |---|---|
@@ -40,10 +43,9 @@ into it.
 | You use a database | `supabase-postgres-best-practices`, `postgresql-patterns`, `postgresql-code-review`, `supabase-database-hygiene`, `dev-prod` (staging-first discipline) |
 | You deploy a frontend | `/deploy-vercel`, `landing-page-mvp`, `site-speed-boost`, `lovable-to-vercel-migration` |
 | You build UI | `ui-design-system` (house design system), `/design-review`, `tailwind-shadcn-system`, `data-table-design`, `build-dashboard`, `kpi-dashboard-design` |
-| You want a system map | `/topology` + the topology emitters — a live map of code, database, automations + drift flags (`docs/TOPOLOGY-SYSTEM-OVERVIEW.md`) |
-| You run parallel chats | `/where`, worktree discipline, collision-detection hooks |
-| You keep an Obsidian vault | `obsidian-second-brain`, `/vault-sync`, `/vault-review`, `/trace`, `/drift`, `/emerge`, `/graduate` |
-| You work with a team | `/collab`, `/build-with-agent-team` |
+| You run parallel chats | worktree discipline, collision-detection hooks |
+| You keep an Obsidian vault | `obsidian-second-brain`, `/vault-sync`, `/vault-review`, `/trace`, `/drift`, `/emerge`, `/graduate` (full recipe: `docs/OBSIDIAN-SETUP.md`) |
+| You work with a team | `collab` skill, `/build-with-agent-team` |
 | You ship to real users | `production-readiness-review`, `/verify-shipped`, `/e2e-test`, the security five (below) |
 | Google Workspace | `gws-gmail`, `gws-calendar`, `gws-docs`, `gws-sheets`, `gws-drive`, `gws-tasks`, `gws-keep`, `gws-meet` |
 

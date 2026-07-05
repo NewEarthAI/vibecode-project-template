@@ -119,7 +119,7 @@ git log -1 --format=%ct origin/main
 
 **Decision: CLI-only path. No env-var fallback.**
 
-Findings on Justin's primary Mac (2026-05-07):
+Findings on the operator's primary Mac (2026-05-07):
 - ✅ `vercel` CLI installed at `/opt/homebrew/bin/vercel` (v50.39.0)
 - ✅ `vercel whoami` returns `your-org` (the team scope a SaaS app lives under)
 - ❌ `VERCEL_TOKEN` env var NOT set
