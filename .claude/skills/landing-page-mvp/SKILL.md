@@ -14,7 +14,7 @@ description: |
 version: 2.3
 classification: capability-uplift
 created: 2026-03-10
-updated: 2026-06-24
+updated: 2026-07-08
 triggers:
   - "cinematic landing page"
   - "GSAP landing page"
@@ -465,3 +465,18 @@ Gotchas worth keeping:
 
 Status: built + prod-build smoke PASS; go-live gated on `vercel login` + apex DNS.
 Did NOT `/push-to-template` (single use ≠ proven; push gate is the 2nd client page).
+
+---
+
+## Hero Gradient Headline — Field Gotchas
+
+Field-tested on a gradient "animated word" hero (a headline where one word cycles in a colour gradient). Three lessons for any premium gradient headline or rotating-word hero — they apply whether the motion lib is GSAP or Framer Motion.
+
+### Gradient headline descenders — `bg-clip-text` shears g / p / y
+`bg-clip-text text-transparent` paints the gradient into the glyph shapes, but only across the element's OWN box. Tailwind's text-size utilities (`text-6xl` / `text-7xl` / …) ship a coupled `line-height: 1`, and — being responsive utilities — they WIN over a separate `leading-[1.1]` on source order at that breakpoint. So the paint box ends up exactly font-size tall, with no room below the baseline, and descenders render transparent — sheared flat. **Fix: the descender room goes on the GRADIENT span itself** (a wrapper's padding can't extend a child's paint box), as `padding-bottom` in `em` so it holds at every breakpoint — its padding box is what the gradient fills. Padding is also layout space, so it floats the next line down; reclaim it with a **negative `margin-bottom`** (tuned by measuring) and set the reserved line-height to match the padded box so a word-swap never jumps. Worst-case test word: one with both a `p` and a `g`.
+
+### Rotating-word headline under reduced-motion — keep cycling
+When the rotation IS the message (N words cycling to say N things), do NOT freeze on one word under `prefers-reduced-motion` — that silently kills the whole message for every reduced-motion user. An opacity crossfade is not the motion that setting targets — it is about vestibular *movement* (translate / scale / parallax / spin), and Framer Motion's `reducedMotion="user"` keeps opacity/colour running anyway. So under reduced-motion keep the words cycling; drop *movement*, never the *content change*. (A purely decorative 2-phase reveal may still go static — the rule is specifically about message-carrying rotators.)
+
+### Verify hero fixes against pixels, not DOM boxes
+`getBoundingClientRect()` reports the *line box* — it cannot see glyph-ink overflow or gradient-clip, so a "the box says it's fine" check passes a visibly-clipped descender. Measure the real thing with canvas `measureText` on the **deployed** preview: `fontBoundingBoxAscent + fontBoundingBoxDescent` is the box the glyphs need; compare it to the painted box (`line-height + padding-bottom`) — any positive shortfall means clipped. The same tool balances stacked heading lines: measure each line's ink cap-top and descender-bottom, then equalise the gap above vs below. Pixels/metrics, not bounding boxes; deployed preview, not just local.
